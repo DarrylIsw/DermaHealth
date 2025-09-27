@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DermaHealth</string>
+    <string name="tip_of_day">Tip of the Day</string>
+    <string name="my_routine">My Routine</string>
+    <string name="add_routine">Add</string>
+    <string name="scan">Scan</string>
+    <string name="history">History</string>
+    <string name="profile">Profile</string>
+    <string name="delete_confirm">Are you sure you want to delete this item?</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+</resources>
