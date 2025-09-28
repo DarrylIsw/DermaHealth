@@ -44,9 +44,10 @@ class HistoryAdapter(
         holder.btnExpand.setOnClickListener {
             expanded = !expanded
             holder.expandable.visibility = if (expanded) View.VISIBLE else View.GONE
-            holder.btnExpand.setImageResource(
-                if (expanded) R.drawable.   ic_expand_less else R.drawable.ic_expand_more
-            )
+
+            holder.btnExpand.animate().rotation(
+                if (expanded) 180f else 0f
+            ).setDuration(200).start()
         }
 
         holder.btnEdit.setOnClickListener { onEdit(item) }

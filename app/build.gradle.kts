@@ -47,15 +47,17 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // CameraX (core, lifecycle, view, and image capture)
-    val cameraxVersion = "1.3.2"
-    implementation("androidx.camera:camera-core:$cameraxVersion")
-    implementation("androidx.camera:camera-camera2:$cameraxVersion")
-    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
-    implementation("androidx.camera:camera-view:1.2.3")
-    implementation("de.hdodenhof:circleimageview:3.1.0")
+    var camerax_version = "1.3.4" // or latest stable
+    implementation("androidx.camera:camera-core:$camerax_version")
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+    implementation("androidx.camera:camera-view:$camerax_version")
+    implementation("androidx.camera:camera-extensions:$camerax_version")
     // uCrop for cropping
     implementation(libs.ucrop)
 
     // Optional: Kotlin coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 }

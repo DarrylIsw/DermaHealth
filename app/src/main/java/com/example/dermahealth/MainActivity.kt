@@ -4,8 +4,6 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.example.dermahealth.fragments.HomeFragment
-import com.example.dermahealth.fragments.ScanFragment
 import com.example.dermahealth.fragments.HistoryFragment
 import com.example.dermahealth.fragments.ProfileFragment
 class MainActivity : AppCompatActivity() {

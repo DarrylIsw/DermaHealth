@@ -36,7 +36,7 @@
                     android:layout_gravity="center"
                     app:indicatorSize="160dp"
                     app:trackThickness="12dp"
-                    app:indeterminate="false"
+                    android:indeterminate="true"
                     android:progress="0"
                     app:indicatorColor="@color/teal_700" />
 

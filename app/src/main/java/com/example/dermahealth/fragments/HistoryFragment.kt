@@ -5,7 +5,14 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.dermahealth.R
+import com.example.dermahealth.adapter.HistoryAdapter
+import com.example.dermahealth.data.ScanHistory
+import com.google.android.material.snackbar.Snackbar
 
 class HistoryFragment : Fragment() {
 
@@ -26,7 +33,8 @@ class HistoryFragment : Fragment() {
         val adapter = HistoryAdapter(
             scans = scanList,
             onEdit = { scan ->
-                Toast.makeText(requireContext(), "Edit notes: ${scan.result}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Edit notes: ${scan.result}", Toast.LENGTH_SHORT)
+                    .show()
             },
             onDelete = { scan ->
                 AlertDialog.Builder(requireContext())
