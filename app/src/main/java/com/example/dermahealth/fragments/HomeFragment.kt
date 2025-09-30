@@ -3,8 +3,12 @@ package com.example.dermahealth
 import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.*
+import android.view.animation.AlphaAnimation
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -18,8 +22,23 @@ class HomeFragment : Fragment() {
     private lateinit var tvScore: TextView
     private lateinit var rvRoutines: RecyclerView
     private lateinit var btnAddRoutine: ImageButton
+    private lateinit var tvTip: TextView
+    private lateinit var ivTipIcon: ImageView
+
     private val routineList = mutableListOf<Routine>()
     private lateinit var adapter: RoutineAdapter
+
+    // --- Tip of the Day rotation ---
+    private val tips = listOf(
+        "90% of skin aging is caused by sun exposure — wear sunscreen daily.",
+        "Drink at least 8 glasses of water a day to keep your skin hydrated.",
+        "A balanced diet rich in antioxidants helps your skin glow naturally.",
+        "Cleanse your face gently, avoid over-scrubbing.",
+        "Sleep is your skin’s best friend — aim for 7–8 hours."
+    )
+    private var tipIndex = 0
+    private val handler = Handler(Looper.getMainLooper())
+    private val tipInterval = 5000L // 5 seconds
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,6 +55,16 @@ class HomeFragment : Fragment() {
         rvRoutines = view.findViewById(R.id.rv_routines)
         btnAddRoutine = view.findViewById(R.id.btn_add_routine)
 
+        // Tip of the Day views
+        tvTip = view.findViewById(R.id.tv_tip)
+        ivTipIcon = view.findViewById(R.id.iv_tip_icon)
+
+        // Initial tip
+        tvTip.text = tips[tipIndex]
+
+        // Start rotating tips
+        startTipRotation()
+
         // Dummy routines
         routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
         routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
@@ -46,16 +75,16 @@ class HomeFragment : Fragment() {
             routineList,
             onEdit = { routine ->
                 Toast.makeText(requireContext(), "Edit: ${routine.title}", Toast.LENGTH_SHORT).show()
-                // TODO: Implement edit dialog/form later
+                // TODO: open edit dialog later
             },
             onDelete = { routine ->
-                showDeleteConfirm(routine, adapter) // ✅ now works
+                showDeleteConfirm(routine, adapter)
             }
         )
         rvRoutines.layoutManager = LinearLayoutManager(requireContext())
         rvRoutines.adapter = adapter
 
-        // Add routine button (dummy)
+        // Add routine button
         btnAddRoutine.setOnClickListener {
             val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
             val newItem = Routine(id, "New routine $id", "Time")
@@ -64,19 +93,34 @@ class HomeFragment : Fragment() {
             rvRoutines.scrollToPosition(0)
             Toast.makeText(requireContext(), "Routine added (dummy)", Toast.LENGTH_SHORT).show()
         }
-
-        // Quick action: navigate to Scan
-        view.findViewById<View>(R.id.btn_quick_scan).setOnClickListener {
-            activity?.supportFragmentManager
-                ?.beginTransaction()
-                ?.replace(R.id.fragment_container, ScanFragment())
-                ?.addToBackStack(null)
-                ?.commit()
-        }
-
-        // Animate skin score (dummy value)
+        // Animate skin score
         animateSkinScore(85)
     }
+
+    // --- Tip rotation with fade animation ---
+    private fun startTipRotation() {
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                tipIndex = (tipIndex + 1) % tips.size
+
+                val fadeOut = AlphaAnimation(1f, 0f).apply { duration = 500 }
+                val fadeIn = AlphaAnimation(0f, 1f).apply { duration = 500 }
+
+                tvTip.startAnimation(fadeOut)
+                fadeOut.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
+                    override fun onAnimationStart(animation: android.view.animation.Animation?) {}
+                    override fun onAnimationEnd(animation: android.view.animation.Animation?) {
+                        tvTip.text = tips[tipIndex]
+                        tvTip.startAnimation(fadeIn)
+                    }
+                    override fun onAnimationRepeat(animation: android.view.animation.Animation?) {}
+                })
+
+                handler.postDelayed(this, tipInterval)
+            }
+        }, tipInterval)
+    }
+
     private fun showDeleteConfirm(routine: Routine, adapter: RoutineAdapter) {
         AlertDialog.Builder(requireContext())
             .setMessage(getString(R.string.delete_confirm))
@@ -98,21 +142,24 @@ class HomeFragment : Fragment() {
         animator.addUpdateListener { valueAnimator ->
             val value = valueAnimator.animatedValue as Int
             tvScore.text = value.toString()
-            // try both ways to set progress (compat depends on Material lib version)
             try {
                 cpSkin.setProgressCompat(value, true)
             } catch (t: Throwable) {
-                // fallback to direct property if available
                 try {
                     cpSkin.progress = value
-                } catch (_: Throwable) { /* ignore */ }
+                } catch (_: Throwable) { }
             }
         }
         animator.start()
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        handler.removeCallbacksAndMessages(null) // stop tip rotation safely
+    }
 }
 
-/** Simple data class and adapter below **/
+/** Simple data class and adapter **/
 data class Routine(val id: Int, val title: String, val time: String)
 
 class RoutineAdapter(

@@ -5,29 +5,39 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/background_light">
+    android:background="#F9FAFB"> <!-- soft gray background -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <!-- Skin Health Card (Hero) -->
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Today"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#111827"
+            android:fontFamily="@font/inter_bold"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Skin Health Card -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_skin_score"
             android:layout_width="match_parent"
             android:layout_height="220dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            android:layout_marginBottom="12dp"
-            app:strokeWidth="0dp"
-            android:backgroundTint="@color/card_bg">
+            app:cardCornerRadius="20dp"
+            app:cardElevation="3dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@android:color/white">
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="12dp">
+                android:padding="16dp">
 
                 <com.google.android.material.progressindicator.CircularProgressIndicator
                     android:id="@+id/cp_skin"
@@ -36,16 +46,16 @@
                     android:layout_gravity="center"
                     app:indicatorSize="160dp"
                     app:trackThickness="12dp"
-                    android:indeterminate="true"
+                    android:indeterminate="false"
                     android:progress="0"
-                    app:indicatorColor="@color/teal_700" />
+                    app:indicatorColor="#3478F6"/> <!-- primary blue -->
 
-                <!-- Score number overlay -->
+                <!-- Overlay texts -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tv_skin_score"
@@ -54,7 +64,8 @@
                         android:text="0"
                         android:textSize="28sp"
                         android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:fontFamily="@font/inter_bold"
+                        android:textColor="#111827"/>
 
                     <TextView
                         android:id="@+id/tv_skin_label"
@@ -62,8 +73,8 @@
                         android:layout_height="wrap_content"
                         android:text="Skin Health"
                         android:textSize="14sp"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginTop="4dp" />
+                        android:textColor="#6B7280"
+                        android:fontFamily="@font/inter"/>
 
                     <TextView
                         android:id="@+id/tv_skin_sub"
@@ -71,141 +82,179 @@
                         android:layout_height="wrap_content"
                         android:text="Keep up your routine to stay healthy"
                         android:textSize="12sp"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginTop="8dp"/>
+                        android:textColor="#9CA3AF"
+                        android:fontFamily="@font/inter"
+                        android:layout_marginTop="6dp"/>
                 </LinearLayout>
-
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Quick action buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:weightSum="3"
-            android:layout_marginBottom="12dp">
+            android:layout_marginBottom="16dp">
 
+            <!-- Appointments -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/btn_quick_scan"
                 android:layout_width="0dp"
-                android:layout_height="96dp"
+                android:layout_height="100dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
                 android:layout_marginEnd="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                android:backgroundTint="@android:color/white"
                 android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <ImageView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:src="@android:drawable/ic_menu_camera"
-                        android:contentDescription="@string/scan" />
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_appointments"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter"
+                        android:background="@null"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/scan"
+                        android:text="Appointments"
                         android:textSize="14sp"
-                        android:textColor="@color/text_primary"
+                        android:textColor="#111827"
+                        android:fontFamily="@font/inter"
                         android:layout_marginTop="8dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Prescriptions -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/btn_quick_history"
                 android:layout_width="0dp"
-                android:layout_height="96dp"
+                android:layout_height="100dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
                 android:layout_marginEnd="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                android:backgroundTint="@android:color/white"
                 android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <ImageView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:src="@android:drawable/ic_menu_recent_history"
-                        android:contentDescription="@string/history" />
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_prescriptions"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter"
+                        android:background="@null"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/history"
+                        android:text="Prescriptions"
                         android:textSize="14sp"
-                        android:textColor="@color/text_primary"
+                        android:textColor="#111827"
+                        android:fontFamily="@font/inter"
                         android:layout_marginTop="8dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Reports -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/btn_quick_profile"
                 android:layout_width="0dp"
-                android:layout_height="96dp"
+                android:layout_height="100dp"
                 android:layout_weight="1"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="3dp"
+                android:backgroundTint="@android:color/white"
                 android:foreground="?attr/selectableItemBackground">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <ImageView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:src="@android:drawable/ic_menu_manage"
-                        android:contentDescription="@string/profile" />
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_reports"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter"
+                        android:background="@null"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/profile"
+                        android:text="Reports"
                         android:textSize="14sp"
-                        android:textColor="@color/text_primary"
+                        android:textColor="#111827"
+                        android:fontFamily="@font/inter"
                         android:layout_marginTop="8dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
+
         <!-- Tip of the Day -->
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/tv_tip_header"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tip_of_day"
             android:textStyle="bold"
-            android:textSize="18sp"
-            android:textColor="@color/text_primary"
-            android:layout_marginBottom="8dp"/>
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins_bold"
+            android:textColor="@android:color/white"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_tip_header"/>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="3dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="4dp"
             android:layout_marginBottom="16dp"
-            android:padding="12dp">
+            android:backgroundTint="@android:color/white"
+            android:padding="16dp">
 
-            <TextView
-                android:id="@+id/tv_tip"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="90% of skin aging is caused by sun exposure — wear sunscreen daily."
-                android:textColor="@color/text_secondary"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Tip Icon -->
+                <ImageView
+                    android:id="@+id/iv_tip_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_lightbulb"
+                    android:layout_marginEnd="12dp"/>
+
+                <!-- Tip Text -->
+                <TextView
+                    android:id="@+id/tv_tip"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="90% of skin aging is caused by sun exposure — wear sunscreen daily."
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="#374151"
+                    android:fontFamily="@font/inter_medium"/>
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- My Routine header -->
@@ -223,7 +272,8 @@
                 android:text="@string/my_routine"
                 android:textStyle="bold"
                 android:textSize="18sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="#111827"
+                android:fontFamily="@font/inter_bold"/>
 
             <ImageButton
                 android:id="@+id/btn_add_routine"
@@ -231,9 +281,11 @@
                 android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_input_add"
+                app:tint="#3478F6"
                 android:contentDescription="@string/add_routine"/>
         </LinearLayout>
 
+        <!-- RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_routines"
             android:layout_width="match_parent"
