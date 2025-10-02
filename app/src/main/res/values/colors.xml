@@ -3,10 +3,12 @@
     <color name="background_light">#FAFAFA</color>
     <color name="peach_200">#FFCCBC</color>
     <color name="card_bg">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
     <color name="text_primary">#212121</color>
     <color name="text_secondary">#616161</color>
     <color name="black">#000000</color>
     <color name="teal_200">#03DAC5</color>
     <color name="teal_700">#00796B</color>
     <color name="medium_sky_blue">#3478F6</color>
+    <color name="danger_red">#F44336</color>
 </resources>
