@@ -20,6 +20,36 @@
         android:layout_gravity="bottom"
         app:menu="@menu/bottom_nav_menu"
         app:labelVisibilityMode="labeled"
-        android:background="?android:attr/windowBackground" />
+        android:background="@drawable/bg_bottom_nav"
+        app:itemIconTint="@color/nav_item_color"
+        app:itemTextColor="@color/nav_item_color"
+        app:itemBackground="@null"
+        app:itemRippleColor="@null"
+        android:foreground="@null"/>
+
+
+
+    <!-- Floating blue circle for nav highlight -->
+    <View
+        android:id="@+id/nav_circle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/bg_nav_circle"
+        android:visibility="invisible"/>
+
+    <!-- Floating scroll-to-bottom button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_scroll_down"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|bottom"
+        android:layout_marginBottom="72dp"
+        app:backgroundTint="@android:color/white"
+        app:srcCompat="@drawable/ic_arrow_downward"
+        app:tint="@android:color/black"
+        app:fabSize="mini"
+        android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

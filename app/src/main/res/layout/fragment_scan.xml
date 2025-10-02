@@ -5,7 +5,9 @@
     android:id="@+id/scan_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light">
+    android:background="@color/background_light"
+    android:clipToPadding="false"
+    android:paddingBottom="56dp">
 
     <!-- Camera preview: occupies 65% of height -->
     <androidx.camera.view.PreviewView

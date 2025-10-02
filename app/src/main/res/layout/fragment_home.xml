@@ -6,7 +6,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#F9FAFB">
+    android:background="#F9FAFB"
+    android:clipToPadding="false"
+    android:paddingBottom="56dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -39,67 +41,194 @@
 
         <!-- Skin Health Card -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_skin_score"
             android:layout_width="match_parent"
-            android:layout_height="220dp"
+            android:layout_height="wrap_content"
             app:cardCornerRadius="20dp"
             app:cardElevation="3dp"
             android:layout_marginBottom="16dp"
             android:backgroundTint="@android:color/white">
 
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="220dp"
+                android:orientation="horizontal"
                 android:padding="12dp">
 
-                <com.google.android.material.progressindicator.CircularProgressIndicator
-                    android:id="@+id/cp_skin"
+                <!-- Left circular progress with overlay -->
+                <FrameLayout
                     android:layout_width="160dp"
                     android:layout_height="160dp"
-                    android:layout_gravity="center"
-                    app:indicatorSize="160dp"
-                    app:trackThickness="12dp"
-                    android:indeterminate="false"
-                    android:progress="0"
-                    app:indicatorColor="#3478F6"/>
+                    android:layout_gravity="center">
 
-                <!-- Overlay texts -->
+                    <!-- Circular Progress -->
+                    <com.google.android.material.progressindicator.CircularProgressIndicator
+                        android:id="@+id/cp_skin"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:indicatorSize="150dp"
+                        app:trackThickness="12dp"
+                        android:indeterminate="false"
+                        android:progress="0"
+                        app:indicatorColor="#3478F6"/>
+
+                    <!-- Overlay texts -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <!-- Score -->
+                        <TextView
+                            android:id="@+id/tv_skin_score"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/inter_bold"
+                            android:textColor="#111827"/>
+
+                        <!-- Affirmation -->
+                        <TextView
+                            android:id="@+id/tv_skin_affirmation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Keep it up!"
+                            android:textSize="12sp"
+                            android:textColor="#4DA9F0"
+                            android:fontFamily="@font/inter"/>
+                    </LinearLayout>
+                </FrameLayout>
+
+                <!-- Right side: live environment data -->
+                <!-- Right side: live environment data -->
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp">
 
-                    <TextView
-                        android:id="@+id/tv_skin_score"
-                        android:layout_width="wrap_content"
+                    <!-- UV Index -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:fontFamily="@font/inter_bold"
-                        android:textColor="#111827"/>
+                        android:orientation="vertical"
+                        android:layout_marginBottom="12dp">
 
-                    <TextView
-                        android:id="@+id/tv_skin_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Skin Health"
-                        android:textSize="14sp"
-                        android:textColor="#6B7280"
-                        android:fontFamily="@font/inter"/>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
 
-                    <TextView
-                        android:id="@+id/tv_skin_sub"
-                        android:layout_width="wrap_content"
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_sunny"/>
+
+                            <TextView
+                                android:id="@+id/tv_uv_index"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="UV: 98 (High)"
+                                android:layout_marginStart="8dp"
+                                android:textSize="14sp"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/pb_uv"
+                            style="@android:style/Widget.ProgressBar.Horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="6dp"
+                            android:progress="20"
+                            android:max="11"
+                            android:progressTint="#FFC107"
+                            android:backgroundTint="#E0E0E0"/>
+                    </LinearLayout>
+
+                    <!-- Humidity -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Keep up your routine to stay healthy"
-                        android:textSize="12sp"
-                        android:textColor="#9CA3AF"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="6dp"/>
+                        android:orientation="vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_water_drop"/>
+
+                            <TextView
+                                android:id="@+id/tv_humidity"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Humidity: 45%"
+                                android:layout_marginStart="8dp"
+                                android:textSize="14sp"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/pb_humidity"
+                            style="@android:style/Widget.ProgressBar.Horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="6dp"
+                            android:progress="45"
+                            android:max="100"
+                            android:progressTint="#2196F3"
+                            android:backgroundTint="#E0E0E0"/>
+                    </LinearLayout>
+
+                    <!-- Pollution (AQI) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_cloud"/>
+
+                            <TextView
+                                android:id="@+id/tv_pollution"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="AQI: 18 (Low)"
+                                android:layout_marginStart="8dp"
+                                android:textSize="14sp"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/pb_pollution"
+                            style="@android:style/Widget.ProgressBar.Horizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="6dp"
+                            android:progress="72"
+                            android:max="500"
+                            android:progressTint="#4CAF50"
+                            android:backgroundTint="#E0E0E0"/>
+                    </LinearLayout>
                 </LinearLayout>
-            </FrameLayout>
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ... rest of your layout unchanged (appointments/prescriptions/reports/tip card/recycler) -->

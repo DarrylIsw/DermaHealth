@@ -23,10 +23,14 @@ import android.view.animation.AnimationUtils
 import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
 import androidx.core.view.children
+import androidx.core.widget.NestedScrollView
 import androidx.viewpager2.widget.CompositePageTransformer
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.math.roundToInt
+import android.animation.ObjectAnimator
+import android.widget.ProgressBar
 
 class HomeFragment : Fragment() {
 
@@ -43,6 +47,9 @@ class HomeFragment : Fragment() {
     private var currentPage = 0
     private val carouselHandler = Handler(Looper.getMainLooper())
     private lateinit var carouselRunnable: Runnable
+    private var fabScrollDown: FloatingActionButton? = null
+
+
 
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
     private val carouselImages: List<Int> = listOf(
@@ -155,6 +162,13 @@ class HomeFragment : Fragment() {
         return (dp * density).roundToInt()
     }
 
+    private fun animateProgressBar(progressBar: ProgressBar, target: Int, duration: Long = 1200L) {
+        ObjectAnimator.ofInt(progressBar, "progress", 0, target).apply {
+            interpolator = DecelerateInterpolator()
+            this.duration = duration
+            start()
+        }
+    }
     private fun setupScrollAnimations(root: View) {
         // load animation
         val fadeUp = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_up)
@@ -230,6 +244,43 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Right-side progress bar (UV, Humidity, Pollution)
+
+        val pbUv = view.findViewById<ProgressBar>(R.id.pb_uv)
+        val pbHumidity = view.findViewById<ProgressBar>(R.id.pb_humidity)
+        val pbPollution = view.findViewById<ProgressBar>(R.id.pb_pollution)
+
+        // Dummy values (replace with API results)
+        val uvValue = 6       // range 0–11+
+        val humidityValue = 72 // percentage
+        val pollutionValue = 130 // AQI
+
+        // Animate progress
+        animateProgressBar(pbUv, uvValue)
+        animateProgressBar(pbHumidity, humidityValue)
+        animateProgressBar(pbPollution, pollutionValue)
+
+        val tvUv = view.findViewById<TextView>(R.id.tv_uv_index)
+        tvUv.alpha = 0f
+        tvUv.text = "UV: $uvValue (High)"
+        tvUv.animate().alpha(1f).setDuration(800).setStartDelay(400).start()
+
+        // === Scroll & FAB setup ===
+        nestedScroll = view.findViewById(R.id.nested_scroll)
+        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
+
+        nestedScroll.setOnScrollChangeListener { v: NestedScrollView, _, _, _, _ ->
+            val atBottom = !v.canScrollVertically(1)
+            if (atBottom) fabScrollDown?.hide() else fabScrollDown?.show()
+        }
+
+        fabScrollDown?.setOnClickListener {
+            nestedScroll.post {
+                nestedScroll.smoothScrollTo(0, nestedScroll.getChildAt(0).bottom)
+            }
+        }
+
+        // Skin setup
         cpSkin = view.findViewById(R.id.cp_skin)
         tvScore = view.findViewById(R.id.tv_skin_score)
         rvRoutines = view.findViewById(R.id.rv_routines)
@@ -335,7 +386,8 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        handler.removeCallbacksAndMessages(null) // stop tip rotation safely
+        handler.removeCallbacksAndMessages(null) // stop tip rotation
+        fabScrollDown?.hide()
     }
 
     override fun onResume() {
@@ -370,14 +422,23 @@ class RoutineAdapter(
         return VH(v)
     }
 
-
-
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
         holder.tvTitle.text = item.title
         holder.tvTime.text = item.time
         holder.btnEdit.setOnClickListener { onEdit(item) }
         holder.btnDelete.setOnClickListener { onDelete(item) }
+
+        // --- Animation ---
+        holder.itemView.alpha = 0f
+        holder.itemView.translationY = 50f
+
+        holder.itemView.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(300)
+            .setStartDelay(position * 80L) // staggered entry
+            .start()
     }
 
     override fun getItemCount(): Int = items.size
