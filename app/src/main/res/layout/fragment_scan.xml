@@ -5,181 +5,316 @@
     android:id="@+id/scan_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
-    android:clipToPadding="false"
-    android:paddingBottom="56dp">
+    android:background="@color/white">
 
-    <!-- Camera preview: occupies 65% of height -->
-    <androidx.camera.view.PreviewView
-        android:id="@+id/previewView"
+    <!-- Scrollable content -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingBottom="56dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.65"/>
-
-    <!-- Floating cropped preview overlay (hidden until crop) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card_cropped_preview"
-        android:layout_width="160dp"
-        android:layout_height="160dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="8dp"
-        android:visibility="gone"
-        app:strokeWidth="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/previewView"
-        android:layout_marginTop="-60dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <ImageView
-            android:id="@+id/iv_cropped"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:contentDescription="Cropped lesion"/>
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- Bottom controls container (fills remaining) -->
-    <LinearLayout
-        android:id="@+id/bottom_container"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@+id/previewView"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Action row: Capture and Gallery -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="12dp">
+            android:orientation="vertical">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/btn_take_photo"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_weight="1"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                android:foreground="?attr/selectableItemBackground"
-                android:layout_marginEnd="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:src="@android:drawable/ic_menu_camera"
-                        android:contentDescription="Take photo"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Take Photo"
-                        android:layout_marginStart="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/btn_pick_gallery"
-                android:layout_width="0dp"
-                android:layout_height="64dp"
-                android:layout_weight="1"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                android:foreground="?attr/selectableItemBackground"
-                android:layout_marginStart="8dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:src="@android:drawable/ic_menu_gallery"
-                        android:contentDescription="Pick gallery"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Gallery"
-                        android:layout_marginStart="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-
-        <!-- Classification card (hidden until crop) -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_classification"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            android:visibility="gone"
-            android:padding="12dp"
-            android:layout_marginBottom="12dp">
-
+            <!-- Header -->
             <LinearLayout
+                android:id="@+id/header_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="6dp"
+                android:elevation="6dp">
 
                 <TextView
-                    android:id="@+id/tv_class_label"
+                    android:id="@+id/tv_header_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Classification"
+                    android:text="Melanoma Detector"
+                    android:textColor="@android:color/black"
+                    android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textSize="16sp"/>
+                    android:fontFamily="@font/poppins_semibold" />
 
-                <TextView
-                    android:id="@+id/tv_class_result"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Benign"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="6dp"/>
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="8dp"
+                    android:background="#E0E0E0" />
+            </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tv_class_note"
+            <!-- Camera Preview -->
+            <androidx.camera.view.PreviewView
+                android:id="@+id/previewView"
+                android:layout_width="match_parent"
+                android:layout_height="350dp"
+                android:background="@android:color/black"
+                android:layout_marginTop="12dp" />
+
+            <!-- Floating cropped preview overlay (centered over camera) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_cropped_preview"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_gravity="center"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="10dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/white"
+                android:elevation="12dp"
+                android:layout_marginTop="-80dp">
+
+                <ImageView
+                    android:id="@+id/iv_cropped"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Cropped lesion" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Info Dropdown -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_info_dropdown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/white"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="This is a dummy result. Consult your dermatologist for a real diagnosis."
-                    android:layout_marginTop="8dp"
-                    android:textSize="12sp"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:id="@+id/tv_info_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="How to Use"
+                        android:textColor="@color/medium_sky_blue"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:fontFamily="@font/poppins_medium" />
+
+                    <ImageView
+                        android:id="@+id/iv_dropdown_arrow"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_arrow_downwards"
+                        app:tint="@color/medium_sky_blue"
+                        android:contentDescription="Expand instructions" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Dropdown content -->
+            <LinearLayout
+                android:id="@+id/info_content_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:padding="16dp"
+                android:layout_marginHorizontal="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tv_info_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1️⃣ Position your camera about 20–30 cm from the lesion.\n\n2️⃣ Ensure lighting is even and the skin is in focus.\n\n3️⃣ Tap 'Take Photo' to capture.\n\n4️⃣ Crop precisely around the lesion before classification.\n\n5️⃣ Save results to view later in history."
+                    android:textSize="14sp"
+                    android:textColor="@android:color/black"
+                    android:fontFamily="@font/inter" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- Save to history button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_save_history"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="Save to History"
-            android:enabled="false"/>
+            <!-- Bottom Container -->
+            <LinearLayout
+                android:id="@+id/bottom_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:clipToPadding="false">
 
-        <!-- Helper / guidance text -->
-        <TextView
-            android:id="@+id/tv_guidance"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Tip: Keep 20–30 cm away. Avoid blur. Crop the lesion precisely after capture."
-            android:textSize="12sp"
-            android:layout_marginTop="8dp"
-            android:textColor="@color/text_secondary"/>
-    </LinearLayout>
+                <!-- Action row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp">
 
+                    <!-- Take Photo -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_take_photo"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="6dp"
+                        app:cardBackgroundColor="@color/white"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:layout_marginEnd="8dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                app:tint="@color/medium_sky_blue"
+                                android:src="@android:drawable/ic_menu_camera"
+                                android:contentDescription="Take photo" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Take Photo"
+                                android:textColor="@color/medium_sky_blue"
+                                android:textStyle="bold"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/poppins_medium"
+                                android:layout_marginStart="8dp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Pick from Gallery -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btn_pick_gallery"
+                        android:layout_width="0dp"
+                        android:layout_height="72dp"
+                        android:layout_weight="1"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="6dp"
+                        app:cardBackgroundColor="@color/white"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:layout_marginStart="8dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="28dp"
+                                android:layout_height="28dp"
+                                app:tint="@color/medium_sky_blue"
+                                android:src="@android:drawable/ic_menu_gallery"
+                                android:contentDescription="Pick gallery" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Gallery"
+                                android:textColor="@color/medium_sky_blue"
+                                android:textStyle="bold"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/poppins_medium"
+                                android:layout_marginStart="8dp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <!-- Classification Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_classification"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="6dp"
+                    app:cardBackgroundColor="@color/white"
+                    android:visibility="gone"
+                    android:padding="16dp"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_class_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Classification"
+                            android:textStyle="bold"
+                            android:textSize="14sp"
+                            android:textColor="@color/medium_sky_blue"
+                            android:fontFamily="@font/poppins_semibold" />
+
+                        <TextView
+                            android:id="@+id/tv_class_result"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Benign"
+                            android:textColor="@android:color/black"
+                            android:textSize="22sp"
+                            android:textStyle="bold"
+                            android:fontFamily="@font/poppins_bold"
+                            android:layout_marginTop="4dp" />
+
+                        <TextView
+                            android:id="@+id/tv_class_note"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="This is a dummy result. Consult your dermatologist for a real diagnosis."
+                            android:textColor="#808080"
+                            android:textSize="12sp"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="@font/inter" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Save Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_save_history"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="Save to History"
+                    android:textAllCaps="false"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:textColor="@android:color/white"
+                    app:cornerRadius="14dp"
+                    android:enabled="false"
+                    app:backgroundTint="@color/medium_sky_blue" />
+
+                <!-- Guidance Text -->
+                <TextView
+                    android:id="@+id/tv_guidance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tip: Keep 20–30 cm away. Avoid blur. Crop the lesion precisely after capture."
+                    android:textColor="#9E9E9E"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/inter"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="8dp" />
+
+            </LinearLayout> <!-- bottom_container -->
+        </LinearLayout> <!-- scrollable LinearLayout -->
+    </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
