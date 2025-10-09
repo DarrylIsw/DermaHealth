@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultCallback
@@ -101,6 +102,9 @@ class ScanFragment : Fragment() {
         btnSaveHistory = view.findViewById(R.id.btn_save_history)
         ivCropped = view.findViewById(R.id.iv_cropped)
         croppedCard = view.findViewById(R.id.card_cropped_preview)
+        val infoCard = view.findViewById<MaterialCardView>(R.id.btn_info_dropdown)
+        val infoContent = view.findViewById<LinearLayout>(R.id.info_content_container)
+        val arrow = view.findViewById<ImageView>(R.id.iv_dropdown_arrow)
 
         // Permission launcher
         requestPermissionLauncher = registerForActivityResult(
@@ -157,6 +161,23 @@ class ScanFragment : Fragment() {
                         // undo logic if needed
                     }.show()
                 // In real app: persist to database/storage
+            }
+        }
+
+        infoCard.setOnClickListener {
+            if (infoContent.visibility == View.GONE) {
+                // expand with fade-in
+                infoContent.visibility = View.VISIBLE
+                infoContent.alpha = 0f
+                infoContent.animate().alpha(1f).setDuration(250).start()
+                // rotate arrow
+                arrow.animate().rotation(180f).setDuration(250).start()
+            } else {
+                // collapse
+                infoContent.animate().alpha(0f).setDuration(250).withEndAction {
+                    infoContent.visibility = View.GONE
+                }.start()
+                arrow.animate().rotation(0f).setDuration(250).start()
             }
         }
 

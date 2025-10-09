@@ -18,15 +18,13 @@
 
         <!-- Header -->
         <TextView
-            android:id="@+id/tv_today"
+            android:id="@+id/tv_greeting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Today"
-            android:textSize="22sp"
-            android:textStyle="bold"
+            android:text="Good Morning, Darryl!"
+            android:textSize="26sp"
             android:textColor="#111827"
-            android:fontFamily="@font/inter_bold"
-            android:layout_marginBottom="16dp"/>
+            android:fontFamily="@font/inter_bold"/>
 
         <!-- CAROUSEL: ViewPager2 (1/3 of screen + a little more) -->
         <androidx.viewpager2.widget.ViewPager2
@@ -232,123 +230,6 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ... rest of your layout unchanged (appointments/prescriptions/reports/tip card/recycler) -->
-        <!-- paste the rest of your original layout here as-is -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="3"
-            android:layout_marginBottom="16dp">
-
-            <!-- Appointments -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                android:backgroundTint="@android:color/white"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_appointments"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitCenter"
-                        android:background="@null"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Appointments"
-                        android:textSize="14sp"
-                        android:textColor="#111827"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Prescriptions -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                android:backgroundTint="@android:color/white"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_prescriptions"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitCenter"
-                        android:background="@null"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Prescriptions"
-                        android:textSize="14sp"
-                        android:textColor="#111827"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Reports -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                android:backgroundTint="@android:color/white"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_reports"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitCenter"
-                        android:background="@null"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Reports"
-                        android:textSize="14sp"
-                        android:textColor="#111827"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-
-
         <!-- Tip of the Day -->
         <TextView
             android:id="@+id/tv_tip_header"
@@ -434,6 +315,26 @@
         <!-- RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_routines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"/>
+
+        <!-- Product Cards-->
+        <!-- Product Grid -->
+        <TextView
+            android:id="@+id/tv_product_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Skincare Products"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#111827"
+            android:fontFamily="@font/inter_bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_products"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:nestedScrollingEnabled="false"/>

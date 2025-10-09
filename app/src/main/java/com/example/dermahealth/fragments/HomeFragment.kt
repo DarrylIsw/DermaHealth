@@ -30,7 +30,15 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.math.roundToInt
 import android.animation.ObjectAnimator
+import android.util.Log
 import android.widget.ProgressBar
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import com.example.dermahealth.adapter.ProductAdapter
+import com.example.dermahealth.api.RetrofitInstanceOBF
+import com.example.dermahealth.data.Product
+import com.example.dermahealth.databinding.FragmentHomeBinding
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
@@ -48,7 +56,10 @@ class HomeFragment : Fragment() {
     private val carouselHandler = Handler(Looper.getMainLooper())
     private lateinit var carouselRunnable: Runnable
     private var fabScrollDown: FloatingActionButton? = null
-
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
+    private lateinit var rvProducts: RecyclerView
+    private lateinit var productAdapter: ProductAdapter
 
 
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
@@ -71,20 +82,31 @@ class HomeFragment : Fragment() {
     private val tipInterval = 5000L // 5 seconds
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val root = inflater.inflate(R.layout.fragment_home, container, false)
+    ): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        val root = binding.root
 
+        // keep your existing findViewById code (if views aren’t yet migrated to binding)
         vpCarousel = root.findViewById(R.id.vp_carousel)
-        nestedScroll = root.findViewById(R.id.nested_scroll /* if you gave id, else use root as NestedScrollView variable*/)
+        nestedScroll = root.findViewById(R.id.nested_scroll)
         rvRoutines = root.findViewById(R.id.rv_routines)
 
-        // initialize carousel + animations
+        // your original functionality
         setupCarousel()
         setupScrollAnimations(root)
+        fetchProducts()
 
         return root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        handler.removeCallbacksAndMessages(null) // stop tip rotation
+        fabScrollDown?.hide()
+        _binding = null // ✅ safely clear binding
     }
 
     private fun setupCarousel() {
@@ -384,11 +406,70 @@ class HomeFragment : Fragment() {
         animator.start()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        handler.removeCallbacksAndMessages(null) // stop tip rotation
-        fabScrollDown?.hide()
+//    private fun setupProductGrid(products: List<Product>) {
+//        val adapter = ProductAdapter(products)
+//        val layoutManager = GridLayoutManager(requireContext(), 2)
+//        binding.rvProducts.layoutManager = layoutManager
+//        binding.rvProducts.adapter = adapter
+//    }
+
+    private fun setupProductsRecyclerView(products: List<Product>) {
+        rvProducts = binding.rvProducts
+        productAdapter = ProductAdapter(products)
+        rvProducts.layoutManager = GridLayoutManager(requireContext(), 2)
+        rvProducts.adapter = productAdapter
     }
+
+    private fun fetchProducts() {
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitInstanceOBF.api.getProducts(pageSize = 20)
+
+                // Convert to your app's Product model
+                val convertedProducts = response.products.map {
+                    Product(
+                        name = it.name,
+                        brand = it.brand,
+                        imageUrl = it.imageUrl
+                    )
+                }
+
+                // Filter & clean
+                val filteredProducts = convertedProducts
+                    .filter { product ->
+                        val name = product.name?.trim().orEmpty()
+                        val hasValidName = name.isNotEmpty() &&
+                                !name.matches(Regex("^\\d+$")) &&
+                                name.lowercase() != "null"
+
+                        val hasImage = !product.imageUrl.isNullOrEmpty()
+                        hasValidName && hasImage
+                    }
+                    .map { product ->
+                        val formattedName = product.name?.lowercase()
+                            ?.split(" ")
+                            ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                            ?: "Unnamed Product"
+
+                        val formattedBrand = product.brand?.lowercase()
+                            ?.split(" ")
+                            ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                            ?: "Unknown Brand"
+
+                        product.copy(name = formattedName, brand = formattedBrand)
+                    }
+
+                Log.d("SkincareAPI", "Filtered ${filteredProducts.size} valid products")
+
+                setupProductsRecyclerView(filteredProducts)
+
+            } catch (e: Exception) {
+                Log.e("SkincareAPI", "Error fetching products: ${e.message}")
+            }
+        }
+    }
+
+
 
     override fun onResume() {
         super.onResume()
