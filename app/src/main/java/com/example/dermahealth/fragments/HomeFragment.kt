@@ -1,11 +1,14 @@
 package com.example.dermahealth
 
+import kotlinx.coroutines.*
+import androidx.lifecycle.lifecycleScope
 import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -32,12 +35,12 @@ import kotlin.math.roundToInt
 import android.animation.ObjectAnimator
 import android.util.Log
 import android.widget.ProgressBar
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.dermahealth.adapter.ProductAdapter
 import com.example.dermahealth.api.RetrofitInstanceOBF
 import com.example.dermahealth.data.Product
 import com.example.dermahealth.databinding.FragmentHomeBinding
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
@@ -60,8 +63,9 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var rvProducts: RecyclerView
     private lateinit var productAdapter: ProductAdapter
-
-
+    private var refreshJob: Job? = null
+    private val refreshIntervalMs = 20000L // 15 seconds
+    private var isActive = true
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
     private val carouselImages: List<Int> = listOf(
         R.drawable.carousel_1,
@@ -97,7 +101,7 @@ class HomeFragment : Fragment() {
         // your original functionality
         setupCarousel()
         setupScrollAnimations(root)
-        fetchProducts()
+        fetchProductsPeriodically()
 
         return root
     }
@@ -105,6 +109,8 @@ class HomeFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         handler.removeCallbacksAndMessages(null) // stop tip rotation
+        isActive = false
+        refreshJob?.cancel()
         fabScrollDown?.hide()
         _binding = null // ✅ safely clear binding
     }
@@ -348,6 +354,7 @@ class HomeFragment : Fragment() {
         }
         // Animate skin score
         animateSkinScore(85)
+        startAutoRefresh()
     }
 
     // --- Tip rotation with fade animation ---
@@ -420,56 +427,132 @@ class HomeFragment : Fragment() {
         rvProducts.adapter = productAdapter
     }
 
-    private fun fetchProducts() {
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitInstanceOBF.api.getProducts(pageSize = 20)
+    private fun fetchProductsPeriodically() {
+        refreshJob?.cancel() // cancel previous if any
 
-                // Convert to your app's Product model
-                val convertedProducts = response.products.map {
-                    Product(
-                        name = it.name,
-                        brand = it.brand,
-                        imageUrl = it.imageUrl
-                    )
+        refreshJob = lifecycleScope.launch {
+            while (isActive) {
+                try {
+                    // Fetch next page
+                    val response = RetrofitInstanceOBF.api.getProducts(page = currentPage, pageSize = 10)
+
+                    // Convert API response to local Product model
+                    val convertedProducts = response.products.map {
+                        Product(
+                            name = it.name,
+                            brand = it.brand,
+                            imageUrl = it.imageUrl
+                        )
+                    }
+
+                    // Filter and format valid ones
+                    val filteredProducts = convertedProducts
+                        .filter { product ->
+                            val name = product.name?.trim().orEmpty()
+                            val validName = name.isNotEmpty() &&
+                                    !name.matches(Regex("^\\d+$")) &&
+                                    name.lowercase() != "null"
+                            val hasImage = !product.imageUrl.isNullOrEmpty()
+                            validName && hasImage
+                        }
+                        .map { product ->
+                            val formattedName = product.name?.lowercase()
+                                ?.split(" ")
+                                ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                                ?: "Unnamed Product"
+
+                            val formattedBrand = product.brand?.lowercase()
+                                ?.split(" ")
+                                ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                                ?: "Unknown Brand"
+
+                            product.copy(name = formattedName, brand = formattedBrand)
+                        }
+
+                    // ✅ Limit to 4 valid products only
+                    val limitedProducts = filteredProducts.shuffled().take(4)
+
+                    if (limitedProducts.isNotEmpty()) {
+                        crossfadeRecyclerView {
+                            setupProductsRecyclerView(limitedProducts)
+                        }
+                    }
+
+                    Log.d("OBF", "Page $currentPage fetched: ${limitedProducts.size} products shown")
+
+                    // Move to next page (loop around if needed)
+                    currentPage++
+                    if (currentPage > 50) currentPage = 1
+
+                    delay(refreshIntervalMs)
+
+                } catch (e: Exception) {
+                    Log.e("OBF", "Error fetching products: ${e.message}")
+                    delay(5000) // retry slower on error
                 }
-
-                // Filter & clean
-                val filteredProducts = convertedProducts
-                    .filter { product ->
-                        val name = product.name?.trim().orEmpty()
-                        val hasValidName = name.isNotEmpty() &&
-                                !name.matches(Regex("^\\d+$")) &&
-                                name.lowercase() != "null"
-
-                        val hasImage = !product.imageUrl.isNullOrEmpty()
-                        hasValidName && hasImage
-                    }
-                    .map { product ->
-                        val formattedName = product.name?.lowercase()
-                            ?.split(" ")
-                            ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                            ?: "Unnamed Product"
-
-                        val formattedBrand = product.brand?.lowercase()
-                            ?.split(" ")
-                            ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-                            ?: "Unknown Brand"
-
-                        product.copy(name = formattedName, brand = formattedBrand)
-                    }
-
-                Log.d("SkincareAPI", "Filtered ${filteredProducts.size} valid products")
-
-                setupProductsRecyclerView(filteredProducts)
-
-            } catch (e: Exception) {
-                Log.e("SkincareAPI", "Error fetching products: ${e.message}")
             }
         }
     }
 
+    private fun startAutoRefresh() {
+        refreshJob = lifecycleScope.launch {
+            while (isActive) {
+                delay(refreshIntervalMs)
+                fetchProductsPeriodically()
+            }
+        }
+    }
 
+    // Function (paste inside your Fragment class)
+    private fun crossfadeRecyclerView(onFadeOutComplete: () -> Unit) {
+        // Use the nullable backing binding to avoid NPEs if view was destroyed
+        val rv = _binding?.rvProducts ?: return
+
+        // Fade-out animation
+        val fadeOut = AlphaAnimation(1f, 0f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // Fade-in animation
+        val fadeIn = AlphaAnimation(0f, 1f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // When fade-out ends, update data then start fade-in
+        fadeOut.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) {}
+
+            override fun onAnimationEnd(animation: Animation?) {
+                // Ensure UI updates happen on main thread
+                activity?.runOnUiThread {
+                    // Replace adapter data / rebind UI
+                    onFadeOutComplete()
+
+                    // Start fade-in; ensure final alpha is set after animation
+                    fadeIn.setAnimationListener(object : Animation.AnimationListener {
+                        override fun onAnimationStart(animation: Animation?) {}
+                        override fun onAnimationEnd(animation: Animation?) {
+                            // explicit final state
+                            rv.alpha = 1f
+                            // remove listeners to avoid accidental repeats
+                            fadeIn.setAnimationListener(null)
+                        }
+                        override fun onAnimationRepeat(animation: Animation?) {}
+                    })
+                    rv.startAnimation(fadeIn)
+                }
+            }
+
+            override fun onAnimationRepeat(animation: Animation?) {}
+        })
+
+        // Start fade-out (ensure run on main)
+        activity?.runOnUiThread {
+            rv.startAnimation(fadeOut)
+        }
+    }
 
     override fun onResume() {
         super.onResume()
