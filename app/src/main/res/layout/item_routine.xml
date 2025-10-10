@@ -5,97 +5,120 @@
     android:id="@+id/card_routine"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="6dp"
-    android:backgroundTint="#FAFAFA"
-    android:clipToPadding="false"
-    android:padding="16dp">
+    android:layout_marginVertical="8dp"
+    android:layout_marginHorizontal="4dp"
+    android:backgroundTint="@android:color/white"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="8dp"
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp"
+    android:padding="20dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:weightSum="10">
+        android:orientation="vertical">
 
-        <!-- Left decorative icon -->
-
-        <!-- Text container -->
-
-        <ImageView
-            android:id="@+id/img_routine_icon"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            android:backgroundTint="#4DA9F0"
-            android:contentDescription="Routine Icon"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:src="@drawable/ic_sun" />
-
+        <!-- Top row: Icon + Title + Time + Edit button -->
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="7"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tv_routine_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Apply Sunscreen"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary"
-                android:fontFamily="@font/poppins_semibold"
-                android:ellipsize="end"
-                android:maxLines="1"/>
-
-            <TextView
-                android:id="@+id/tv_routine_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="08:00 AM"
-                android:textSize="13sp"
-                android:textColor="@color/text_secondary"
-                android:fontFamily="@font/poppins"
-                android:layout_marginTop="4dp"/>
-        </LinearLayout>
-
-        <!-- Action buttons container -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="3"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="end|center_vertical"
-            android:layout_marginEnd="13.5dp">
+            android:gravity="center_vertical">
 
+            <!-- Routine Icon -->
+            <FrameLayout
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:background="@drawable/bg_circle_blue"
+                android:layout_marginEnd="14dp"
+                android:layout_marginStart="14dp">
+
+                <ImageView
+                    android:id="@+id/img_routine_icon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_sun"
+                    app:tint="@android:color/white" />
+            </FrameLayout>
+
+            <!-- Title + Time -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_routine_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Apply Sunscreen"
+                    android:textColor="@color/medium_sky_blue"
+                    android:textSize="18sp"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+                <TextView
+                    android:id="@+id/tv_routine_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="08:00 AM"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/poppins"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
+            <!-- Edit button only -->
             <ImageButton
                 android:id="@+id/btn_edit"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 app:srcCompat="@drawable/ic_edit"
+                app:tint="@color/medium_sky_blue"
                 android:contentDescription="Edit Routine"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:layout_marginEnd="20dp"
-                app:tint="@android:color/black"
-                android:scaleType="centerInside"
-                android:adjustViewBounds="true"/>
+                android:layout_marginStart="6dp"
+                android:layout_marginEnd="12dp"/>
+        </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/btn_delete"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                app:srcCompat="@drawable/ic_delete"
-                android:contentDescription="Delete Routine"
-                android:background="?attr/selectableItemBackgroundBorderless"
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="12dp"
+            android:background="#EAEAEA"/>
+
+        <!-- Optional: detail or reminder row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/img_info_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                app:srcCompat="@drawable/ic_info"
+                app:tint="@color/medium_sky_blue"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
                 android:layout_marginEnd="8dp"
-                app:tint="@android:color/black"
-                android:scaleType="centerInside"
-                android:adjustViewBounds="true"/>
+                android:layout_marginStart="8dp"
+                android:padding="2dp" />
+
+            <TextView
+                android:id="@+id/tv_routine_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Remember to reapply after 2 hours outdoors"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                android:fontFamily="@font/poppins_medium"/>
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

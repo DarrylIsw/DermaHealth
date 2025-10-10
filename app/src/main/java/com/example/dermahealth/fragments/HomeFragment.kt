@@ -37,11 +37,14 @@ import android.util.Log
 import android.widget.ProgressBar
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.dermahealth.adapter.ProductAdapter
+import com.example.dermahealth.adapter.RoutineAdapter
 import com.example.dermahealth.api.RetrofitInstanceMakeup
 import com.example.dermahealth.api.RetrofitInstanceOBF
 import com.example.dermahealth.data.Product
+import com.example.dermahealth.data.Routine
 import com.example.dermahealth.databinding.FragmentHomeBinding
-import com.example.dermahealth.model.MakeupProduct
+import androidx.recyclerview.widget.ItemTouchHelper
+import com.example.dermahealth.helper.SwipeToDeleteCallback
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -332,11 +335,6 @@ class HomeFragment : Fragment() {
         // Start rotating tips
         startTipRotation()
 
-        // Dummy routines
-        routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
-        routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
-        routineList.add(Routine(3, "Drink more water", "Throughout the day"))
-
         // RecyclerView setup
         adapter = RoutineAdapter(
             routineList,
@@ -360,6 +358,36 @@ class HomeFragment : Fragment() {
             rvRoutines.scrollToPosition(0)
             Toast.makeText(requireContext(), "Routine added (dummy)", Toast.LENGTH_SHORT).show()
         }
+
+        rvRoutines = view.findViewById(R.id.rv_routines)
+
+        // Dummy data
+        routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
+        routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
+        routineList.add(Routine(3, "Drink more water", "Throughout the day"))
+
+        // RecyclerView setup
+        adapter = RoutineAdapter(
+            routineList,
+            onEdit = { routine ->
+                Toast.makeText(requireContext(), "Edit: ${routine.title}", Toast.LENGTH_SHORT).show()
+            },
+            onDelete = { routine ->
+                showDeleteConfirm(routine, adapter) // your confirm dialog or delete logic
+            }
+        )
+
+        rvRoutines.layoutManager = LinearLayoutManager(requireContext())
+        rvRoutines.adapter = adapter
+
+        // === Swipe to delete ===
+        val swipeToDeleteCallback = SwipeToDeleteCallback(requireContext(), adapter) { position ->
+            val routine = routineList[position]
+            adapter.removeAt(position)
+            Toast.makeText(requireContext(), "Deleted: ${routine.title}", Toast.LENGTH_SHORT).show()
+        }
+        ItemTouchHelper(swipeToDeleteCallback).attachToRecyclerView(rvRoutines)
+
         // Animate skin score
         animateSkinScore(85)
         startAutoRefresh()
@@ -388,7 +416,6 @@ class HomeFragment : Fragment() {
             }
         }, tipInterval)
     }
-
     private fun showDeleteConfirm(routine: Routine, adapter: RoutineAdapter) {
         AlertDialog.Builder(requireContext())
             .setMessage(getString(R.string.delete_confirm))
@@ -708,47 +735,4 @@ class HomeFragment : Fragment() {
         refreshJob?.cancel()
         makeupRefreshJob?.cancel()
     }
-}
-
-/** Simple data class and adapter **/
-data class Routine(val id: Int, val title: String, val time: String)
-
-class RoutineAdapter(
-    private val items: List<Routine>,
-    private val onEdit: (Routine) -> Unit,
-    private val onDelete: (Routine) -> Unit
-) : RecyclerView.Adapter<RoutineAdapter.VH>() {
-
-    inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvTitle: TextView = view.findViewById(R.id.tv_routine_title)
-        val tvTime: TextView = view.findViewById(R.id.tv_routine_time)
-        val btnEdit: ImageButton = view.findViewById(R.id.btn_edit)
-        val btnDelete: ImageButton = view.findViewById(R.id.btn_delete)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_routine, parent, false)
-        return VH(v)
-    }
-
-    override fun onBindViewHolder(holder: VH, position: Int) {
-        val item = items[position]
-        holder.tvTitle.text = item.title
-        holder.tvTime.text = item.time
-        holder.btnEdit.setOnClickListener { onEdit(item) }
-        holder.btnDelete.setOnClickListener { onDelete(item) }
-
-        // --- Animation ---
-        holder.itemView.alpha = 0f
-        holder.itemView.translationY = 50f
-
-        holder.itemView.animate()
-            .alpha(1f)
-            .translationY(0f)
-            .setDuration(300)
-            .setStartDelay(position * 80L) // staggered entry
-            .start()
-    }
-
-    override fun getItemCount(): Int = items.size
 }
