@@ -37,9 +37,11 @@ import android.util.Log
 import android.widget.ProgressBar
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.dermahealth.adapter.ProductAdapter
+import com.example.dermahealth.api.RetrofitInstanceMakeup
 import com.example.dermahealth.api.RetrofitInstanceOBF
 import com.example.dermahealth.data.Product
 import com.example.dermahealth.databinding.FragmentHomeBinding
+import com.example.dermahealth.model.MakeupProduct
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -66,6 +68,11 @@ class HomeFragment : Fragment() {
     private var refreshJob: Job? = null
     private val refreshIntervalMs = 20000L // 15 seconds
     private var isActive = true
+    private var makeupRefreshJob: Job? = null
+    private val makeupRefreshIntervalMs = 20000L // 15 seconds
+    private lateinit var rvMakeup: RecyclerView
+    private lateinit var makeupAdapter: ProductAdapter
+
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
     private val carouselImages: List<Int> = listOf(
         R.drawable.carousel_1,
@@ -102,6 +109,7 @@ class HomeFragment : Fragment() {
         setupCarousel()
         setupScrollAnimations(root)
         fetchProductsPeriodically()
+        fetchMakeupProductsPeriodically()
 
         return root
     }
@@ -427,6 +435,13 @@ class HomeFragment : Fragment() {
         rvProducts.adapter = productAdapter
     }
 
+    private fun setupMakeupRecycler(products: List<Product>) {
+        rvMakeup = binding.rvMakeup
+        makeupAdapter = ProductAdapter(products)
+        rvMakeup.layoutManager = GridLayoutManager(requireContext(), 2)
+        rvMakeup.adapter = makeupAdapter
+    }
+
     private fun fetchProductsPeriodically() {
         refreshJob?.cancel() // cancel previous if any
 
@@ -494,11 +509,88 @@ class HomeFragment : Fragment() {
         }
     }
 
+    // 🔹 List of product types available from Makeup API
+    private val makeupCategories = listOf(
+        "blush", "bronzer", "eyebrow", "eyeliner", "eyeshadow",
+        "foundation", "lip_liner", "lipstick", "mascara", "nail_polish"
+    )
+
+    private fun fetchMakeupProductsPeriodically() {
+        makeupRefreshJob?.cancel()
+
+        makeupRefreshJob = lifecycleScope.launch {
+            while (isActive) {
+                try {
+                    val selectedTypes = makeupCategories.shuffled().take(4)
+
+                    val allProducts = selectedTypes.map { type ->
+                        async {
+                            try {
+                                val response = RetrofitInstanceMakeup.api.getProducts(productType = type)
+                                val validItems = response.mapNotNull {
+                                    val imageUrl = it.imageUrl?.trim()
+                                    val name = it.name?.trim().orEmpty()
+                                    val brand = it.brand?.trim().orEmpty()
+
+                                    // ✅ Filter: must have image and valid name
+                                    if (
+                                        imageUrl.isNullOrEmpty() ||
+                                        !imageUrl.matches(Regex("(?i).+\\.(jpg|jpeg|png|webp)$")) ||
+                                        name.isEmpty() ||
+                                        name.equals("null", ignoreCase = true)
+                                    ) return@mapNotNull null
+
+                                    val formattedName = name.split(" ")
+                                        .joinToString(" ") { w -> w.replaceFirstChar { c -> c.uppercase() } }
+
+                                    val formattedBrand = if (brand.isNotEmpty()) {
+                                        brand.split(" ")
+                                            .joinToString(" ") { w -> w.replaceFirstChar { c -> c.uppercase() } }
+                                    } else {
+                                        "Unknown Brand"
+                                    }
+
+                                    Product(
+                                        name = formattedName,
+                                        brand = formattedBrand,
+                                        imageUrl = imageUrl
+                                    )
+                                }
+
+                                // Return one random valid product per category if available
+                                validItems.shuffled().firstOrNull()
+                            } catch (e: Exception) {
+                                Log.e("MAKEUP", "Error fetching $type: ${e.message}")
+                                null
+                            }
+                        }
+                    }.awaitAll().filterNotNull()
+
+                    if (allProducts.isNotEmpty()) {
+                        crossfadeMakeupRecyclerView {
+                            setupMakeupRecycler(allProducts)
+                        }
+                        Log.d("MAKEUP", "✅ Displayed ${allProducts.size} products from ${selectedTypes.joinToString()}")
+                    } else {
+                        Log.w("MAKEUP", "⚠️ No valid products found — retrying next cycle")
+                    }
+
+                    delay(makeupRefreshIntervalMs)
+
+                } catch (e: Exception) {
+                    Log.e("MAKEUP", "Error in periodic refresh: ${e.message}")
+                    delay(5000)
+                }
+            }
+        }
+    }
+
     private fun startAutoRefresh() {
         refreshJob = lifecycleScope.launch {
             while (isActive) {
                 delay(refreshIntervalMs)
-                fetchProductsPeriodically()
+                fetchProductsPeriodically()        // 💧 Skincare from OBF
+                fetchMakeupProductsPeriodically()
             }
         }
     }
@@ -554,6 +646,57 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun crossfadeMakeupRecyclerView(onFadeOutComplete: () -> Unit) {
+        // Use the nullable backing binding to avoid NPEs if view was destroyed
+        val rv = _binding?.rvMakeup ?: return
+
+        // Fade-out animation
+        val fadeOut = AlphaAnimation(1f, 0f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // Fade-in animation
+        val fadeIn = AlphaAnimation(0f, 1f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // When fade-out ends, update data then start fade-in
+        fadeOut.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) {}
+
+            override fun onAnimationEnd(animation: Animation?) {
+                // Ensure UI updates happen on main thread
+                activity?.runOnUiThread {
+                    // Replace adapter data / rebind UI
+                    onFadeOutComplete()
+
+                    // Start fade-in; ensure final alpha is set after animation
+                    fadeIn.setAnimationListener(object : Animation.AnimationListener {
+                        override fun onAnimationStart(animation: Animation?) {}
+                        override fun onAnimationEnd(animation: Animation?) {
+                            // explicit final state
+                            rv.alpha = 1f
+                            // remove listeners to avoid accidental repeats
+                            fadeIn.setAnimationListener(null)
+                        }
+                        override fun onAnimationRepeat(animation: Animation?) {}
+                    })
+                    rv.startAnimation(fadeIn)
+                }
+            }
+
+            override fun onAnimationRepeat(animation: Animation?) {}
+        })
+
+        // Start fade-out (ensure run on main)
+        activity?.runOnUiThread {
+            rv.startAnimation(fadeOut)
+        }
+    }
+
+
     override fun onResume() {
         super.onResume()
         carouselHandler.postDelayed(carouselRunnable, 10000) // start auto-scroll
@@ -562,6 +705,8 @@ class HomeFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         carouselHandler.removeCallbacks(carouselRunnable) // stop auto-scroll
+        refreshJob?.cancel()
+        makeupRefreshJob?.cancel()
     }
 }
 
