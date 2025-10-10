@@ -33,7 +33,13 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.math.roundToInt
 import android.animation.ObjectAnimator
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.util.Log
+import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ProgressBar
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.dermahealth.adapter.ProductAdapter
@@ -45,6 +51,7 @@ import com.example.dermahealth.data.Routine
 import com.example.dermahealth.databinding.FragmentHomeBinding
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.example.dermahealth.helper.SwipeToDeleteCallback
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -75,6 +82,10 @@ class HomeFragment : Fragment() {
     private val makeupRefreshIntervalMs = 20000L // 15 seconds
     private lateinit var rvMakeup: RecyclerView
     private lateinit var makeupAdapter: ProductAdapter
+    private lateinit var overlay: FrameLayout
+    private lateinit var blurBackground: View
+    private lateinit var card: MaterialCardView
+
 
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
     private val carouselImages: List<Int> = listOf(
@@ -209,30 +220,24 @@ class HomeFragment : Fragment() {
         }
     }
     private fun setupScrollAnimations(root: View) {
-        // load animation
         val fadeUp = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_up)
-
-        // if nestedScroll not found by id, fallback find
-        val nsv = root as? androidx.core.widget.NestedScrollView ?: root.findViewById(android.R.id.content)
-
-        // We will monitor scroll changes on NestedScrollView and animate children when they become visible.
-        val nested = if (nsv is androidx.core.widget.NestedScrollView) nsv else nestedScroll
+        val nested = root.findViewById<NestedScrollView>(R.id.nested_scroll) ?: return
 
         nested.setOnScrollChangeListener { _, _, _, _, _ ->
-            // animate direct children of the LinearLayout inside nested scroll (the main column)
+            // animate direct children of the LinearLayout inside NestedScrollView
             val mainLinear = nested.getChildAt(0) as? ViewGroup ?: return@setOnScrollChangeListener
             for (child in mainLinear.children) {
                 if (child.visibility == View.VISIBLE && child.tag != "animated" && isViewVisibleOnScreen(child)) {
                     child.startAnimation(fadeUp)
-                    child.tag = "animated" // prevent reanimation if you don't want repeated animations
+                    child.tag = "animated"
                 }
             }
 
-            // animate visible children in RecyclerView (for items)
+            // animate visible children in RecyclerView
             if (::rvRoutines.isInitialized) {
-                val layoutManager = rvRoutines.layoutManager ?: return@setOnScrollChangeListener
-                val first = (rvRoutines.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager)?.findFirstVisibleItemPosition() ?: -1
-                val last = (rvRoutines.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager)?.findLastVisibleItemPosition() ?: -1
+                val lm = rvRoutines.layoutManager as? LinearLayoutManager ?: return@setOnScrollChangeListener
+                val first = lm.findFirstVisibleItemPosition()
+                val last = lm.findLastVisibleItemPosition()
                 if (first >= 0 && last >= first) {
                     for (i in first..last) {
                         val child = rvRoutines.findViewHolderForAdapterPosition(i)?.itemView
@@ -245,10 +250,10 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // initial trigger so top content animates on first draw
+        // initial trigger
         nested.post {
             nested.scrollTo(0, 0)
-            nested.scrollBy(0, 1) // tiny scroll to fire listener
+            nested.scrollBy(0, 1)
         }
     }
 
@@ -283,8 +288,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Right-side progress bar (UV, Humidity, Pollution)
-
+        // --- Progress Bars (Right-side) ---
         val pbUv = view.findViewById<ProgressBar>(R.id.pb_uv)
         val pbHumidity = view.findViewById<ProgressBar>(R.id.pb_humidity)
         val pbPollution = view.findViewById<ProgressBar>(R.id.pb_pollution)
@@ -294,20 +298,94 @@ class HomeFragment : Fragment() {
         val humidityValue = 72 // percentage
         val pollutionValue = 130 // AQI
 
-        // Animate progress
+        // --- Core Views ---
+        rvRoutines = view.findViewById(R.id.rv_routines)
+        btnAddRoutine = view.findViewById(R.id.btn_add_routine)
+        nestedScroll = view.findViewById(R.id.nested_scroll)
+        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
+
+        // Skin views
+        cpSkin = view.findViewById(R.id.cp_skin)
+        tvScore = view.findViewById(R.id.tv_skin_score)
+
+        // Tip of the Day
+        tvTip = view.findViewById(R.id.tv_tip)
+        ivTipIcon = view.findViewById(R.id.iv_tip_icon)
+
+        // --- Overlay + Floating Card ---
+
+        // --- Overlay + Card (already in XML) ---
+        overlay = view.findViewById(R.id.addRoutineOverlay)
+        blurBackground = overlay.findViewById(R.id.blurBackground)
+        card = overlay.findViewById(R.id.card_add_routine)
+
+        // --- EditTexts and Buttons inside the card ---
+        val etName = overlay.findViewById<EditText>(R.id.et_routine_name)
+        val etTime = overlay.findViewById<EditText>(R.id.et_routine_time)
+        val etComment = overlay.findViewById<EditText>(R.id.et_routine_comment)
+        val btnCancel = overlay.findViewById<Button>(R.id.btn_cancel_add)
+        val btnSave = overlay.findViewById<Button>(R.id.btn_save_add)
+
+        // --- Add Routine FAB ---
+        btnAddRoutine.setOnClickListener {
+            showAddRoutineCard()
+        }
+
+        // --- Cancel button ---
+        btnCancel.setOnClickListener {
+            hideAddRoutineCard()
+        }
+
+        // --- Save button ---
+        btnSave.setOnClickListener {
+            val title = etName.text.toString().trim()
+            val time = etTime.text.toString().trim()
+            val comment = etComment.text.toString().trim()
+
+            if (title.isEmpty() || time.isEmpty()) {
+                Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
+            val newRoutine = Routine(id, title, time)
+            routineList.add(0, newRoutine)
+            adapter.notifyItemInserted(0)
+            rvRoutines.scrollToPosition(0)
+
+            Toast.makeText(requireContext(), "Routine added", Toast.LENGTH_SHORT).show()
+            hideAddRoutineCard()
+
+            // Clear inputs
+            etName.text.clear()
+            etTime.text.clear()
+            etComment.text.clear()
+        }
+
+        Log.d("DEBUG_OVERLAY", "overlay: $overlay")
+        Log.d("DEBUG_OVERLAY", "card: $card")
+        Log.d("DEBUG_OVERLAY", "etName: $etName, etTime: $etTime, etComment: $etComment")
+        Log.d("DEBUG_OVERLAY", "btnCancel: $btnCancel, btnSave: $btnSave")
+
+        // --- Dummy routines (only once) ---
+        if (routineList.isEmpty()) {
+            routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
+            routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
+            routineList.add(Routine(3, "Drink more water", "Throughout the day"))
+        }
+
+        // Animate progress bars
         animateProgressBar(pbUv, uvValue)
         animateProgressBar(pbHumidity, humidityValue)
         animateProgressBar(pbPollution, pollutionValue)
 
+        // UV text animation
         val tvUv = view.findViewById<TextView>(R.id.tv_uv_index)
         tvUv.alpha = 0f
         tvUv.text = "UV: $uvValue (High)"
         tvUv.animate().alpha(1f).setDuration(800).setStartDelay(400).start()
 
-        // === Scroll & FAB setup ===
-        nestedScroll = view.findViewById(R.id.nested_scroll)
-        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
-
+        // --- Scroll & FAB setup ---
         nestedScroll.setOnScrollChangeListener { v: NestedScrollView, _, _, _, _ ->
             val atBottom = !v.canScrollVertically(1)
             if (atBottom) fabScrollDown?.hide() else fabScrollDown?.show()
@@ -319,28 +397,15 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // Skin setup
-        cpSkin = view.findViewById(R.id.cp_skin)
-        tvScore = view.findViewById(R.id.tv_skin_score)
-        rvRoutines = view.findViewById(R.id.rv_routines)
-        btnAddRoutine = view.findViewById(R.id.btn_add_routine)
-
-        // Tip of the Day views
-        tvTip = view.findViewById(R.id.tv_tip)
-        ivTipIcon = view.findViewById(R.id.iv_tip_icon)
-
-        // Initial tip
+        // --- Tip of the Day ---
         tvTip.text = tips[tipIndex]
-
-        // Start rotating tips
         startTipRotation()
 
-        // RecyclerView setup
+        // --- RecyclerView Adapter ---
         adapter = RoutineAdapter(
             routineList,
             onEdit = { routine ->
                 Toast.makeText(requireContext(), "Edit: ${routine.title}", Toast.LENGTH_SHORT).show()
-                // TODO: open edit dialog later
             },
             onDelete = { routine ->
                 showDeleteConfirm(routine, adapter)
@@ -349,38 +414,7 @@ class HomeFragment : Fragment() {
         rvRoutines.layoutManager = LinearLayoutManager(requireContext())
         rvRoutines.adapter = adapter
 
-        // Add routine button
-        btnAddRoutine.setOnClickListener {
-            val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
-            val newItem = Routine(id, "New routine $id", "Time")
-            routineList.add(0, newItem)
-            adapter.notifyItemInserted(0)
-            rvRoutines.scrollToPosition(0)
-            Toast.makeText(requireContext(), "Routine added (dummy)", Toast.LENGTH_SHORT).show()
-        }
-
-        rvRoutines = view.findViewById(R.id.rv_routines)
-
-        // Dummy data
-        routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
-        routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
-        routineList.add(Routine(3, "Drink more water", "Throughout the day"))
-
-        // RecyclerView setup
-        adapter = RoutineAdapter(
-            routineList,
-            onEdit = { routine ->
-                Toast.makeText(requireContext(), "Edit: ${routine.title}", Toast.LENGTH_SHORT).show()
-            },
-            onDelete = { routine ->
-                showDeleteConfirm(routine, adapter) // your confirm dialog or delete logic
-            }
-        )
-
-        rvRoutines.layoutManager = LinearLayoutManager(requireContext())
-        rvRoutines.adapter = adapter
-
-        // === Swipe to delete ===
+        // --- RecyclerView swipe ---
         val swipeToDeleteCallback = SwipeToDeleteCallback(requireContext(), adapter) { position ->
             val routine = routineList[position]
             adapter.removeAt(position)
@@ -388,10 +422,11 @@ class HomeFragment : Fragment() {
         }
         ItemTouchHelper(swipeToDeleteCallback).attachToRecyclerView(rvRoutines)
 
-        // Animate skin score
+        // --- Animate skin score ---
         animateSkinScore(85)
         startAutoRefresh()
     }
+
 
     // --- Tip rotation with fade animation ---
     private fun startTipRotation() {
@@ -610,6 +645,50 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+    }
+
+    // ---- Add these functions at fragment level ----
+    private fun showAddRoutineCard() {
+        overlay.visibility = View.VISIBLE
+        card.visibility = View.VISIBLE
+        overlay.bringToFront()
+
+        overlay.alpha = 0f
+        overlay.animate().alpha(1f).setDuration(250).start()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val blurRadius = 20f
+            val renderEffect = RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP)
+            blurBackground.setRenderEffect(renderEffect)
+            blurBackground.alpha = 1f
+        } else {
+            blurBackground.alpha = 1f
+        }
+
+        card.translationY = 300f
+        card.alpha = 0f
+        card.animate()
+            .translationY(0f)
+            .alpha(1f)
+            .setDuration(300)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+    }
+
+    private fun hideAddRoutineCard() {
+        card.animate()
+            .translationY(300f)
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction {
+                overlay.animate().alpha(0f).setDuration(200).withEndAction {
+                    overlay.visibility = View.GONE
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        blurBackground.setRenderEffect(null)
+                    }
+                }.start()
+            }
+            .start()
     }
 
     private fun startAutoRefresh() {
