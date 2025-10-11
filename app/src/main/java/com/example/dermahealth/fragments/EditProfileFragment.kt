@@ -57,19 +57,25 @@ class EditProfileFragment : Fragment() {
         btnCancel.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
+        return view
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Handle back press
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (parentFragmentManager.backStackEntryCount > 0) {
-                    // Go back to the previous fragment in the stack
+                    // Go back to ProfileFragment
                     parentFragmentManager.popBackStack()
                 } else {
-                    // Exit the app if no more fragments in the stack
+                    // Exit app if no fragments left
                     requireActivity().finish()
                 }
             }
         })
-        return view
     }
+
 
 }

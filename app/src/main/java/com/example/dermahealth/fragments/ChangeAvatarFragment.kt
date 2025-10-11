@@ -82,6 +82,24 @@ class ChangeAvatarFragment : Fragment() {
         return view
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Handle back press
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (parentFragmentManager.backStackEntryCount > 0) {
+                    // Go back to ProfileFragment
+                    parentFragmentManager.popBackStack()
+                } else {
+                    // Exit app if no fragments left
+                    requireActivity().finish()
+                }
+            }
+        })
+    }
+
+
     // 🔹 Tampilkan dialog: pilih dari Kamera atau Galeri
     private fun showChooseDialog() {
         val options = arrayOf("Take Photo", "Choose from Gallery")
