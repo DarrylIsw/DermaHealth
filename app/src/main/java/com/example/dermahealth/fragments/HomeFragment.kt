@@ -7,6 +7,8 @@ import android.app.AlertDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import com.example.dermahealth.helper.BackHandler
+import androidx.core.view.isVisible
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.widget.ImageButton
@@ -53,13 +55,12 @@ import com.example.dermahealth.databinding.FragmentHomeBinding
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.example.dermahealth.helper.SwipeToDeleteCallback
 import com.google.android.material.card.MaterialCardView
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class HomeFragment : Fragment() {
+
+class HomeFragment : Fragment(), BackHandler {
 
     private lateinit var cpSkin: CircularProgressIndicator
     private lateinit var tvScore: TextView
@@ -360,6 +361,8 @@ class HomeFragment : Fragment() {
                 routineList.add(0, newRoutine)
                 adapter.notifyItemInserted(0)
                 rvRoutines.scrollToPosition(0)
+                hideAddRoutineCard()
+                clearOverlayFields()
 
                 Toast.makeText(requireContext(), "Routine added", Toast.LENGTH_SHORT).show()
                 hideAddRoutineCard()
@@ -521,6 +524,14 @@ class HomeFragment : Fragment() {
         startAutoRefresh()
     }
 
+    override fun onBackPressed(): Boolean {
+        return if (overlay.isVisible) {
+            hideAddRoutineCard() // close overlay
+            true
+        } else {
+            false
+        }
+    }
 
     // --- Tip rotation with fade animation ---
     private fun startTipRotation() {
@@ -747,6 +758,12 @@ class HomeFragment : Fragment() {
         etComment.setText(routine.note ?: "")
     }
 
+    private fun clearOverlayFields() {
+        etName.text.clear()
+        etTime.text.clear()
+        etComment.text.clear()
+    }
+
     // ---- Add these functions at fragment level ----
     private fun showAddRoutineCard() {
         overlay.visibility = View.VISIBLE
@@ -775,7 +792,7 @@ class HomeFragment : Fragment() {
             .start()
     }
 
-    private fun hideAddRoutineCard() {
+    fun hideAddRoutineCard() {
         card.animate()
             .translationY(300f)
             .alpha(0f)
@@ -790,6 +807,19 @@ class HomeFragment : Fragment() {
             }
             .start()
     }
+
+    fun isOverlayVisible(): Boolean {
+        return overlay.visibility == View.VISIBLE
+    }
+
+    // Add this function to HomeFragment
+    fun closeOverlayIfVisible(): Boolean {
+        return if (overlay.visibility == View.VISIBLE) {
+            hideAddRoutineCard()
+            true
+        } else false
+    }
+
 
     private fun startAutoRefresh() {
         refreshJob = lifecycleScope.launch {

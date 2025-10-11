@@ -5,8 +5,7 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
+import androidx.activity.OnBackPressedCallback
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -35,9 +34,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.example.dermahealth.helper.BackHandler
 
-class ScanFragment : Fragment() {
 
+class ScanFragment : Fragment(), BackHandler {
+    override fun onBackPressed(): Boolean {
+        // nothing special to handle → just return false
+        return false
+    }
     private lateinit var previewView: PreviewView
     private lateinit var btnTake: MaterialCardView
     private lateinit var btnGallery: MaterialCardView

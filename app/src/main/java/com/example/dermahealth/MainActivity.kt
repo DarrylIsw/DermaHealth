@@ -10,12 +10,18 @@ import androidx.fragment.app.Fragment
 import com.example.dermahealth.fragments.HistoryFragment
 import com.example.dermahealth.fragments.ProfileFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
-
+import androidx.activity.OnBackPressedCallback
+import com.example.dermahealth.helper.BackHandler
+import com.example.dermahealth.fragments.*
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var circle: View
     private var currentSelectedView: View? = null
+
+    // Track BottomNavigationView tab history
+    private val tabStack = ArrayDeque<Int>()
+    private var currentTabId = R.id.nav_home // default start tab
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,10 +30,18 @@ class MainActivity : AppCompatActivity() {
         bottomNav = findViewById(R.id.bottom_nav)
         circle = findViewById(R.id.nav_circle)
 
-        // Load default fragment if this is the first launch
-        if (savedInstanceState == null) {
-            loadFragment(HomeFragment())
+        // --- in MainActivity ---
+        val fragmentStack = ArrayDeque<Fragment>()
+        var currentTabId = R.id.nav_home
 
+// Load default fragment
+        if (savedInstanceState == null) {
+            val home = HomeFragment()
+            fragmentStack.addLast(home)
+            loadFragment(home)
+            currentTabId = R.id.nav_home
+
+            // ⚡ Ensure the circle is visible and positioned correctly
             bottomNav.post {
                 val homeView = getNavItemView(R.id.nav_home)
                 homeView?.let {
@@ -38,28 +52,69 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Handle nav item selection
+        // BottomNav listener
         bottomNav.setOnItemSelectedListener { item ->
             val targetView = getNavItemView(item.itemId) ?: return@setOnItemSelectedListener false
-            val newFragment = when (item.itemId) {
-                R.id.nav_home -> HomeFragment()
-                R.id.nav_scan -> ScanFragment()
-                R.id.nav_history -> HistoryFragment()
-                R.id.nav_profile -> ProfileFragment()
-                else -> return@setOnItemSelectedListener false
+
+            if (item.itemId != currentTabId) {
+                val newFragment: Fragment = when (item.itemId) {
+                    R.id.nav_home -> HomeFragment()
+                    R.id.nav_scan -> ScanFragment()
+                    R.id.nav_history -> HistoryFragment()
+                    R.id.nav_profile -> ProfileFragment()
+                    else -> return@setOnItemSelectedListener false
+                }
+
+                // Push new fragment to stack
+                fragmentStack.addLast(newFragment)
+                currentTabId = item.itemId
+                loadFragment(newFragment)
+
+                currentSelectedView?.let { from -> animateCircleTransition(from, targetView, circle) }
+                    ?: moveCircleInstant(targetView)
+                currentSelectedView = targetView
+                updateNavIcons(item.itemId)
             }
-
-            loadFragment(newFragment)
-
-            // ⚡ Faster circle animation transition
-            currentSelectedView?.let { from ->
-                animateCircleTransition(from, targetView, circle)
-            } ?: moveCircleInstant(targetView)
-            currentSelectedView = targetView
-
-            updateNavIcons(item.itemId)
             true
         }
+
+        // Back handling
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val currentFragment = fragmentStack.lastOrNull()
+
+                // Overlay check
+                if (currentFragment is HomeFragment && currentFragment.isOverlayVisible()) {
+                    currentFragment.hideAddRoutineCard()
+                    return
+                }
+
+                if (fragmentStack.size > 1) {
+                    fragmentStack.removeLast()
+                    val previousFragment = fragmentStack.last()
+                    loadFragment(previousFragment)
+
+                    // Update BottomNav selection
+                    val previousTabId = when (previousFragment) {
+                        is HomeFragment -> R.id.nav_home
+                        is ScanFragment -> R.id.nav_scan
+                        is HistoryFragment -> R.id.nav_history
+                        is ProfileFragment -> R.id.nav_profile
+                        else -> R.id.nav_home
+                    }
+                    bottomNav.selectedItemId = previousTabId
+                    currentTabId = previousTabId
+
+                    // ⚡ Ensure circle is positioned correctly when navigating via back
+                    bottomNav.post {
+                        val targetView = getNavItemView(previousTabId)
+                        targetView?.let { moveCircleInstant(it) }
+                    }
+                } else {
+                    finish()
+                }
+            }
+        })
     }
 
     /** Load selected fragment */
@@ -117,15 +172,15 @@ class MainActivity : AppCompatActivity() {
             circle.x = startX
             circle.animate()
                 .scaleX(0.8f).scaleY(0.8f)
-                .setDuration(100) // fast shrink
+                .setDuration(100)
                 .withEndAction {
                     circle.animate()
                         .x(endX)
-                        .setDuration(120) // fast move
+                        .setDuration(120)
                         .withEndAction {
                             circle.animate()
                                 .scaleX(1f).scaleY(1f)
-                                .setDuration(100) // fast restore
+                                .setDuration(100)
                                 .start()
                         }.start()
                 }.start()

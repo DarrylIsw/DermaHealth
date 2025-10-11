@@ -13,9 +13,13 @@ import com.example.dermahealth.R
 import com.example.dermahealth.adapter.HistoryAdapter
 import com.example.dermahealth.data.ScanHistory
 import com.google.android.material.snackbar.Snackbar
+import com.example.dermahealth.helper.BackHandler
 
-class HistoryFragment : Fragment() {
-
+class HistoryFragment : Fragment(), BackHandler {
+    override fun onBackPressed(): Boolean {
+        // nothing special to handle → just return false
+        return false
+    }
     private lateinit var rvHistory: RecyclerView
     private val scanList = mutableListOf<ScanHistory>()
 
@@ -52,5 +56,6 @@ class HistoryFragment : Fragment() {
 
         rvHistory.layoutManager = LinearLayoutManager(requireContext())
         rvHistory.adapter = adapter
+
     }
 }

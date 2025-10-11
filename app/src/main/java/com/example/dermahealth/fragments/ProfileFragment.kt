@@ -11,9 +11,13 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.R
 import de.hdodenhof.circleimageview.CircleImageView
+import com.example.dermahealth.helper.BackHandler
 
-class ProfileFragment : Fragment() {
-
+class ProfileFragment : Fragment(), BackHandler {
+    override fun onBackPressed(): Boolean {
+        // nothing special to handle → just return false
+        return false
+    }
     private lateinit var imgAvatar: CircleImageView
     private lateinit var btnEditAvatar: View
     private lateinit var tvName: TextView

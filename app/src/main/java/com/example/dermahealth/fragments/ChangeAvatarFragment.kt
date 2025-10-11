@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.R
 import java.io.ByteArrayOutputStream
+import androidx.activity.OnBackPressedCallback
 
 class ChangeAvatarFragment : Fragment() {
 
@@ -78,7 +79,6 @@ class ChangeAvatarFragment : Fragment() {
         btnCancel.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
-
         return view
     }
 

@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.R
+import androidx.activity.OnBackPressedCallback
 
 class EditProfileFragment : Fragment() {
 
@@ -57,6 +58,18 @@ class EditProfileFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
 
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (parentFragmentManager.backStackEntryCount > 0) {
+                    // Go back to the previous fragment in the stack
+                    parentFragmentManager.popBackStack()
+                } else {
+                    // Exit the app if no more fragments in the stack
+                    requireActivity().finish()
+                }
+            }
+        })
         return view
     }
+
 }
