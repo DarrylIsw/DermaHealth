@@ -371,6 +371,7 @@
         </FrameLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Dialog Add Routine Card-->
     <FrameLayout
         android:id="@+id/addRoutineOverlay"
         android:layout_width="match_parent"
@@ -383,7 +384,7 @@
             android:id="@+id/blurBackground"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#80000000"/> <!-- fallback dark overlay -->
+            android:background="#80000000"/>
 
         <!-- Center floating card -->
         <com.google.android.material.card.MaterialCardView
@@ -393,10 +394,12 @@
             android:layout_gravity="center"
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"
             app:cardCornerRadius="24dp"
-            app:cardElevation="10dp"
             android:backgroundTint="@android:color/white"
-            android:padding="20dp">
+            app:cardElevation="16dp"
+            android:padding="24dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -405,72 +408,108 @@
 
                 <!-- Title -->
                 <TextView
+                    android:id="@+id/tv_add_routine_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Add Routine"
-                    android:textSize="20sp"
+                    android:textSize="22sp"
                     android:textColor="@color/medium_sky_blue"
                     android:fontFamily="@font/poppins_semibold"
-                    android:layout_marginBottom="16dp"/>
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginStart="12dp"/>
 
                 <!-- Routine Name -->
                 <EditText
                     android:id="@+id/et_routine_name"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:hint="Routine title"
                     android:inputType="textCapWords"
-                    android:backgroundTint="@color/medium_sky_blue"
                     android:fontFamily="@font/poppins"
-                    android:layout_marginBottom="12dp"/>
+                    android:layout_marginBottom="16dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="@drawable/input_field_bg"/>
 
                 <!-- Time -->
                 <EditText
                     android:id="@+id/et_routine_time"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Set time (e.g. 08:00 AM)"
-                    android:inputType="text"
-                    android:backgroundTint="@color/medium_sky_blue"
+                    android:layout_height="48dp"
+                    android:hint="Set time (e.g. 08.30)"
+                    android:inputType="none"
+                    android:focusable="false"
                     android:fontFamily="@font/poppins"
-                    android:layout_marginBottom="12dp"/>
+                    android:layout_marginBottom="16dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="@drawable/input_field_bg"/>
 
                 <!-- Comment -->
                 <EditText
                     android:id="@+id/et_routine_comment"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:hint="Short comment (optional)"
                     android:inputType="text"
-                    android:backgroundTint="@color/medium_sky_blue"
                     android:fontFamily="@font/poppins"
-                    android:layout_marginBottom="20dp"/>
+                    android:layout_marginBottom="24dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="@drawable/input_field_bg"/>
 
-                <!-- Buttons -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="end"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:paddingBottom="8dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false">
 
-                    <Button
-                        android:id="@+id/btn_cancel_add"
+                    <!-- Cancel Button with subtle shadow -->
+                    <androidx.cardview.widget.CardView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cancel"
-                        android:textColor="@color/medium_sky_blue"
-                        style="?attr/materialButtonOutlinedStyle"/>
+                        app:cardElevation="6dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        android:layout_marginEnd="8dp">
 
-                    <Button
-                        android:id="@+id/btn_save_add"
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_cancel_add"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cancel"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:textColor="@color/medium_sky_blue"
+                            app:strokeColor="@color/light_gray"
+                            app:strokeWidth="0dp"
+                            app:cornerRadius="16dp"
+                            android:backgroundTint="@android:color/transparent"/>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Add Button with subtle shadow -->
+                    <androidx.cardview.widget.CardView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Add"
-                        android:layout_marginStart="12dp"
-                        android:textColor="@android:color/white"
-                        android:backgroundTint="@color/medium_sky_blue"/>
+                        app:cardElevation="6dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="@color/medium_sky_blue">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_save_add"
+                            android:layout_width="wrap_content"
+                            android:layout_height="48dp"
+                            android:text="Add"
+                            android:textColor="@android:color/white"
+                            app:cornerRadius="16dp"
+                            android:backgroundTint="@android:color/transparent"/>
+                    </androidx.cardview.widget.CardView>
+
                 </LinearLayout>
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </FrameLayout>

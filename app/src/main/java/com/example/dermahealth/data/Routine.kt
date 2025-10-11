@@ -1,7 +1,8 @@
 package com.example.dermahealth.data
 
 data class Routine(
-    val id: Int,
-    val title: String,
-    val time: String
+    var id: Int,
+    var title: String,
+    var time: String,
+    var note: String? = null
 )

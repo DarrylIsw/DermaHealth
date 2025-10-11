@@ -33,6 +33,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.math.roundToInt
 import android.animation.ObjectAnimator
+import android.app.TimePickerDialog
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
@@ -52,8 +53,11 @@ import com.example.dermahealth.databinding.FragmentHomeBinding
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.example.dermahealth.helper.SwipeToDeleteCallback
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class HomeFragment : Fragment() {
 
@@ -85,7 +89,12 @@ class HomeFragment : Fragment() {
     private lateinit var overlay: FrameLayout
     private lateinit var blurBackground: View
     private lateinit var card: MaterialCardView
-
+    // --- Routine overlay fields ---
+    private lateinit var etName: EditText
+    private lateinit var etTime: EditText
+    private lateinit var etComment: EditText
+    private lateinit var btnSave: Button
+    private lateinit var btnCancel: Button
 
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
     private val carouselImages: List<Int> = listOf(
@@ -312,8 +321,6 @@ class HomeFragment : Fragment() {
         tvTip = view.findViewById(R.id.tv_tip)
         ivTipIcon = view.findViewById(R.id.iv_tip_icon)
 
-        // --- Overlay + Floating Card ---
-
         // --- Overlay + Card (already in XML) ---
         overlay = view.findViewById(R.id.addRoutineOverlay)
         blurBackground = overlay.findViewById(R.id.blurBackground)
@@ -325,10 +332,43 @@ class HomeFragment : Fragment() {
         val etComment = overlay.findViewById<EditText>(R.id.et_routine_comment)
         val btnCancel = overlay.findViewById<Button>(R.id.btn_cancel_add)
         val btnSave = overlay.findViewById<Button>(R.id.btn_save_add)
+        val tvTitle = overlay.findViewById<TextView>(R.id.tv_add_routine_title)
+
 
         // --- Add Routine FAB ---
+// --- Add Routine FAB ---
         btnAddRoutine.setOnClickListener {
+            tvTitle.text = "Add Routine"       // Reset title
+            etName.text.clear()
+            etTime.text.clear()
+            etComment.text.clear()
             showAddRoutineCard()
+
+            // btnSave for adding
+            btnSave.setOnClickListener {
+                val title = etName.text.toString().trim()
+                val time = etTime.text.toString().trim()
+                val comment = etComment.text.toString().trim()
+
+                if (title.isEmpty() || time.isEmpty()) {
+                    Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
+                val newRoutine = Routine(id, title, time, note = if (comment.isBlank()) null else comment)
+                routineList.add(0, newRoutine)
+                adapter.notifyItemInserted(0)
+                rvRoutines.scrollToPosition(0)
+
+                Toast.makeText(requireContext(), "Routine added", Toast.LENGTH_SHORT).show()
+                hideAddRoutineCard()
+
+                // Clear inputs
+                etName.text.clear()
+                etTime.text.clear()
+                etComment.text.clear()
+            }
         }
 
         // --- Cancel button ---
@@ -340,7 +380,7 @@ class HomeFragment : Fragment() {
         btnSave.setOnClickListener {
             val title = etName.text.toString().trim()
             val time = etTime.text.toString().trim()
-            val comment = etComment.text.toString().trim()
+            val comment = etComment.text.toString().trim() // <-- additional comment
 
             if (title.isEmpty() || time.isEmpty()) {
                 Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
@@ -348,7 +388,7 @@ class HomeFragment : Fragment() {
             }
 
             val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
-            val newRoutine = Routine(id, title, time)
+            val newRoutine = Routine(id, title, time, note = if (comment.isBlank()) null else comment)
             routineList.add(0, newRoutine)
             adapter.notifyItemInserted(0)
             rvRoutines.scrollToPosition(0)
@@ -362,6 +402,7 @@ class HomeFragment : Fragment() {
             etComment.text.clear()
         }
 
+
         Log.d("DEBUG_OVERLAY", "overlay: $overlay")
         Log.d("DEBUG_OVERLAY", "card: $card")
         Log.d("DEBUG_OVERLAY", "etName: $etName, etTime: $etTime, etComment: $etComment")
@@ -373,6 +414,28 @@ class HomeFragment : Fragment() {
             routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
             routineList.add(Routine(3, "Drink more water", "Throughout the day"))
         }
+
+        // --- TimePicker listener (use same etTime) ---
+        etTime.setOnClickListener {
+            val cal = Calendar.getInstance()
+            val hour = cal.get(Calendar.HOUR_OF_DAY)
+            val minute = cal.get(Calendar.MINUTE)
+
+            // Use TimePickerDialog from Material 2
+            val timePicker = TimePickerDialog(
+                requireContext(),
+                R.style.CustomTimePickerDialog,
+                { _, selectedHour, selectedMinute ->
+                    val formatted = String.format("%02d.%02d", selectedHour, selectedMinute)
+                    etTime.setText(formatted)
+                },
+                hour,
+                minute,
+                true
+            )
+            timePicker.show()
+        }
+
 
         // Animate progress bars
         animateProgressBar(pbUv, uvValue)
@@ -401,20 +464,51 @@ class HomeFragment : Fragment() {
         tvTip.text = tips[tipIndex]
         startTipRotation()
 
-        // --- RecyclerView Adapter ---
+// --- RecyclerView Adapter for edit/delete ---
         adapter = RoutineAdapter(
             routineList,
             onEdit = { routine ->
-                Toast.makeText(requireContext(), "Edit: ${routine.title}", Toast.LENGTH_SHORT).show()
+                // Populate overlay fields
+                tvTitle.text = "Edit Routine"
+                etName.setText(routine.title)
+                etTime.setText(routine.time)
+                etComment.setText(routine.note ?: "")
+
+                showAddRoutineCard()
+
+                // btnSave for editing
+                btnSave.setOnClickListener {
+                    val title = etName.text.toString().trim()
+                    val time = etTime.text.toString().trim()
+                    val comment = etComment.text.toString().trim()
+
+                    if (title.isEmpty() || time.isEmpty()) {
+                        Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    // Update routine object
+                    routine.title = title
+                    routine.time = time
+                    routine.note = if (comment.isBlank()) null else comment
+
+                    adapter.notifyItemChanged(routineList.indexOf(routine))
+                    hideAddRoutineCard()
+
+                    // Reset overlay title back to Add Routine
+                    tvTitle.text = "Add Routine"
+                }
             },
             onDelete = { routine ->
                 showDeleteConfirm(routine, adapter)
             }
         )
+
+        // --- RecyclerView setup ---
         rvRoutines.layoutManager = LinearLayoutManager(requireContext())
         rvRoutines.adapter = adapter
 
-        // --- RecyclerView swipe ---
+        // --- RecyclerView swipe to delete ---
         val swipeToDeleteCallback = SwipeToDeleteCallback(requireContext(), adapter) { position ->
             val routine = routineList[position]
             adapter.removeAt(position)
@@ -647,6 +741,12 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun populateRoutineForEdit(routine: Routine) {
+        etName.setText(routine.title)
+        etTime.setText(routine.time)
+        etComment.setText(routine.note ?: "")
+    }
+
     // ---- Add these functions at fragment level ----
     private fun showAddRoutineCard() {
         overlay.visibility = View.VISIBLE
@@ -801,6 +901,18 @@ class HomeFragment : Fragment() {
             rv.startAnimation(fadeOut)
         }
     }
+
+    private fun showTimePicker(view: View) {
+        val cal = Calendar.getInstance()
+        val hour = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+
+        TimePickerDialog(view.context, { _, h, m ->
+            val formatted = String.format("%02d.%02d", h, m)
+            (view as EditText).setText(formatted)
+        }, hour, minute, true).show()
+    }
+
 
 
     override fun onResume() {

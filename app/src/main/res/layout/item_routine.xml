@@ -116,14 +116,16 @@
                 android:layout_marginBottom="3.45dp"/>
 
 
-            <TextView
-                android:id="@+id/tv_routine_note"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Remember to reapply after 2 hours outdoors"
-                android:textSize="13sp"
-                android:textColor="@color/text_secondary"
-                android:fontFamily="@font/poppins_medium"
+            <EditText
+                android:id="@+id/et_additional_comment"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Add additional comment (optional)"
+                android:inputType="text"
+                android:fontFamily="@font/poppins"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:background="@drawable/input_field_bg"
                 android:layout_marginBottom="1.55dp"/>
         </LinearLayout>
     </LinearLayout>
