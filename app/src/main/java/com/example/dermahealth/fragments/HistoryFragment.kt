@@ -86,7 +86,9 @@ class HistoryFragment : Fragment() {
         // seed dummy
         val seed = listOf(
             ScanHistory(1, null, "Benign", "2025-09-24", "Looks fine, monitor", null),
-            ScanHistory(2, null, "Suspicious", "2025-09-20", "Visit dermatologist soon", null)
+            ScanHistory(2, null, "Suspicious", "2025-09-20", "Visit dermatologist soon", null),
+            ScanHistory(3, null, "Malignant", "2025-09-18", "Seek consultation ASAP", null),
+            ScanHistory(4, null, "Neutral", "2025-09-15", "No abnormality detected", null)
         )
         adapter.submitList(seed)
         updateEmptyState()
