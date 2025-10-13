@@ -5,9 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.SimpleItemAnimator
 import com.example.dermahealth.R
 import com.example.dermahealth.adapter.HistoryAdapter
 import com.example.dermahealth.data.ScanHistory
@@ -25,12 +27,17 @@ class HistoryFragment : Fragment() {
             onEdit = { scan ->
                 AlertDialog.Builder(requireContext())
                     .setTitle(getString(R.string.edit_notes))
-                    .setMessage("Edit notes for: ${scan.result}")
+                    .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
                     .setPositiveButton(android.R.string.ok, null)
                     .show()
             },
             onDelete = { scan ->
                 confirmDelete(scan)
+            },
+            onToggleExpand = { pos, expanded ->
+                if (expanded) {
+                    b.rvHistory.post { b.rvHistory.smoothScrollToPosition(pos) }
+                }
             }
         )
     }
@@ -70,17 +77,14 @@ class HistoryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         b.rvHistory.layoutManager = LinearLayoutManager(requireContext())
         b.rvHistory.adapter = adapter
+        b.rvHistory.setHasFixedSize(false) // items can change height
 
-        // swipe to delete
-//        val swipe = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-//            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
-//            override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {
-//                val scan = adapter.currentList[vh.bindingAdapterPosition]
-//                confirmDelete(scan)
-//                adapter.notifyItemChanged(vh.bindingAdapterPosition) // restore until confirmed
-//            }
-//        }
-//        ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
+        (b.rvHistory.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
+
+        val extra = resources.getDimensionPixelSize(R.dimen.rv_extra_scroll)
+        b.rvHistory.post {
+            b.rvHistory.updatePadding(bottom = b.rvHistory.paddingBottom + extra)
+        }
 
         val swipeCallback = SwipeActionsCallback(
             context = requireContext(),
@@ -97,7 +101,7 @@ class HistoryFragment : Fragment() {
                 // Example: reuse the same edit dialog you had for the Edit button
                 androidx.appcompat.app.AlertDialog.Builder(requireContext())
                     .setTitle(getString(R.string.edit_notes))
-                    .setMessage("Edit notes for: ${scan.result}")
+                    .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
                     .setPositiveButton(android.R.string.ok, null)
                     .show()
             }

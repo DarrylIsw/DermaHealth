@@ -20,7 +20,8 @@ import java.time.format.DateTimeFormatter
 
 class HistoryAdapter(
     private val onEdit: (ScanHistory) -> Unit,
-    private val onDelete: (ScanHistory) -> Unit
+    private val onDelete: (ScanHistory) -> Unit,
+    private val onToggleExpand: (position: Int, expanded: Boolean) -> Unit
 ) : ListAdapter<ScanHistory, HistoryAdapter.VH>(DIFF) {
 
     companion object {
@@ -83,11 +84,16 @@ class HistoryAdapter(
 
         // expand/collapse with smooth layout change
         b.btnExpand.setOnClickListener {
-            val newList = currentList.toMutableList()
             val idx = holder.bindingAdapterPosition.takeIf { it != RecyclerView.NO_POSITION } ?: return@setOnClickListener
+            val newList = currentList.toMutableList()
             val cur = newList[idx]
-            newList[idx] = cur.copy(isExpanded = !cur.isExpanded)
-            submitList(newList)  // DiffUtil animates + state persists
+            val next = cur.copy(isExpanded = !cur.isExpanded)
+            newList[idx] = next
+
+            submitList(newList) {
+                // notify fragment AFTER RV has applied the diff & layout pass
+                onToggleExpand(idx, next.isExpanded)
+            }
         }
 
         // actions
