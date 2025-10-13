@@ -4,111 +4,121 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="6dp"
-    android:animateLayoutChanges="true">
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="20dp"
+    app:cardUseCompatPadding="true"
+    app:strokeColor="?attr/colorOutline"
+    app:strokeWidth="1dp">
 
     <LinearLayout
+        android:id="@+id/rootRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="14dp">
 
-        <!-- Row with Image + Main Info -->
+        <!-- HEADER ROW -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            <ImageView
-                android:id="@+id/iv_scan"
+            <!-- Thumbnail -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivScan"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_foreground"
-                android:background="@drawable/bg_image_placeholder"
-                android:contentDescription="Scan image"
-                android:clipToOutline="true"/>
+                android:contentDescription="@string/cd_history_thumbnail"
+                app:shapeAppearanceOverlay="@style/Shape.Round12" />
 
+            <!-- Texts -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:paddingStart="12dp">
+                android:layout_marginStart="12dp">
 
-                <TextView
-                    android:id="@+id/tv_result"
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipResult"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Result: Benign"
-                    android:textStyle="bold"
-                    android:textSize="16sp"/>
+                    android:text="Benign"
+                    style="@style/Widget.Material3.Chip.Assist.Elevated" />
 
                 <TextView
-                    android:id="@+id/tv_date"
+                    android:id="@+id/tvDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Date: Sep 24, 2025"
-                    android:textSize="14sp"/>
+                    android:layout_marginTop="2dp"
+                    android:text="Sep 24, 2025"
+                    android:textAppearance="?attr/textAppearanceBodySmall" />
 
                 <TextView
-                    android:id="@+id/tv_notes"
+                    android:id="@+id/tvNotes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Notes: Monitor regularly"
-                    android:textSize="14sp"
+                    android:layout_marginTop="2dp"
+                    android:text="Looks fine, monitor"
                     android:ellipsize="end"
-                    android:maxLines="1"/>
+                    android:maxLines="1"
+                    android:textAppearance="?attr/textAppearanceBodyMedium" />
             </LinearLayout>
 
-            <!-- Expand / Collapse Button -->
-            <ImageView
-                android:id="@+id/btn_expand"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_expand_more"
-                android:contentDescription="Expand"
-                android:padding="4dp"/>
+            <!-- Expand button -->
+            <ImageButton
+                android:id="@+id/btnExpand"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:contentDescription="@string/cd_expand"
+                style="?attr/borderlessButtonStyle"
+                app:srcCompat="@drawable/ic_expand_more" />
         </LinearLayout>
 
-        <!-- Hidden expandable section -->
+        <!-- EXPANDABLE SECTION -->
         <LinearLayout
-            android:id="@+id/expandable_section"
+            android:id="@+id/expandable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="8dp"
+            android:paddingTop="10dp"
             android:visibility="gone">
 
-            <ImageView
-                android:id="@+id/iv_cropped"
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivCropped"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_background"
-                android:contentDescription="Cropped image"/>
+                android:contentDescription="@string/cd_cropped_area"
+                app:shapeAppearanceOverlay="@style/Shape.Round12" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="end"
-                android:paddingTop="8dp">
+                android:paddingTop="10dp">
 
-                <Button
-                    android:id="@+id/btn_edit"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEdit"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Edit Notes"/>
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:text="@string/edit_notes" />
 
-                <Button
-                    android:id="@+id/btn_delete"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDelete"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Delete"
-                    android:layout_marginStart="8dp"/>
+                    android:layout_marginStart="8dp"
+                    style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+                    android:text="@string/delete"
+                    app:backgroundTint="?attr/colorErrorContainer"
+                    app:iconTint="?attr/colorOnErrorContainer"
+                    android:textColor="?attr/colorOnErrorContainer" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
