@@ -70,12 +70,11 @@
             <!-- Expand button -->
             <ImageButton
                 android:id="@+id/btnExpand"
-                style="?attr/borderlessButtonStyle"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:contentDescription="@string/cd_expand"
                 android:padding="8dp"
-                app:tint="#3478F6"
+                android:contentDescription="@string/cd_expand"
+                style="?attr/borderlessButtonStyle"
                 app:srcCompat="@drawable/ic_expand_more" />
         </LinearLayout>
 
