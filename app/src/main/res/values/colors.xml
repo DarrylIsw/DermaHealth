@@ -8,4 +8,9 @@
     <color name="black">#000000</color>
     <color name="teal_200">#03DAC5</color>
     <color name="teal_700">#00796B</color>
+
+    <color name="chip_benign">#C8E6C9</color>
+    <color name="chip_suspicious">#FFE0B2</color>
+    <color name="chip_malignant">#FFCDD2</color>
+    <color name="chip_neutral">#E0E0E0</color>
 </resources>
