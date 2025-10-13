@@ -39,7 +39,7 @@ class SplashActivity : AppCompatActivity() {
 
             // Start main activity slightly after fade-out
             Handler(Looper.getMainLooper()).postDelayed({
-                startActivity(Intent(this, MainActivity::class.java))
+                startActivity(Intent(this, LoginRegisterActivity::class.java))
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                 finish()
             }, 450)
