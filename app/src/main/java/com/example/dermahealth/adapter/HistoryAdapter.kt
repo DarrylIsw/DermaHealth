@@ -1,58 +1,97 @@
 package com.example.dermahealth.adapter
 
+import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.dermahealth.R
 import com.example.dermahealth.data.ScanHistory
+import com.example.dermahealth.databinding.ItemHistoryBinding
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class HistoryAdapter(
-    private val scans: MutableList<ScanHistory>,
     private val onEdit: (ScanHistory) -> Unit,
     private val onDelete: (ScanHistory) -> Unit
-) : RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder>() {
+) : ListAdapter<ScanHistory, HistoryAdapter.VH>(DIFF) {
 
-    inner class HistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val ivScan: ImageView = itemView.findViewById(R.id.iv_scan)
-        val tvResult: TextView = itemView.findViewById(R.id.tv_result)
-        val tvDate: TextView = itemView.findViewById(R.id.tv_date)
-        val tvNotes: TextView = itemView.findViewById(R.id.tv_notes)
-        val btnExpand: ImageView = itemView.findViewById(R.id.btn_expand)
-        val expandable: LinearLayout = itemView.findViewById(R.id.expandable_section)
-        val btnEdit: Button = itemView.findViewById(R.id.btn_edit)
-        val btnDelete: Button = itemView.findViewById(R.id.btn_delete)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_history, parent, false)
-        return HistoryViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
-        val item = scans[position]
-        holder.ivScan.setImageResource(item.imageRes)
-        holder.tvResult.text = "Result: ${item.result}"
-        holder.tvDate.text = "Date: ${item.date}"
-        holder.tvNotes.text = "Notes: ${item.notes}"
-
-        var expanded = false
-        holder.btnExpand.setOnClickListener {
-            expanded = !expanded
-            holder.expandable.visibility = if (expanded) View.VISIBLE else View.GONE
-
-            holder.btnExpand.animate().rotation(
-                if (expanded) 180f else 0f
-            ).setDuration(200).start()
+    companion object {
+        private val DIFF = object : DiffUtil.ItemCallback<ScanHistory>() {
+            override fun areItemsTheSame(old: ScanHistory, new: ScanHistory) = old.id == new.id
+            override fun areContentsTheSame(old: ScanHistory, new: ScanHistory) = old == new
         }
 
-        holder.btnEdit.setOnClickListener { onEdit(item) }
-        holder.btnDelete.setOnClickListener { onDelete(item) }
+        @RequiresApi(Build.VERSION_CODES.O)
+        private val IN_FMT = DateTimeFormatter.ISO_LOCAL_DATE
+        @RequiresApi(Build.VERSION_CODES.O)
+        private val OUT_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun prettyDate(iso: String): String = runCatching {
+            LocalDate.parse(iso, IN_FMT).format(OUT_FMT)
+        }.getOrElse { iso }
     }
 
-    override fun getItemCount(): Int = scans.size
+    inner class VH(val b: ItemHistoryBinding) : RecyclerView.ViewHolder(b.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val b = ItemHistoryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return VH(b)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val item = getItem(position)
+        val b = holder.b
+
+        // images
+        b.ivScan.load(item.imageUrl ?: R.drawable.ic_launcher_foreground) {
+            crossfade(true)
+            transformations(RoundedCornersTransformation(12f))
+            error(R.drawable.bg_image_placeholder)
+            placeholder(R.drawable.bg_image_placeholder)
+        }
+        b.ivCropped.load(item.croppedUrl ?: R.drawable.ic_launcher_background) {
+            crossfade(true)
+            error(R.drawable.bg_image_placeholder)
+            placeholder(R.drawable.bg_image_placeholder)
+        }
+
+        // text
+        b.tvNotes.text = item.notes
+        b.tvDate.text = prettyDate(item.dateIso)
+
+        // result chip styling
+        b.chipResult.text = item.result
+        when (item.result.lowercase()) {
+            "benign" -> b.chipResult.setChipBackgroundColorResource(R.color.chip_benign)
+            "suspicious" -> b.chipResult.setChipBackgroundColorResource(R.color.chip_suspicious)
+            "malignant" -> b.chipResult.setChipBackgroundColorResource(R.color.chip_malignant)
+            else -> b.chipResult.setChipBackgroundColorResource(R.color.chip_neutral)
+        }
+
+        // expand state
+        b.expandable.isVisible = item.isExpanded
+        b.btnExpand.rotation = if (item.isExpanded) 180f else 0f
+
+        // expand/collapse with smooth layout change
+        b.btnExpand.setOnClickListener {
+            val newList = currentList.toMutableList()
+            val idx = holder.bindingAdapterPosition.takeIf { it != RecyclerView.NO_POSITION } ?: return@setOnClickListener
+            val cur = newList[idx]
+            newList[idx] = cur.copy(isExpanded = !cur.isExpanded)
+            submitList(newList)  // DiffUtil animates + state persists
+        }
+
+        // actions
+        b.btnEdit.setOnClickListener { onEdit(item) }
+        b.btnDelete.setOnClickListener { onDelete(item) }
+    }
 }
