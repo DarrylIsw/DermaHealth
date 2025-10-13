@@ -9,12 +9,16 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dermahealth.R
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class SwipeActionsCallback(
     context: Context,
-    private val onSwipedLeft: (position: Int) -> Unit,    // DELETE
-    private val onSwipedRight: (position: Int) -> Unit    // EDIT
+    private val onRequestLeft: (position: Int, done: () -> Unit) -> Unit,   // DELETE
+    private val onRequestRight: (position: Int, done: () -> Unit) -> Unit,  // EDIT
+    private val swipeThreshold: Float = 0.35f
 ) : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
 
     private val red = ContextCompat.getColor(context, R.color.deleteSwipeBackground)     // e.g. #D32F2F
@@ -36,17 +40,15 @@ class SwipeActionsCallback(
     private val iconSize = dp(context, 24f).roundToInt()
     private val gap = dp(context, 8f)
 
+    private var isHandling = false
+
     override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
 
-    override fun onSwiped(vh: RecyclerView.ViewHolder, direction: Int) {
-        val pos = vh.bindingAdapterPosition
-        when (direction) {
-            ItemTouchHelper.LEFT -> onSwipedLeft(pos)
-            ItemTouchHelper.RIGHT -> onSwipedRight(pos)
-        }
-    }
+    override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float = 1f
+    override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 10f
+    override fun getSwipeVelocityThreshold(defaultValue: Float): Float = defaultValue * 10f
+    override fun onSwiped(vh: RecyclerView.ViewHolder, direction: Int) { /* no-op (we handle manually) */ }
 
-    override fun getSwipeThreshold(vh: RecyclerView.ViewHolder): Float = 0.35f
 
     override fun onChildDraw(
         c: Canvas,
@@ -57,49 +59,79 @@ class SwipeActionsCallback(
         isCurrentlyActive: Boolean
     ) {
         val item = vh.itemView
+        val w = max(item.width, 1)
+        val lockRatio = 0.50f      // max reveal distance (30% of row width)
+        val triggerRatio = swipeThreshold   // trigger threshold (15% of row width)
+
+        // 1) Clamp how far the card can travel
+        val maxReveal = w * lockRatio
+        val drawDx = min(max(dX, -maxReveal), maxReveal)
+
+        // 2) Draw your backgrounds using the CLAMPED distance
         val h = (item.bottom - item.top).toFloat()
         val centerY = item.top + h / 2f
 
-        if (dX > 0f) {
-            // RIGHT = EDIT (blue)
-            val rect = RectF(item.left.toFloat(), item.top.toFloat(), (item.left + dX).coerceAtMost(item.right.toFloat()), item.bottom.toFloat())
+        if (drawDx > 0f) {
+            val rect = RectF(item.left.toFloat(), item.top.toFloat(), item.left + drawDx, item.bottom.toFloat())
             c.drawRoundRect(rect, corner, corner, paintEditBg)
-
             val iconTop = centerY - iconSize / 2f
             val iconLeft = item.left + pad
             iconEdit?.let { bmp ->
-                val scaled = Bitmap.createScaledBitmap(bmp, iconSize, iconSize, true)
+                val scaled = android.graphics.Bitmap.createScaledBitmap(bmp, iconSize, iconSize, true)
                 c.drawBitmap(scaled, iconLeft, iconTop, null)
             }
-            val text = rv.context.getString(R.string.edit_notes) // “Edit Notes”
-            val textX = iconLeft + iconSize + gap
-            val textY = centerY + textCenterOffset(text)
-            c.drawText(text, textX, textY, paintText)
-        } else if (dX < 0f) {
-            // LEFT = DELETE (red)
-            val rect = RectF((item.right + dX).coerceAtLeast(item.left.toFloat()), item.top.toFloat(), item.right.toFloat(), item.bottom.toFloat())
+            val t = rv.context.getString(R.string.edit_notes)
+            c.drawText(t, iconLeft + iconSize + gap, centerY + textCenterOffset(t), paintText)
+        } else if (drawDx < 0f) {
+            val rect = RectF(item.right + drawDx, item.top.toFloat(), item.right.toFloat(), item.bottom.toFloat())
             c.drawRoundRect(rect, corner, corner, paintDeleteBg)
-
             val iconTop = centerY - iconSize / 2f
             val iconRight = item.right - pad
             iconDelete?.let { bmp ->
-                val scaled = Bitmap.createScaledBitmap(bmp, iconSize, iconSize, true)
+                val scaled = android.graphics.Bitmap.createScaledBitmap(bmp, iconSize, iconSize, true)
                 c.drawBitmap(scaled, iconRight - iconSize, iconTop, null)
             }
-            val text = rv.context.getString(R.string.delete)
-            val textWidth = paintText.measureText(text)
-            val textX = iconRight - iconSize - gap - textWidth
-            val textY = centerY + textCenterOffset(text)
-            c.drawText(text, textX, textY, paintText)
+            val t = rv.context.getString(R.string.delete)
+            val tW = paintText.measureText(t)
+            c.drawText(t, iconRight - iconSize - gap - tW, centerY + textCenterOffset(t), paintText)
         }
 
-        super.onChildDraw(c, rv, vh, dX, dY, actionState, isCurrentlyActive)
+        // translate with CLAMPED distance
+        super.onChildDraw(c, rv, vh, drawDx, dY, actionState, isCurrentlyActive)
+
+        // finger up → decide once; if already handling, bail
+        if (!isCurrentlyActive && !isHandling) {
+            val crossed = abs(dX) >= (w * triggerRatio)
+            if (crossed) {
+                isHandling = true
+                val pos = vh.bindingAdapterPosition
+                // snap back FIRST, then show prompt; unlock on done()
+                item.animate()
+                    .translationX(0f)
+                    .alpha(1f)
+                    .setDuration(120L)
+                    .withEndAction {
+                        rv.post { rv.adapter?.notifyItemChanged(pos) }
+                        val done: () -> Unit = {
+                            // unlock after dialog/sheet closes
+                            isHandling = false
+                            // ensure view is reset
+                            rv.post { rv.adapter?.notifyItemChanged(pos) }
+                        }
+                        if (dX > 0) onRequestRight(pos, done) else onRequestLeft(pos, done)
+                    }
+                    .start()
+            } else {
+                // not enough → just snap back
+                item.animate().translationX(0f).setDuration(120L).start()
+            }
+        }
     }
 
     private fun textCenterOffset(text: String): Float {
-        val bounds = Rect()
-        paintText.getTextBounds(text, 0, text.length, bounds)
-        return bounds.height() / 2f - 3f
+        val b = android.graphics.Rect()
+        paintText.getTextBounds(text, 0, text.length, b)
+        return b.height() / 2f - 3f
     }
 
     private fun dp(ctx: Context, v: Float) = v * ctx.resources.displayMetrics.density

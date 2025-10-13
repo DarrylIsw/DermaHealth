@@ -86,28 +86,34 @@ class HistoryFragment : Fragment() {
             b.rvHistory.updatePadding(bottom = b.rvHistory.paddingBottom + extra)
         }
 
-        val swipeCallback = SwipeActionsCallback(
+        val swipe = SwipeActionsCallback(
             context = requireContext(),
-            onSwipedLeft = { pos ->    // DELETE
-                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback
-                // snap back visually (so the row stays until user confirms)
-                adapter.notifyItemChanged(pos)
-                confirmDelete(scan)    // your dialog+undo flow
+            onRequestLeft = { pos, done ->   // DELETE
+                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
+                AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.delete_scan_title)
+                    .setMessage(R.string.delete_scan_msg)
+                    .setPositiveButton(R.string.yes) { _, _ ->
+                        removeWithUndo(scan)
+                        done()
+                    }
+                    .setNegativeButton(R.string.no) { _, _ -> done() }
+                    .setOnDismissListener { done() }
+                    .show()
             },
-            onSwipedRight = { pos ->   // EDIT
-                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback
-                // snap back, then open your edit flow (you already show a dialog)
-                adapter.notifyItemChanged(pos)
-                // Example: reuse the same edit dialog you had for the Edit button
-                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            onRequestRight = { pos, done ->  // EDIT
+                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
+                AlertDialog.Builder(requireContext())
                     .setTitle(getString(R.string.edit_notes))
                     .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
-                    .setPositiveButton(android.R.string.ok, null)
+                    .setPositiveButton(android.R.string.ok) { _, _ -> done() }
+                    .setOnDismissListener { done() }
                     .show()
-            }
+            },
+            swipeThreshold = 0.35f
         )
+        ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
 
-        ItemTouchHelper(swipeCallback).attachToRecyclerView(b.rvHistory)
 
         // seed dummy
         val seed = listOf(
