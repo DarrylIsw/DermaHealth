@@ -28,6 +28,14 @@
         <item name="android:windowLightNavigationBar" tools:ignore="NewApi">true</item>
     </style>
 
+    <style name="SplashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/medium_sky_blue</item>
+        <item name="android:windowBackground">@drawable/splash_screen_bg</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
     <!-- Your app’s main theme -->
     <style name="Theme.DermaHealth" parent="Base.Theme.DermaHealth" />
 

@@ -120,7 +120,7 @@
                 android:id="@+id/et_additional_comment"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:hint="Add additional comment (optional)"
+                android:hint="Add additional comment"
                 android:inputType="text"
                 android:fontFamily="@font/poppins"
                 android:paddingStart="12dp"
