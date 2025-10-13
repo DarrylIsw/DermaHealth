@@ -9,8 +9,17 @@
     <color name="teal_200">#03DAC5</color>
     <color name="teal_700">#00796B</color>
 
+    <!-- History -->
+    <!-- warning colors -->
     <color name="chip_benign">#C8E6C9</color>
     <color name="chip_suspicious">#FFE0B2</color>
     <color name="chip_malignant">#FFCDD2</color>
     <color name="chip_neutral">#E0E0E0</color>
+
+    <!-- left swipe (delete) -->
+    <color name="deleteSwipeBackground">#F03838</color>
+    <color name="deleteSwipeForeground">#FFFFFFFF</color>
+
+    <!-- right swipe (edit) -->
+    <color name="editSwipeBackground">#1976D2</color> <!-- blue 700 -->
 </resources>

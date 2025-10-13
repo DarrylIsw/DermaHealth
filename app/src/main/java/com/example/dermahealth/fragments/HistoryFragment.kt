@@ -8,12 +8,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import coil.Coil
 import com.example.dermahealth.R
 import com.example.dermahealth.adapter.HistoryAdapter
 import com.example.dermahealth.data.ScanHistory
 import com.example.dermahealth.databinding.FragmentHistoryBinding
+import com.example.dermahealth.ui.SwipeActionsCallback
 import com.google.android.material.snackbar.Snackbar
 
 class HistoryFragment : Fragment() {
@@ -73,15 +72,38 @@ class HistoryFragment : Fragment() {
         b.rvHistory.adapter = adapter
 
         // swipe to delete
-        val swipe = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
-            override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {
-                val scan = adapter.currentList[vh.bindingAdapterPosition]
-                confirmDelete(scan)
-                adapter.notifyItemChanged(vh.bindingAdapterPosition) // restore until confirmed
+//        val swipe = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+//            override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
+//            override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {
+//                val scan = adapter.currentList[vh.bindingAdapterPosition]
+//                confirmDelete(scan)
+//                adapter.notifyItemChanged(vh.bindingAdapterPosition) // restore until confirmed
+//            }
+//        }
+//        ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
+
+        val swipeCallback = SwipeActionsCallback(
+            context = requireContext(),
+            onSwipedLeft = { pos ->    // DELETE
+                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback
+                // snap back visually (so the row stays until user confirms)
+                adapter.notifyItemChanged(pos)
+                confirmDelete(scan)    // your dialog+undo flow
+            },
+            onSwipedRight = { pos ->   // EDIT
+                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback
+                // snap back, then open your edit flow (you already show a dialog)
+                adapter.notifyItemChanged(pos)
+                // Example: reuse the same edit dialog you had for the Edit button
+                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.edit_notes))
+                    .setMessage("Edit notes for: ${scan.result}")
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
             }
-        }
-        ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
+        )
+
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(b.rvHistory)
 
         // seed dummy
         val seed = listOf(
