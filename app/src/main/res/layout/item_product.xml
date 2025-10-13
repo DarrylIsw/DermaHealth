@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:text="Product Name"
             android:textSize="14sp"
-            android:textColor="#111827"
+            android:textColor="@color/deep_dark_blue"
             android:fontFamily="@font/inter_bold"
             android:ellipsize="end"
             android:maxLines="2"
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:text="Brand"
             android:textSize="12sp"
-            android:textColor="#6B7280"
+            android:textColor="@color/grey2"
             android:fontFamily="@font/inter" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -10,7 +10,7 @@
     android:backgroundTint="@android:color/white"
     app:cardCornerRadius="20dp"
     app:cardElevation="8dp"
-    app:strokeColor="#E0E0E0"
+    app:strokeColor="@color/light_grey_white6"
     app:strokeWidth="1dp"
     android:padding="20dp">
 
@@ -94,7 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="12dp"
-            android:background="#EAEAEA"/>
+            android:background="@color/white3"/>
 
         <!-- Optional: detail or reminder row -->
         <LinearLayout

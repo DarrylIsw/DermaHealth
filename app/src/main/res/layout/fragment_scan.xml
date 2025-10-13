@@ -50,7 +50,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:layout_marginTop="8dp"
-                    android:background="#E0E0E0" />
+                    android:background="@color/light_grey_white3" />
             </LinearLayout>
 
             <!-- Camera Preview -->
@@ -112,7 +112,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#F5F5F5"
+            android:background="@color/white2"
             android:padding="16dp"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="8dp"
@@ -265,7 +265,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="This is a dummy result. Consult your dermatologist for a real diagnosis."
-                            android:textColor="#808080"
+                            android:textColor="@color/light_grey_white5"
                             android:textSize="12sp"
                             android:layout_marginTop="8dp"
                             android:fontFamily="@font/inter" />
@@ -303,7 +303,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Tip: Keep 20–30 cm away. Avoid blur. Crop the lesion precisely after capture."
-                    android:textColor="#9E9E9E"
+                    android:textColor="@color/light_grey_white4"
                     android:textSize="12sp"
                     android:fontFamily="@font/inter"
                     android:gravity="center"

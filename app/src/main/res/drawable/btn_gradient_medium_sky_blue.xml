@@ -5,7 +5,7 @@
     <corners android:radius="14dp" /> <!-- match your button corner radius -->
 
     <gradient
-        android:startColor="#6FA8FF"
-        android:endColor="#3478F6"
+        android:startColor="@color/light_sky_blue2"
+        android:endColor="@color/medium_sky_blue"
         android:angle="-45"/>
 </shape>

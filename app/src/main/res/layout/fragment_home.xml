@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        android:background="#F9FAFB"
+        android:background="@color/light_grey_white"
         android:clipToPadding="false"
         android:paddingBottom="56dp">
 
@@ -33,7 +33,7 @@
                     android:text="Good Morning, Darryl!"
                     android:layout_marginBottom="10dp"
                     android:textSize="26sp"
-                    android:textColor="#111827"
+                    android:textColor="@color/deep_dark_blue"
                     android:fontFamily="@font/inter_bold"/>
 
                 <!-- CAROUSEL: ViewPager2 (1/3 of screen + a little more) -->
@@ -77,7 +77,7 @@
                                 app:trackThickness="12dp"
                                 android:indeterminate="false"
                                 android:progress="0"
-                                app:indicatorColor="#3478F6"/>
+                                app:indicatorColor="@color/medium_sky_blue"/>
 
                             <!-- Overlay texts -->
                             <LinearLayout
@@ -95,7 +95,7 @@
                                     android:textSize="28sp"
                                     android:textStyle="bold"
                                     android:fontFamily="@font/inter_bold"
-                                    android:textColor="#111827"/>
+                                    android:textColor="@color/deep_dark_blue"/>
 
                                 <!-- Affirmation -->
                                 <TextView
@@ -105,7 +105,7 @@
                                     android:layout_marginTop="4dp"
                                     android:text="Keep it up!"
                                     android:textSize="12sp"
-                                    android:textColor="#4DA9F0"
+                                    android:textColor="@color/light_sky_blue3"
                                     android:fontFamily="@font/inter"/>
                             </LinearLayout>
                         </FrameLayout>
@@ -155,8 +155,8 @@
                                     android:layout_height="6dp"
                                     android:progress="20"
                                     android:max="11"
-                                    android:progressTint="#FFC107"
-                                    android:backgroundTint="#E0E0E0"/>
+                                    android:progressTint="@color/yellow_orange"
+                                    android:backgroundTint="@color/light_grey_white3"/>
                             </LinearLayout>
 
                             <!-- Humidity -->
@@ -194,8 +194,8 @@
                                     android:layout_height="6dp"
                                     android:progress="45"
                                     android:max="100"
-                                    android:progressTint="#2196F3"
-                                    android:backgroundTint="#E0E0E0"/>
+                                    android:progressTint="@color/light_sky_blue2"
+                                    android:backgroundTint="@color/light_grey_white"/>
                             </LinearLayout>
 
                             <!-- Pollution (AQI) -->
@@ -232,8 +232,8 @@
                                     android:layout_height="6dp"
                                     android:progress="72"
                                     android:max="500"
-                                    android:progressTint="#4CAF50"
-                                    android:backgroundTint="#E0E0E0"/>
+                                    android:progressTint="@color/grass_green"
+                                    android:backgroundTint="@color/light_grey_white3"/>
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
@@ -289,7 +289,7 @@
                             android:text="90% of skin aging is caused by sun exposure — wear sunscreen daily."
                             android:textSize="14sp"
                             android:lineSpacingExtra="4dp"
-                            android:textColor="#374151"
+                            android:textColor="@color/dark_grey"
                             android:fontFamily="@font/inter_medium"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -309,7 +309,7 @@
                         android:text="@string/my_routine"
                         android:textStyle="bold"
                         android:textSize="18sp"
-                        android:textColor="#111827"
+                        android:textColor="@color/deep_dark_blue"
                         android:fontFamily="@font/inter_bold"/>
 
                     <ImageButton
@@ -318,7 +318,7 @@
                         android:layout_height="40dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@android:drawable/ic_input_add"
-                        app:tint="#3478F6"
+                        app:tint="@color/medium_sky_blue"
                         android:contentDescription="@string/add_routine"/>
                 </LinearLayout>
 
@@ -338,7 +338,7 @@
                     android:text="Skincare Products"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#111827"
+                    android:textColor="@color/deep_dark_blue"
                     android:fontFamily="@font/inter_bold"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="8dp"/>
@@ -357,7 +357,7 @@
                     android:text="Beauty Products"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#111827"
+                    android:textColor="@color/deep_dark_blue"
                     android:fontFamily="@font/inter_bold"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="8dp"/>
@@ -376,7 +376,7 @@
         android:id="@+id/addRoutineOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#80000000"
+        android:background="@color/black_shade"
         android:visibility="gone">
 
         <!-- Background blur / dark fallback -->
@@ -384,7 +384,7 @@
             android:id="@+id/blurBackground"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#80000000"/>
+            android:background="@color/black_shade"/>
 
         <!-- Center floating card -->
         <com.google.android.material.card.MaterialCardView

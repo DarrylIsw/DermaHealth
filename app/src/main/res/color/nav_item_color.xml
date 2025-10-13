@@ -3,5 +3,5 @@
     <!-- Selected state = white -->
     <item android:color="@android:color/white" android:state_checked="true"/>
     <!-- Default state = medium sky blue -->
-    <item android:color="#3478F6"/>
+    <item android:color="@color/medium_sky_blue"/>
 </selector>

@@ -42,7 +42,7 @@ class SplashActivity : AppCompatActivity() {
                 startActivity(Intent(this, MainActivity::class.java))
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                 finish()
-            }, 600)
-        }, 1200 + 1000) // 1200 fadeIn + 1000 delay before fadeOut starts
+            }, 450)
+        }, 1450) // 1200 fadeIn + 1000 delay before fadeOut starts
     }
 }

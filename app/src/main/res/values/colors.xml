@@ -13,4 +13,21 @@
     <color name="danger_red">#F44336</color>
     <color name="progress_bg_light">#E0E0E0</color>
     <color name="light_gray">#D3D3D3</color>
+    <color name="light_grey_white">#F9FAFB</color>
+    <color name="light_grey_white2">#E5E7EB</color>
+    <color name="light_sky_blue">#66B2FF</color>
+    <color name="light_sky_blue2">#6FA8FF</color>
+    <color name="deep_dark_blue">#111827</color>
+    <color name="black_shade">#80000000</color>
+    <color name="dark_grey">#374151</color>
+    <color name="light_grey_white3">#E0E0E0</color>
+    <color name="grass_green">#4CAF50</color>
+    <color name="yellow_orange">#FFC107</color>
+    <color name="light_sky_blue3">#4DA9F0</color>
+    <color name="light_grey_white4">#9E9E9E</color>
+    <color name="light_grey_white5">#808080</color>
+    <color name="white2">#F5F5F5</color>
+    <color name="grey2">#6B7280</color>
+    <color name="white3">#EAEAEA</color>
+    <color name="light_grey_white6">#E0E0E0</color>
 </resources>

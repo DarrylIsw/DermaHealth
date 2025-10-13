@@ -2,7 +2,7 @@
     android:shape="oval">
 
     <!-- A slightly larger circle -->
-    <solid android:color="#3478F6"/>
+    <solid android:color="@color/medium_sky_blue"/>
 
     <!-- Increased diameter -->
     <size android:width="80dp" android:height="80dp"/>
