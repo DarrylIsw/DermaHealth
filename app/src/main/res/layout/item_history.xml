@@ -75,6 +75,7 @@
                 android:padding="8dp"
                 android:contentDescription="@string/cd_expand"
                 style="?attr/borderlessButtonStyle"
+                app:tint="#3478F6"
                 app:srcCompat="@drawable/ic_expand_more" />
         </LinearLayout>
 
