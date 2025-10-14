@@ -47,7 +47,7 @@
                     android:id="@+id/tv_result"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Result: Benign"
+                    android:text="@string/result_benign"
                     android:textStyle="bold"
                     android:textSize="17sp"
                     android:fontFamily="@font/poppins_semibold"
@@ -57,7 +57,7 @@
                     android:id="@+id/tv_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Date: Sep 24, 2025"
+                    android:text="@string/date_dummy"
                     android:textSize="14sp"
                     android:fontFamily="@font/inter"
                     android:textColor="#666"/>
@@ -66,7 +66,7 @@
                     android:id="@+id/tv_notes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Notes: Monitor regularly"
+                    android:text="@string/notes_monitor_regularly"
                     android:textSize="14sp"
                     android:fontFamily="@font/inter"
                     android:textColor="#666"
@@ -79,7 +79,7 @@
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:src="@drawable/ic_expand_more"
-                android:contentDescription="Expand"
+                android:contentDescription="@string/expand"
                 app:tint="@color/deep_dark_blue"
                 android:padding="4dp"/>
         </LinearLayout>
@@ -97,7 +97,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Result Details"
+                android:text="@string/result_details"
                 android:textStyle="bold"
                 android:textSize="18sp"
                 android:fontFamily="@font/poppins_semibold"
@@ -110,7 +110,7 @@
                 android:layout_height="200dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/dummy_melanoma"
-                android:contentDescription="Cropped scan result"
+                android:contentDescription="@string/cropped_scan_result"
                 android:layout_marginBottom="12dp"/>
 
             <!-- Confidence -->
@@ -118,7 +118,7 @@
                 android:id="@+id/tvConfidence"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Detection Confidence: 92%"
+                android:text="@string/detection_confidence_92"
                 android:fontFamily="@font/inter_medium"
                 android:textColor="@color/deep_dark_blue"
                 android:textSize="15sp"
@@ -129,7 +129,7 @@
                 android:id="@+id/tvAnalysis"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="The lesion appears smooth and consistent in color, indicating a benign pattern."
+                android:text="@string/lesion_dummy"
                 android:fontFamily="@font/inter"
                 android:textColor="#555"
                 android:textSize="14sp"
@@ -161,7 +161,7 @@
                     android:id="@+id/tvConclusion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Safe — No action needed"
+                    android:text="@string/safe_no_action_needed"
                     android:fontFamily="@font/poppins_semibold"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
@@ -181,7 +181,7 @@
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Edit Notes"
+                    android:text="@string/edit_notes"
                     android:textColor="@color/medium_sky_blue"
                     android:fontFamily="@font/poppins_medium"
                     app:cornerRadius="50dp"/>
@@ -191,7 +191,7 @@
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Delete"
+                    android:text="@string/delete_history"
                     android:textColor="@color/deep_dark_blue"
                     android:fontFamily="@font/poppins_medium"
                     android:layout_marginStart="8dp"
