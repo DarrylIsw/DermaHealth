@@ -16,10 +16,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.example.dermahealth.helper.BackHandler
 
 class HistoryFragment : Fragment(), BackHandler {
-    override fun onBackPressed(): Boolean {
-        // nothing special to handle → just return false
-        return false
-    }
+    override fun onBackPressed(): Boolean = false
+
     private lateinit var rvHistory: RecyclerView
     private val scanList = mutableListOf<ScanHistory>()
 
@@ -31,14 +29,29 @@ class HistoryFragment : Fragment(), BackHandler {
         rvHistory = view.findViewById(R.id.rv_history)
 
         // Dummy data
-        scanList.add(ScanHistory(1, R.drawable.ic_launcher_foreground, "Benign", "Sep 24, 2025", "Looks fine, monitor"))
-        scanList.add(ScanHistory(2, R.drawable.ic_launcher_foreground, "Suspicious", "Sep 20, 2025", "Visit dermatologist soon"))
+        scanList.add(
+            ScanHistory(
+                id = 1,
+                imageRes = R.drawable.ic_launcher_foreground,
+                result = "Benign",
+                date = "Sep 24, 2025",
+                notes = "Looks fine, monitor"
+            )
+        )
+        scanList.add(
+            ScanHistory(
+                id = 2,
+                imageRes = R.drawable.ic_launcher_foreground,
+                result = "Suspicious",
+                date = "Sep 20, 2025",
+                notes = "Visit dermatologist soon"
+            )
+        )
 
         val adapter = HistoryAdapter(
             scans = scanList,
             onEdit = { scan ->
-                Toast.makeText(requireContext(), "Edit notes: ${scan.result}", Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(requireContext(), "Edit notes: ${scan.result}", Toast.LENGTH_SHORT).show()
             },
             onDelete = { scan ->
                 AlertDialog.Builder(requireContext())
@@ -56,6 +69,5 @@ class HistoryFragment : Fragment(), BackHandler {
 
         rvHistory.layoutManager = LinearLayoutManager(requireContext())
         rvHistory.adapter = adapter
-
     }
 }
