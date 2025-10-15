@@ -34,7 +34,7 @@
 
             <!-- Avatar -->
             <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/img_avatar"
+                android:id="@+id/img_avatar_main"
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:layout_centerHorizontal="true"
@@ -47,11 +47,11 @@
 
             <!-- Tombol Edit Avatar -->
             <ImageButton
-                android:id="@+id/btn_edit_avatar"
+                android:id="@+id/btn_edit_avatar_main"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_alignEnd="@id/img_avatar"
-                android:layout_alignBottom="@id/img_avatar"
+                android:layout_alignEnd="@id/img_avatar_main"
+                android:layout_alignBottom="@id/img_avatar_main"
                 android:layout_marginEnd="4dp"
                 android:layout_marginBottom="4dp"
                 android:background="@drawable/bg_circle_primary"
@@ -59,7 +59,7 @@
                 android:scaleType="centerInside"
                 android:padding="6dp"
                 android:contentDescription="Edit Avatar"
-                android:tint="@null"
+                app:tint="@null"
                 android:elevation="8dp" />
 
             <!-- Nama -->
@@ -67,7 +67,7 @@
                 android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/img_avatar"
+                android:layout_below="@id/img_avatar_main"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="14dp"
                 android:text="John Doe"
@@ -226,7 +226,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <TextView

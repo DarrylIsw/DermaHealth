@@ -1,84 +1,142 @@
 package com.example.dermahealth.adapter
 
+import android.os.Build
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.dermahealth.R
 import com.example.dermahealth.data.ScanHistory
+import com.example.dermahealth.databinding.ItemHistoryBinding
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class HistoryAdapter(
-    private val scans: MutableList<ScanHistory>,
     private val onEdit: (ScanHistory) -> Unit,
-    private val onDelete: (ScanHistory) -> Unit
-) : RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder>() {
+    private val onDelete: (ScanHistory) -> Unit,
+    private val onToggleExpand: (position: Int, expanded: Boolean) -> Unit
+) : ListAdapter<ScanHistory, HistoryAdapter.VH>(DIFF) {
 
-    inner class HistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val ivScan: ImageView = itemView.findViewById(R.id.iv_scan)
-        val tvResult: TextView = itemView.findViewById(R.id.tv_result)
-        val tvDate: TextView = itemView.findViewById(R.id.tv_date)
-        val tvNotes: TextView = itemView.findViewById(R.id.tv_notes)
-        val btnExpand: ImageView = itemView.findViewById(R.id.btn_expand)
-        val expandable: LinearLayout = itemView.findViewById(R.id.expandable_section)
-        val btnEdit: Button = itemView.findViewById(R.id.btn_edit)
-        val btnDelete: Button = itemView.findViewById(R.id.btn_delete)
-
-        // Extra detail views
-        val tvConfidence: TextView = itemView.findViewById(R.id.tvConfidence)
-        val tvAnalysis: TextView = itemView.findViewById(R.id.tvAnalysis)
-        val tvConclusion: TextView = itemView.findViewById(R.id.tvConclusion)
-        val ivStatusIcon: ImageView = itemView.findViewById(R.id.ivStatusIcon)
-        val conclusionBox: LinearLayout = itemView.findViewById(R.id.conclusionBox)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_history, parent, false)
-        return HistoryViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
-        val scan = scans[position]
-
-        // --- Basic info ---
-        holder.ivScan.setImageResource(scan.imageRes)
-        holder.tvResult.text = "Result: ${scan.result}"
-        holder.tvDate.text = "Date: ${scan.date}"
-        holder.tvNotes.text = "Notes: ${scan.notes}"
-
-        // --- Dynamic details based on scan result ---
-        if (scan.result == "Benign") {
-            holder.tvConfidence.text = "Detection Confidence: 92%"
-            holder.tvAnalysis.text =
-                "The lesion appears smooth and consistent in color, indicating a benign pattern."
-            holder.tvConclusion.text = "Safe — No action needed"
-            holder.conclusionBox.setBackgroundResource(R.drawable.bg_conclusion_safe)
-            holder.ivStatusIcon.setImageResource(R.drawable.ic_check_circle)
-        } else {
-            holder.tvConfidence.text = "Detection Confidence: 68%"
-            holder.tvAnalysis.text =
-                "Irregular edges and uneven coloration suggest a suspicious lesion pattern."
-            holder.tvConclusion.text = "Warning — Visit dermatologist soon"
-            holder.conclusionBox.setBackgroundResource(R.drawable.bg_conclusion_danger)
-            holder.ivStatusIcon.setImageResource(R.drawable.ic_warning)
+    companion object {
+        private val DIFF = object : DiffUtil.ItemCallback<ScanHistory>() {
+            override fun areItemsTheSame(old: ScanHistory, new: ScanHistory) = old.id == new.id
+            override fun areContentsTheSame(old: ScanHistory, new: ScanHistory) = old == new
         }
 
-        // --- Expandable section ---
-        var expanded = false
-        holder.btnExpand.setOnClickListener {
-            expanded = !expanded
-            holder.expandable.visibility = if (expanded) View.VISIBLE else View.GONE
-            holder.btnExpand.animate().rotation(if (expanded) 180f else 0f).setDuration(200).start()
-        }
+        // Date formatters — safe for Android O and above
+        @RequiresApi(Build.VERSION_CODES.O)
+        private val IN_FMT = DateTimeFormatter.ISO_LOCAL_DATE
 
-        // --- Buttons ---
-        holder.btnEdit.setOnClickListener { onEdit(scan) }
-        holder.btnDelete.setOnClickListener { onDelete(scan) }
+        @RequiresApi(Build.VERSION_CODES.O)
+        private val OUT_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
+
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun prettyDate(iso: String?): String = runCatching {
+            if (iso.isNullOrBlank()) return@runCatching "Unknown"
+            LocalDate.parse(iso, IN_FMT).format(OUT_FMT)
+        }.getOrElse { iso ?: "Unknown" }
     }
 
-    override fun getItemCount(): Int = scans.size
+    inner class VH(val b: ItemHistoryBinding) : RecyclerView.ViewHolder(b.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = ItemHistoryBinding.inflate(inflater, parent, false)
+        return VH(binding)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val item = getItem(position)
+        val b = holder.b
+        val context = b.root.context
+
+        // --- 🖼️ Load Images (safe fallback and rounded corners)
+        if (!item.imageUrl.isNullOrBlank()) {
+            b.ivScan.load(item.imageUrl) {
+                crossfade(true)
+                transformations(RoundedCornersTransformation(12f))
+                error(R.drawable.dummy_melanoma)
+                placeholder(R.drawable.dummy_melanoma)
+            }
+        }
+
+        b.ivCropped.load(item.croppedUrl ?: R.drawable.bg_image_placeholder) {
+            crossfade(true)
+            transformations(RoundedCornersTransformation(12f))
+            error(R.drawable.bg_image_placeholder)
+            placeholder(R.drawable.bg_image_placeholder)
+        }
+
+        // --- 📝 Texts
+        b.tvNotes.text = item.notes.ifBlank { "No notes provided." }
+        b.tvDate.text = prettyDate(item.dateIso)
+
+        // --- 🩺 Result Chip
+        b.chipResult.text = item.result
+        val colorRes = when (item.result.lowercase()) {
+            "benign" -> R.color.chip_benign
+            "suspicious" -> R.color.chip_suspicious
+            "malignant" -> R.color.chip_malignant
+            else -> R.color.chip_neutral
+        }
+        b.chipResult.setChipBackgroundColorResource(colorRes)
+
+        // --- 🧠 Dynamic Conclusion Section
+        when (item.result.lowercase()) {
+            "benign" -> {
+                b.conclusionBox.setBackgroundResource(R.drawable.bg_conclusion_safe)
+                b.tvConclusion.text = "Safe — No action needed"
+                b.ivStatusIcon.setImageResource(R.drawable.ic_check_circle)
+            }
+            "suspicious" -> {
+                b.conclusionBox.setBackgroundResource(R.drawable.bg_conclusion_warning)
+                b.tvConclusion.text = "Potential issue — Monitor closely"
+                b.ivStatusIcon.setImageResource(R.drawable.ic_warning)
+            }
+            "malignant" -> {
+                b.conclusionBox.setBackgroundResource(R.drawable.bg_conclusion_danger)
+                b.tvConclusion.text = "Danger — Seek medical attention"
+                b.ivStatusIcon.setImageResource(R.drawable.ic_error)
+            }
+            "neutral" -> {
+                b.conclusionBox.setBackgroundResource(R.drawable.bg_conclusion_neutral)
+                b.tvConclusion.text = "Normal — No abnormality detected"
+                b.ivStatusIcon.setImageResource(R.drawable.ic_info)
+            }
+            else -> {
+                // Default fallback
+                b.conclusionBox.setBackgroundResource(R.drawable.bg_conclusion_neutral)
+                b.tvConclusion.text = "No abnormality detected"
+                b.ivStatusIcon.setImageResource(R.drawable.ic_info)
+            }
+        }
+
+        // --- 🔽 Expand / Collapse
+        b.expandable.isVisible = item.isExpanded
+        b.btnExpand.animate().rotation(if (item.isExpanded) 180f else 0f).setDuration(150).start()
+
+        b.btnExpand.setOnClickListener {
+            val idx = holder.bindingAdapterPosition.takeIf { it != RecyclerView.NO_POSITION } ?: return@setOnClickListener
+
+            val newList = currentList.toMutableList()
+            val current = newList[idx]
+            val updated = current.copy(isExpanded = !current.isExpanded)
+            newList[idx] = updated
+
+            submitList(newList) {
+                onToggleExpand(idx, updated.isExpanded)
+            }
+        }
+
+        // --- ✏️ Actions
+        b.btnEdit.setOnClickListener { onEdit(item) }
+        b.btnDelete.setOnClickListener { onDelete(item) }
+    }
+
 }

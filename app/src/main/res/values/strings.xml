@@ -11,6 +11,17 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="profile_avatar">Profile Avatar</string>
+
+    <string name="history_empty">No scan history yet.\nYour records will appear here.</string>
+    <string name="cd_history_thumbnail">Scan thumbnail</string>
+    <string name="cd_cropped_area">Cropped lesion area</string>
+    <string name="cd_expand">Expand or collapse</string>
+    <string name="delete_scan_title">Delete Scan</string>
+    <string name="delete_scan_msg">Are you sure you want to delete this scan?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="scan_deleted">Scan deleted</string>
+    <string name="undo">Undo</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="history_title">Scan History</string>
     <string name="history_header_info">Review your past skin scan results below</string>
@@ -75,4 +86,6 @@
     <string name="_08_00_am">08:00 AM</string>
     <string name="edit_routine">Edit Routine</string>
     <string name="add_additional_comment">Add additional comment</string>
+    <string name="no_history_yet">No history yet</string>
+    <string name="history_empty_message">Your scan history will appear here once you perform a skin analysis.</string>
 </resources>

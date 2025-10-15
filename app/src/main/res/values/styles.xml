@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <style name="Shape.Round12" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
     <!-- Disable Material3 bottom nav active indicator -->
     <style name="NoActiveIndicator">
         <item name="android:color">@android:color/transparent</item>
@@ -28,6 +33,5 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
-
 
 </resources>
