@@ -4,304 +4,237 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_light"
-    android:padding="8dp">
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
-        <!-- ========== HEADER ========== -->
-        <LinearLayout
+        <!-- ================= HEADER ================= -->
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="16dp"
-            android:background="@drawable/bg_tip_header"
-            android:layout_marginTop="8dp"
-            android:elevation="2dp">
+            android:layout_height="350dp"
+            android:background="@drawable/bg_flat_header"
+            android:gravity="center_horizontal"
+            android:paddingBottom="24dp">
 
-            <!-- Bagian kiri -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+            <!-- Avatar -->
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/img_avatar"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="70dp"
+                android:src="@drawable/ic_person"
+                app:civ_border_width="3dp"
+                app:civ_border_color="@android:color/white"
+                android:scaleType="centerCrop"
+                android:contentDescription="Profile Avatar" />
 
-                <TextView
-                    android:id="@+id/tv_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="John Doe"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
+            <!-- Tombol Edit Avatar -->
+            <ImageButton
+                android:id="@+id/btn_edit_avatar"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignEnd="@id/img_avatar"
+                android:layout_alignBottom="@id/img_avatar"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_circle_primary"
+                android:src="@drawable/camera"
+                android:scaleType="centerInside"
+                android:padding="6dp"
+                android:contentDescription="Edit Avatar"
+                android:tint="@null"
+                android:elevation="8dp" />
 
-                <TextView
-                    android:id="@+id/tv_email"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="john.doe@email.com"
-                    android:textSize="14sp"
-                    android:textColor="@color/black"
-                    android:layout_marginTop="4dp" />
-
-                <TextView
-                    android:id="@+id/tv_mobile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="+62 812-3456-7890"
-                    android:textSize="14sp"
-                    android:textColor="@color/black"
-                    android:layout_marginTop="2dp" />
-            </LinearLayout>
-
-
-            <!-- Bagian kanan -->
-            <RelativeLayout
+            <!-- Nama -->
+            <TextView
+                android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp">
+                android:layout_below="@id/img_avatar"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="14dp"
+                android:text="John Doe"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="@android:color/white" />
 
-                <!-- Avatar dengan border -->
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/img_avatar"
-                    android:layout_width="90dp"
-                    android:layout_height="90dp"
-                    android:src="@drawable/ic_person"
-                    android:contentDescription="Profile Avatar"
-                    android:scaleType="centerCrop"
-                    app:civ_border_width="3dp"
-                    app:civ_border_color="@color/white"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginBottom="4dp" />
+            <!-- Nomor HP -->
+            <TextView
+                android:id="@+id/tv_mobile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_name"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="4dp"
+                android:text="+62 812-3456-7890"
+                android:textSize="14sp"
+                android:textColor="@android:color/white" />
 
-                <!-- Tombol Edit Avatar (kanan bawah avatar) -->
-                <ImageButton
-                    android:id="@+id/btn_edit_avatar"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_alignBottom="@id/img_avatar"
-                    android:layout_alignEnd="@id/img_avatar"
-                    android:layout_marginEnd="-12dp"
-                    android:layout_marginBottom="-6dp"
-                    android:background="@drawable/bg_circle_primary"
-                    android:src="@drawable/camera"
-                    android:scaleType="centerInside"
-                    android:padding="6dp"
-                    android:contentDescription="Edit Avatar"
-                    android:tint="@null" />
+            <!-- Tombol Edit Profile -->
+            <Button
+                android:id="@+id/btn_edit_profile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_mobile"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="18dp"
+                android:text="Edit Profile"
+                android:textColor="@color/black"
+                android:textSize="13sp"
+                android:backgroundTint="@android:color/white"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="8dp"
+                android:elevation="6dp" />
+        </RelativeLayout>
 
-                <!-- Tombol Edit Profile (lebih ke bawah) -->
-                <Button
-                    android:id="@+id/btn_edit_profile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Edit Profile"
-                    android:textColor="@android:color/black"
-                    android:textSize="13sp"
-                    android:backgroundTint="@color/white"
-                    android:layout_below="@id/img_avatar"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="16dp"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="4dp"
-                    style="@style/Widget.MaterialComponents.Button" />
-            </RelativeLayout>
-        </LinearLayout>
-
-        <!-- ========== CARD INFORMASI ========== -->
+        <!-- ================= BAGIAN BAWAH DENGAN ROUNDED BACKGROUND ================= -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:layout_marginTop="8dp">
+            android:background="@drawable/bg_rounded_top_white"
+            android:paddingTop="24dp"
+            android:paddingHorizontal="20dp"
+            android:layout_marginTop="-10dp">
 
-            <!-- AGE -->
+            <!-- CARD: Email -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
                 android:backgroundTint="@android:color/white"
-                android:paddingVertical="30dp"
-                android:paddingHorizontal="20dp">
+                app:cardCornerRadius="14dp"
+                app:cardElevation="3dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/agealt"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
-                        android:tint="@null" />
-
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tv_email"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:text="john.doe@email.com"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tv_age"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Age"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:id="@+id/tv_age_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="24"
-                            android:textColor="@color/text_primary"
-                            android:textSize="24sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Email"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- SCANS -->
+            <!-- CARD: Age -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
                 android:backgroundTint="@android:color/white"
-                android:paddingVertical="30dp"
-                android:paddingHorizontal="20dp">
+                app:cardCornerRadius="14dp"
+                app:cardElevation="3dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/qrscan"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
-                        android:tint="@null" />
-
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tv_age_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:text="24"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tv_scans"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Scans"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:id="@+id/tv_scans_value"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="12"
-                            android:textColor="@color/text_primary"
-                            android:textSize="24sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Age"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- SCORE -->
+            <!-- CARD: Score -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
                 android:backgroundTint="@android:color/white"
-                android:paddingVertical="30dp"
-                android:paddingHorizontal="20dp">
+                app:cardCornerRadius="14dp"
+                app:cardElevation="3dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/score"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
-                        android:tint="@null" />
+                    <TextView
+                        android:id="@+id/tv_score_percentage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Score: 89/100"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
-                    <LinearLayout
+                    <ProgressBar
+                        android:id="@+id/score_progress"
+                        style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tv_score"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Score"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="16sp" />
-
-                        <ProgressBar
-                            android:id="@+id/score_progress"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="match_parent"
-                            android:layout_height="8dp"
-                            android:layout_marginTop="10dp"
-                            android:progress="89"
-                            android:max="100"
-                            android:progressTint="@color/medium_sky_blue"
-                            android:backgroundTint="@color/progress_bg_light" />
-
-                        <TextView
-                            android:id="@+id/tv_score_percentage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Score: 89/100"
-                            android:textSize="12sp"
-                            android:textColor="@color/text_secondary"
-                            android:layout_marginTop="6dp" />
-                    </LinearLayout>
+                        android:layout_height="8dp"
+                        android:layout_marginTop="10dp"
+                        android:progress="89"
+                        android:max="100"
+                        android:progressTint="@color/medium_sky_blue"
+                        android:backgroundTint="@color/progress_bg_light" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- ================= BOTTOM BUTTONS ================= -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="30dp">
+
+                <Button
+                    android:id="@+id/btn_logout"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:text="Logout"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/medium_sky_blue"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_marginBottom="10dp" />
+
+                <Button
+                    android:id="@+id/btn_delete_account"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:text="Delete Account"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/danger_red"
+                    style="@style/Widget.MaterialComponents.Button" />
+            </LinearLayout>
         </LinearLayout>
-
-        <!-- ========== TOMBOL BAWAH ========== -->
-        <Button
-            android:id="@+id/btn_logout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Logout"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/medium_sky_blue"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
-            style="@style/Widget.MaterialComponents.Button" />
-
-        <Button
-            android:id="@+id/btn_delete_account"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Delete Account"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/danger_red"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="10dp"
-            style="@style/Widget.MaterialComponents.Button" />
     </LinearLayout>
 </ScrollView>
