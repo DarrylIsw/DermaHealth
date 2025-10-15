@@ -5,7 +5,7 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
+import androidx.activity.OnBackPressedCallback
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultCallback
@@ -24,6 +25,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import com.yalantis.ucrop.UCrop
@@ -32,9 +34,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.example.dermahealth.helper.BackHandler
 
-class ScanFragment : Fragment() {
 
+class ScanFragment : Fragment(), BackHandler {
+    override fun onBackPressed(): Boolean {
+        // nothing special to handle → just return false
+        return false
+    }
     private lateinit var previewView: PreviewView
     private lateinit var btnTake: MaterialCardView
     private lateinit var btnGallery: MaterialCardView
@@ -101,6 +108,9 @@ class ScanFragment : Fragment() {
         btnSaveHistory = view.findViewById(R.id.btn_save_history)
         ivCropped = view.findViewById(R.id.iv_cropped)
         croppedCard = view.findViewById(R.id.card_cropped_preview)
+        val infoCard = view.findViewById<MaterialCardView>(R.id.btn_info_dropdown)
+        val infoContent = view.findViewById<LinearLayout>(R.id.info_content_container)
+        val arrow = view.findViewById<ImageView>(R.id.iv_dropdown_arrow)
 
         // Permission launcher
         requestPermissionLauncher = registerForActivityResult(
@@ -157,6 +167,23 @@ class ScanFragment : Fragment() {
                         // undo logic if needed
                     }.show()
                 // In real app: persist to database/storage
+            }
+        }
+
+        infoCard.setOnClickListener {
+            if (infoContent.visibility == View.GONE) {
+                // expand with fade-in
+                infoContent.visibility = View.VISIBLE
+                infoContent.alpha = 0f
+                infoContent.animate().alpha(1f).setDuration(250).start()
+                // rotate arrow
+                arrow.animate().rotation(180f).setDuration(250).start()
+            } else {
+                // collapse
+                infoContent.animate().alpha(0f).setDuration(250).withEndAction {
+                    infoContent.visibility = View.GONE
+                }.start()
+                arrow.animate().rotation(0f).setDuration(250).start()
             }
         }
 

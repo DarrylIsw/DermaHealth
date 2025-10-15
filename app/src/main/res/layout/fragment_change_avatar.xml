@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light">
+
+    <!-- ================= HEADER ================= -->
+    <RelativeLayout
+        android:id="@+id/header_section"
+        android:layout_width="match_parent"
+        android:layout_height="350dp"
+        android:background="@drawable/bg_flat_header"
+        android:paddingTop="40dp"
+        android:paddingHorizontal="20dp">
+
+        <!-- Tombol back -->
+        <LinearLayout
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/outline_arrow_back_ios_24"
+                android:tint="@android:color/white"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Change Avatar"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <!-- Avatar di tengah header -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/img_preview"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_person"
+            android:scaleType="centerCrop"
+            android:backgroundTint="@color/background_light"
+            app:shapeAppearanceOverlay="@style/CircularImageView"
+            app:strokeColor="@color/white"
+            app:strokeWidth="3dp" />
+    </RelativeLayout>
+
+    <!-- ================= BAGIAN BAWAH DENGAN ROUNDED BACKGROUND ================= -->
+    <LinearLayout
+        android:id="@+id/content_section"
+        android:layout_below="@id/header_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_rounded_top_white"
+        android:paddingTop="24dp"
+        android:paddingHorizontal="20dp"
+        android:layout_marginTop="-10dp"
+        android:gravity="center_horizontal">
+
+        <!-- Tombol pilih foto -->
+        <Button
+            android:id="@+id/btn_choose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose Photo"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/medium_sky_blue"
+            android:textColor="@android:color/white" />
+
+        <!-- Tombol simpan -->
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="@color/medium_sky_blue"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+</RelativeLayout>

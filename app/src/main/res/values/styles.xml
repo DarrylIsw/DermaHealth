@@ -5,3 +5,34 @@
         <item name="cornerSize">12dp</item>
     </style>
 </resources>
+
+    <!-- Disable Material3 bottom nav active indicator -->
+    <style name="NoActiveIndicator">
+        <item name="android:color">@android:color/transparent</item>
+        <item name="android:alpha">0</item>
+    </style>
+
+    <style name="CustomTimePickerDialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <!-- Background color -->
+        <item name="colorSurface">@color/white</item>
+        <!-- Header / selected time -->
+        <item name="colorPrimary">@color/medium_sky_blue</item>
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColorSecondary">@color/black</item>
+        <!-- OK/Cancel buttons -->
+        <item name="buttonBarPositiveButtonStyle">@style/CustomTimePickerButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/CustomTimePickerButton</item>
+    </style>
+
+    <style name="CustomTimePickerButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/medium_sky_blue</item>
+    </style>
+
+    <style name="CircularImageView">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+
+</resources>

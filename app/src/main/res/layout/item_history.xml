@@ -4,98 +4,174 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="8dp"
+    android:layout_marginVertical="10dp"
+    android:layout_marginHorizontal="6dp"
+    android:padding="4dp"
     app:cardCornerRadius="20dp"
-    app:cardUseCompatPadding="true"
-    app:strokeColor="?attr/colorOutline"
-    app:strokeWidth="1dp">
+    app:cardElevation="8dp"
+    android:animateLayoutChanges="true"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/light_grey_white3"
+    android:backgroundTint="@android:color/white">
 
     <LinearLayout
         android:id="@+id/rootRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="14dp">
+        android:padding="16dp">
 
-        <!-- HEADER ROW -->
+        <!-- Header Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- Thumbnail -->
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/ivScan"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
+            <ImageView
+                android:id="@+id/iv_scan"
+                android:layout_width="85dp"
+                android:layout_height="85dp"
                 android:scaleType="centerCrop"
-                android:contentDescription="@string/cd_history_thumbnail"
-                app:shapeAppearanceOverlay="@style/Shape.Round12" />
+                app:srcCompat="@drawable/dummy_melanoma"
+                android:clipToOutline="true"
+                android:layout_marginEnd="16dp" />
+
 
             <!-- Texts -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
+                android:orientation="vertical">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipResult"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Benign"
-                    style="@style/Widget.Material3.Chip.Assist.Elevated" />
+                    android:text="@string/result_benign"
+                    android:textStyle="bold"
+                    android:textSize="17sp"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:textColor="@color/deep_dark_blue"/>
 
                 <TextView
                     android:id="@+id/tvDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Sep 24, 2025"
-                    android:textAppearance="?attr/textAppearanceBodySmall" />
+                    android:text="@string/date_dummy"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/inter"
+                    android:textColor="#666"/>
 
                 <TextView
                     android:id="@+id/tvNotes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Looks fine, monitor"
+                    android:text="@string/notes_monitor_regularly"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/inter"
+                    android:textColor="#666"
                     android:ellipsize="end"
                     android:maxLines="1"
                     android:textAppearance="?attr/textAppearanceBodyMedium" />
             </LinearLayout>
 
-            <!-- Expand button -->
-            <ImageButton
-                android:id="@+id/btnExpand"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:padding="8dp"
-                android:contentDescription="@string/cd_expand"
-                style="?attr/borderlessButtonStyle"
-                app:tint="#3478F6"
-                app:srcCompat="@drawable/ic_expand_more" />
+            <ImageView
+                android:id="@+id/btn_expand"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/ic_expand_more"
+                android:contentDescription="@string/expand"
+                app:tint="@color/deep_dark_blue"
+                android:padding="4dp"/>
         </LinearLayout>
 
-        <!-- EXPANDABLE SECTION -->
+        <!-- Expandable Section -->
         <LinearLayout
             android:id="@+id/expandable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingTop="10dp"
-            android:visibility="gone">
+            android:visibility="gone"
+            android:animateLayoutChanges="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/result_details"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:fontFamily="@font/poppins_semibold"
+                android:textColor="@color/deep_dark_blue"
+                android:layout_marginBottom="8dp"/>
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivCropped"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:scaleType="centerCrop"
-                android:contentDescription="@string/cd_cropped_area"
-                app:shapeAppearanceOverlay="@style/Shape.Round12" />
+                android:src="@drawable/dummy_melanoma"
+                android:contentDescription="@string/cropped_scan_result"
+                android:layout_marginBottom="12dp"/>
 
+            <!-- Confidence -->
+            <TextView
+                android:id="@+id/tvConfidence"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/detection_confidence_92"
+                android:fontFamily="@font/inter_medium"
+                android:textColor="@color/deep_dark_blue"
+                android:textSize="15sp"
+                android:layout_marginBottom="6dp"/>
+
+            <!-- Short Analysis -->
+            <TextView
+                android:id="@+id/tvAnalysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/lesion_dummy"
+                android:fontFamily="@font/inter"
+                android:textColor="#555"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Conclusion Box -->
+            <LinearLayout
+                android:id="@+id/conclusionBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_conclusion_safe"
+                android:layout_marginBottom="10dp"
+                android:elevation="3dp"
+                android:clipToOutline="true">
+
+                <ImageView
+                    android:id="@+id/ivStatusIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@android:color/white"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvConclusion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/safe_no_action_needed"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:textSize="15sp"/>
+            </LinearLayout>
+
+            <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -104,22 +180,25 @@
                 android:paddingTop="10dp">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEdit"
+                    android:id="@+id/btn_edit"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:text="@string/edit_notes" />
+                    android:text="@string/edit_notes"
+                    android:textColor="@color/medium_sky_blue"
+                    android:fontFamily="@font/poppins_medium"
+                    app:cornerRadius="50dp"/>
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnDelete"
+                    android:id="@+id/btn_delete"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="@string/delete_history"
+                    android:textColor="@color/deep_dark_blue"
+                    android:fontFamily="@font/poppins_medium"
                     android:layout_marginStart="8dp"
-                    style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
-                    android:text="@string/delete"
-                    app:backgroundTint="?attr/colorErrorContainer"
-                    app:iconTint="?attr/colorOnErrorContainer"
-                    android:textColor="?attr/colorOnErrorContainer" />
+                    app:cornerRadius="50dp"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

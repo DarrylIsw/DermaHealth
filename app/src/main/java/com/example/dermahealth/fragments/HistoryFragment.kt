@@ -16,8 +16,10 @@ import com.example.dermahealth.data.ScanHistory
 import com.example.dermahealth.databinding.FragmentHistoryBinding
 import com.example.dermahealth.ui.SwipeActionsCallback
 import com.google.android.material.snackbar.Snackbar
+import com.example.dermahealth.helper.BackHandler
 
-class HistoryFragment : Fragment() {
+class HistoryFragment : Fragment(), BackHandler {
+    override fun onBackPressed(): Boolean = false
 
     private var _b: FragmentHistoryBinding? = null
     private val b get() = _b!!

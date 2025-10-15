@@ -1,11 +1,16 @@
 package com.example.dermahealth
 
+import kotlinx.coroutines.*
+import androidx.lifecycle.lifecycleScope
 import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import com.example.dermahealth.helper.BackHandler
+import androidx.core.view.isVisible
 import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -23,12 +28,39 @@ import android.view.animation.AnimationUtils
 import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
 import androidx.core.view.children
+import androidx.core.widget.NestedScrollView
 import androidx.viewpager2.widget.CompositePageTransformer
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.math.roundToInt
+import android.animation.ObjectAnimator
+import android.app.TimePickerDialog
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
+import android.util.Log
+import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ProgressBar
+import androidx.recyclerview.widget.GridLayoutManager
+import com.example.dermahealth.adapter.ProductAdapter
+import com.example.dermahealth.adapter.RoutineAdapter
+import com.example.dermahealth.api.RetrofitInstanceMakeup
+import com.example.dermahealth.api.RetrofitInstanceOBF
+import com.example.dermahealth.data.Product
+import com.example.dermahealth.data.Routine
+import com.example.dermahealth.databinding.FragmentHomeBinding
+import androidx.recyclerview.widget.ItemTouchHelper
+import com.example.dermahealth.helper.SwipeToDeleteCallback
+import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import java.util.Calendar
 
-class HomeFragment : Fragment() {
+
+class HomeFragment : Fragment(), BackHandler {
 
     private lateinit var cpSkin: CircularProgressIndicator
     private lateinit var tvScore: TextView
@@ -43,6 +75,27 @@ class HomeFragment : Fragment() {
     private var currentPage = 0
     private val carouselHandler = Handler(Looper.getMainLooper())
     private lateinit var carouselRunnable: Runnable
+    private var fabScrollDown: FloatingActionButton? = null
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
+    private lateinit var rvProducts: RecyclerView
+    private lateinit var productAdapter: ProductAdapter
+    private var refreshJob: Job? = null
+    private val refreshIntervalMs = 20000L // 15 seconds
+    private var isActive = true
+    private var makeupRefreshJob: Job? = null
+    private val makeupRefreshIntervalMs = 20000L // 15 seconds
+    private lateinit var rvMakeup: RecyclerView
+    private lateinit var makeupAdapter: ProductAdapter
+    private lateinit var overlay: FrameLayout
+    private lateinit var blurBackground: View
+    private lateinit var card: MaterialCardView
+    // --- Routine overlay fields ---
+    private lateinit var etName: EditText
+    private lateinit var etTime: EditText
+    private lateinit var etComment: EditText
+    private lateinit var btnSave: Button
+    private lateinit var btnCancel: Button
 
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
     private val carouselImages: List<Int> = listOf(
@@ -64,20 +117,34 @@ class HomeFragment : Fragment() {
     private val tipInterval = 5000L // 5 seconds
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val root = inflater.inflate(R.layout.fragment_home, container, false)
+    ): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        val root = binding.root
 
+        // keep your existing findViewById code (if views aren’t yet migrated to binding)
         vpCarousel = root.findViewById(R.id.vp_carousel)
-        nestedScroll = root.findViewById(R.id.nested_scroll /* if you gave id, else use root as NestedScrollView variable*/)
+        nestedScroll = root.findViewById(R.id.nested_scroll)
         rvRoutines = root.findViewById(R.id.rv_routines)
 
-        // initialize carousel + animations
+        // your original functionality
         setupCarousel()
         setupScrollAnimations(root)
+        fetchProductsPeriodically()
+        fetchMakeupProductsPeriodically()
 
         return root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        handler.removeCallbacksAndMessages(null) // stop tip rotation
+        isActive = false
+        refreshJob?.cancel()
+        fabScrollDown?.hide()
+        _binding = null // ✅ safely clear binding
     }
 
     private fun setupCarousel() {
@@ -155,31 +222,32 @@ class HomeFragment : Fragment() {
         return (dp * density).roundToInt()
     }
 
+    private fun animateProgressBar(progressBar: ProgressBar, target: Int, duration: Long = 1200L) {
+        ObjectAnimator.ofInt(progressBar, "progress", 0, target).apply {
+            interpolator = DecelerateInterpolator()
+            this.duration = duration
+            start()
+        }
+    }
     private fun setupScrollAnimations(root: View) {
-        // load animation
         val fadeUp = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_up)
-
-        // if nestedScroll not found by id, fallback find
-        val nsv = root as? androidx.core.widget.NestedScrollView ?: root.findViewById(android.R.id.content)
-
-        // We will monitor scroll changes on NestedScrollView and animate children when they become visible.
-        val nested = if (nsv is androidx.core.widget.NestedScrollView) nsv else nestedScroll
+        val nested = root.findViewById<NestedScrollView>(R.id.nested_scroll) ?: return
 
         nested.setOnScrollChangeListener { _, _, _, _, _ ->
-            // animate direct children of the LinearLayout inside nested scroll (the main column)
+            // animate direct children of the LinearLayout inside NestedScrollView
             val mainLinear = nested.getChildAt(0) as? ViewGroup ?: return@setOnScrollChangeListener
             for (child in mainLinear.children) {
                 if (child.visibility == View.VISIBLE && child.tag != "animated" && isViewVisibleOnScreen(child)) {
                     child.startAnimation(fadeUp)
-                    child.tag = "animated" // prevent reanimation if you don't want repeated animations
+                    child.tag = "animated"
                 }
             }
 
-            // animate visible children in RecyclerView (for items)
+            // animate visible children in RecyclerView
             if (::rvRoutines.isInitialized) {
-                val layoutManager = rvRoutines.layoutManager ?: return@setOnScrollChangeListener
-                val first = (rvRoutines.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager)?.findFirstVisibleItemPosition() ?: -1
-                val last = (rvRoutines.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager)?.findLastVisibleItemPosition() ?: -1
+                val lm = rvRoutines.layoutManager as? LinearLayoutManager ?: return@setOnScrollChangeListener
+                val first = lm.findFirstVisibleItemPosition()
+                val last = lm.findLastVisibleItemPosition()
                 if (first >= 0 && last >= first) {
                     for (i in first..last) {
                         val child = rvRoutines.findViewHolderForAdapterPosition(i)?.itemView
@@ -192,10 +260,10 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // initial trigger so top content animates on first draw
+        // initial trigger
         nested.post {
             nested.scrollTo(0, 0)
-            nested.scrollBy(0, 1) // tiny scroll to fire listener
+            nested.scrollBy(0, 1)
         }
     }
 
@@ -230,51 +298,239 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        cpSkin = view.findViewById(R.id.cp_skin)
-        tvScore = view.findViewById(R.id.tv_skin_score)
+        // --- Progress Bars (Right-side) ---
+        val pbUv = view.findViewById<ProgressBar>(R.id.pb_uv)
+        val pbHumidity = view.findViewById<ProgressBar>(R.id.pb_humidity)
+        val pbPollution = view.findViewById<ProgressBar>(R.id.pb_pollution)
+
+        // Dummy values (replace with API results)
+        val uvValue = 6       // range 0–11+
+        val humidityValue = 72 // percentage
+        val pollutionValue = 130 // AQI
+
+        // --- Core Views ---
         rvRoutines = view.findViewById(R.id.rv_routines)
         btnAddRoutine = view.findViewById(R.id.btn_add_routine)
+        nestedScroll = view.findViewById(R.id.nested_scroll)
+        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
 
-        // Tip of the Day views
+        // Skin views
+        cpSkin = view.findViewById(R.id.cp_skin)
+        tvScore = view.findViewById(R.id.tv_skin_score)
+
+        // Tip of the Day
         tvTip = view.findViewById(R.id.tv_tip)
         ivTipIcon = view.findViewById(R.id.iv_tip_icon)
 
-        // Initial tip
-        tvTip.text = tips[tipIndex]
+        // --- Overlay + Card (already in XML) ---
+        overlay = view.findViewById(R.id.addRoutineOverlay)
+        blurBackground = overlay.findViewById(R.id.blurBackground)
+        card = overlay.findViewById(R.id.card_add_routine)
 
-        // Start rotating tips
+        // --- EditTexts and Buttons inside the card ---
+        val etName = overlay.findViewById<EditText>(R.id.et_routine_name)
+        val etTime = overlay.findViewById<EditText>(R.id.et_routine_time)
+        val etComment = overlay.findViewById<EditText>(R.id.et_routine_comment)
+        val btnCancel = overlay.findViewById<Button>(R.id.btn_cancel_add)
+        val btnSave = overlay.findViewById<Button>(R.id.btn_save_add)
+        val tvTitle = overlay.findViewById<TextView>(R.id.tv_add_routine_title)
+
+
+        // --- Add Routine FAB ---
+// --- Add Routine FAB ---
+        btnAddRoutine.setOnClickListener {
+            tvTitle.text = "Add Routine"       // Reset title
+            etName.text.clear()
+            etTime.text.clear()
+            etComment.text.clear()
+            showAddRoutineCard()
+
+            // btnSave for adding
+            btnSave.setOnClickListener {
+                val title = etName.text.toString().trim()
+                val time = etTime.text.toString().trim()
+                val comment = etComment.text.toString().trim()
+
+                if (title.isEmpty() || time.isEmpty()) {
+                    Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
+                val newRoutine = Routine(id, title, time, note = if (comment.isBlank()) null else comment)
+                routineList.add(0, newRoutine)
+                adapter.notifyItemInserted(0)
+                rvRoutines.scrollToPosition(0)
+                hideAddRoutineCard()
+                clearOverlayFields()
+
+                Toast.makeText(requireContext(), "Routine added", Toast.LENGTH_SHORT).show()
+                hideAddRoutineCard()
+
+                // Clear inputs
+                etName.text.clear()
+                etTime.text.clear()
+                etComment.text.clear()
+            }
+        }
+
+        // --- Cancel button ---
+        btnCancel.setOnClickListener {
+            hideAddRoutineCard()
+        }
+
+        // --- Save button ---
+        btnSave.setOnClickListener {
+            val title = etName.text.toString().trim()
+            val time = etTime.text.toString().trim()
+            val comment = etComment.text.toString().trim() // <-- additional comment
+
+            if (title.isEmpty() || time.isEmpty()) {
+                Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
+            val newRoutine = Routine(id, title, time, note = if (comment.isBlank()) null else comment)
+            routineList.add(0, newRoutine)
+            adapter.notifyItemInserted(0)
+            rvRoutines.scrollToPosition(0)
+
+            Toast.makeText(requireContext(), "Routine added", Toast.LENGTH_SHORT).show()
+            hideAddRoutineCard()
+
+            // Clear inputs
+            etName.text.clear()
+            etTime.text.clear()
+            etComment.text.clear()
+        }
+
+
+        Log.d("DEBUG_OVERLAY", "overlay: $overlay")
+        Log.d("DEBUG_OVERLAY", "card: $card")
+        Log.d("DEBUG_OVERLAY", "etName: $etName, etTime: $etTime, etComment: $etComment")
+        Log.d("DEBUG_OVERLAY", "btnCancel: $btnCancel, btnSave: $btnSave")
+
+        // --- Dummy routines (only once) ---
+        if (routineList.isEmpty()) {
+            routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
+            routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
+            routineList.add(Routine(3, "Drink more water", "Throughout the day"))
+        }
+
+        // --- TimePicker listener (use same etTime) ---
+        etTime.setOnClickListener {
+            val cal = Calendar.getInstance()
+            val hour = cal.get(Calendar.HOUR_OF_DAY)
+            val minute = cal.get(Calendar.MINUTE)
+
+            // Use TimePickerDialog from Material 2
+            val timePicker = TimePickerDialog(
+                requireContext(),
+                R.style.CustomTimePickerDialog,
+                { _, selectedHour, selectedMinute ->
+                    val formatted = String.format("%02d.%02d", selectedHour, selectedMinute)
+                    etTime.setText(formatted)
+                },
+                hour,
+                minute,
+                true
+            )
+            timePicker.show()
+        }
+
+
+        // Animate progress bars
+        animateProgressBar(pbUv, uvValue)
+        animateProgressBar(pbHumidity, humidityValue)
+        animateProgressBar(pbPollution, pollutionValue)
+
+        // UV text animation
+        val tvUv = view.findViewById<TextView>(R.id.tv_uv_index)
+        tvUv.alpha = 0f
+        tvUv.text = "UV: $uvValue (High)"
+        tvUv.animate().alpha(1f).setDuration(800).setStartDelay(400).start()
+
+        // --- Scroll & FAB setup ---
+        nestedScroll.setOnScrollChangeListener { v: NestedScrollView, _, _, _, _ ->
+            val atBottom = !v.canScrollVertically(1)
+            if (atBottom) fabScrollDown?.hide() else fabScrollDown?.show()
+        }
+
+        fabScrollDown?.setOnClickListener {
+            nestedScroll.post {
+                nestedScroll.smoothScrollTo(0, nestedScroll.getChildAt(0).bottom)
+            }
+        }
+
+        // --- Tip of the Day ---
+        tvTip.text = tips[tipIndex]
         startTipRotation()
 
-        // Dummy routines
-        routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
-        routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
-        routineList.add(Routine(3, "Drink more water", "Throughout the day"))
-
-        // RecyclerView setup
+// --- RecyclerView Adapter for edit/delete ---
         adapter = RoutineAdapter(
             routineList,
             onEdit = { routine ->
-                Toast.makeText(requireContext(), "Edit: ${routine.title}", Toast.LENGTH_SHORT).show()
-                // TODO: open edit dialog later
+                // Populate overlay fields
+                tvTitle.text = "Edit Routine"
+                etName.setText(routine.title)
+                etTime.setText(routine.time)
+                etComment.setText(routine.note ?: "")
+
+                showAddRoutineCard()
+
+                // btnSave for editing
+                btnSave.setOnClickListener {
+                    val title = etName.text.toString().trim()
+                    val time = etTime.text.toString().trim()
+                    val comment = etComment.text.toString().trim()
+
+                    if (title.isEmpty() || time.isEmpty()) {
+                        Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    // Update routine object
+                    routine.title = title
+                    routine.time = time
+                    routine.note = if (comment.isBlank()) null else comment
+
+                    adapter.notifyItemChanged(routineList.indexOf(routine))
+                    hideAddRoutineCard()
+
+                    // Reset overlay title back to Add Routine
+                    tvTitle.text = "Add Routine"
+                }
             },
             onDelete = { routine ->
                 showDeleteConfirm(routine, adapter)
             }
         )
+
+        // --- RecyclerView setup ---
         rvRoutines.layoutManager = LinearLayoutManager(requireContext())
         rvRoutines.adapter = adapter
 
-        // Add routine button
-        btnAddRoutine.setOnClickListener {
-            val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
-            val newItem = Routine(id, "New routine $id", "Time")
-            routineList.add(0, newItem)
-            adapter.notifyItemInserted(0)
-            rvRoutines.scrollToPosition(0)
-            Toast.makeText(requireContext(), "Routine added (dummy)", Toast.LENGTH_SHORT).show()
+        // --- RecyclerView swipe to delete ---
+        val swipeToDeleteCallback = SwipeToDeleteCallback(requireContext(), adapter) { position ->
+            val routine = routineList[position]
+            adapter.removeAt(position)
+            Toast.makeText(requireContext(), "Deleted: ${routine.title}", Toast.LENGTH_SHORT).show()
         }
-        // Animate skin score
+        ItemTouchHelper(swipeToDeleteCallback).attachToRecyclerView(rvRoutines)
+
+        // --- Animate skin score ---
         animateSkinScore(85)
+        startAutoRefresh()
+    }
+
+    override fun onBackPressed(): Boolean {
+        return if (overlay.isVisible) {
+            hideAddRoutineCard() // close overlay
+            true
+        } else {
+            false
+        }
     }
 
     // --- Tip rotation with fade animation ---
@@ -300,7 +556,6 @@ class HomeFragment : Fragment() {
             }
         }, tipInterval)
     }
-
     private fun showDeleteConfirm(routine: Routine, adapter: RoutineAdapter) {
         AlertDialog.Builder(requireContext())
             .setMessage(getString(R.string.delete_confirm))
@@ -333,10 +588,362 @@ class HomeFragment : Fragment() {
         animator.start()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        handler.removeCallbacksAndMessages(null) // stop tip rotation safely
+//    private fun setupProductGrid(products: List<Product>) {
+//        val adapter = ProductAdapter(products)
+//        val layoutManager = GridLayoutManager(requireContext(), 2)
+//        binding.rvProducts.layoutManager = layoutManager
+//        binding.rvProducts.adapter = adapter
+//    }
+
+    private fun setupProductsRecyclerView(products: List<Product>) {
+        rvProducts = binding.rvProducts
+        productAdapter = ProductAdapter(products)
+        rvProducts.layoutManager = GridLayoutManager(requireContext(), 2)
+        rvProducts.adapter = productAdapter
     }
+
+    private fun setupMakeupRecycler(products: List<Product>) {
+        rvMakeup = binding.rvMakeup
+        makeupAdapter = ProductAdapter(products)
+        rvMakeup.layoutManager = GridLayoutManager(requireContext(), 2)
+        rvMakeup.adapter = makeupAdapter
+    }
+
+    private fun fetchProductsPeriodically() {
+        refreshJob?.cancel() // cancel previous if any
+
+        refreshJob = lifecycleScope.launch {
+            while (isActive) {
+                try {
+                    // Fetch next page
+                    val response = RetrofitInstanceOBF.api.getProducts(page = currentPage, pageSize = 10)
+
+                    // Convert API response to local Product model
+                    val convertedProducts = response.products.map {
+                        Product(
+                            name = it.name,
+                            brand = it.brand,
+                            imageUrl = it.imageUrl
+                        )
+                    }
+
+                    // Filter and format valid ones
+                    val filteredProducts = convertedProducts
+                        .filter { product ->
+                            val name = product.name?.trim().orEmpty()
+                            val validName = name.isNotEmpty() &&
+                                    !name.matches(Regex("^\\d+$")) &&
+                                    name.lowercase() != "null"
+                            val hasImage = !product.imageUrl.isNullOrEmpty()
+                            validName && hasImage
+                        }
+                        .map { product ->
+                            val formattedName = product.name?.lowercase()
+                                ?.split(" ")
+                                ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                                ?: "Unnamed Product"
+
+                            val formattedBrand = product.brand?.lowercase()
+                                ?.split(" ")
+                                ?.joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+                                ?: "Unknown Brand"
+
+                            product.copy(name = formattedName, brand = formattedBrand)
+                        }
+
+                    // ✅ Limit to 4 valid products only
+                    val limitedProducts = filteredProducts.shuffled().take(4)
+
+                    if (limitedProducts.isNotEmpty()) {
+                        crossfadeRecyclerView {
+                            setupProductsRecyclerView(limitedProducts)
+                        }
+                    }
+
+                    Log.d("OBF", "Page $currentPage fetched: ${limitedProducts.size} products shown")
+
+                    // Move to next page (loop around if needed)
+                    currentPage++
+                    if (currentPage > 50) currentPage = 1
+
+                    delay(refreshIntervalMs)
+
+                } catch (e: Exception) {
+                    Log.e("OBF", "Error fetching products: ${e.message}")
+                    delay(5000) // retry slower on error
+                }
+            }
+        }
+    }
+
+    // 🔹 List of product types available from Makeup API
+    private val makeupCategories = listOf(
+        "blush", "bronzer", "eyebrow", "eyeliner", "eyeshadow",
+        "foundation", "lip_liner", "lipstick", "mascara", "nail_polish"
+    )
+
+    private fun fetchMakeupProductsPeriodically() {
+        makeupRefreshJob?.cancel()
+
+        makeupRefreshJob = lifecycleScope.launch {
+            while (isActive) {
+                try {
+                    val selectedTypes = makeupCategories.shuffled().take(4)
+
+                    val allProducts = selectedTypes.map { type ->
+                        async {
+                            try {
+                                val response = RetrofitInstanceMakeup.api.getProducts(productType = type)
+                                val validItems = response.mapNotNull {
+                                    val imageUrl = it.imageUrl?.trim()
+                                    val name = it.name?.trim().orEmpty()
+                                    val brand = it.brand?.trim().orEmpty()
+
+                                    // ✅ Filter: must have image and valid name
+                                    if (
+                                        imageUrl.isNullOrEmpty() ||
+                                        !imageUrl.matches(Regex("(?i).+\\.(jpg|jpeg|png|webp)$")) ||
+                                        name.isEmpty() ||
+                                        name.equals("null", ignoreCase = true)
+                                    ) return@mapNotNull null
+
+                                    val formattedName = name.split(" ")
+                                        .joinToString(" ") { w -> w.replaceFirstChar { c -> c.uppercase() } }
+
+                                    val formattedBrand = if (brand.isNotEmpty()) {
+                                        brand.split(" ")
+                                            .joinToString(" ") { w -> w.replaceFirstChar { c -> c.uppercase() } }
+                                    } else {
+                                        "Unknown Brand"
+                                    }
+
+                                    Product(
+                                        name = formattedName,
+                                        brand = formattedBrand,
+                                        imageUrl = imageUrl
+                                    )
+                                }
+
+                                // Return one random valid product per category if available
+                                validItems.shuffled().firstOrNull()
+                            } catch (e: Exception) {
+                                Log.e("MAKEUP", "Error fetching $type: ${e.message}")
+                                null
+                            }
+                        }
+                    }.awaitAll().filterNotNull()
+
+                    if (allProducts.isNotEmpty()) {
+                        crossfadeMakeupRecyclerView {
+                            setupMakeupRecycler(allProducts)
+                        }
+                        Log.d("MAKEUP", "✅ Displayed ${allProducts.size} products from ${selectedTypes.joinToString()}")
+                    } else {
+                        Log.w("MAKEUP", "⚠️ No valid products found — retrying next cycle")
+                    }
+
+                    delay(makeupRefreshIntervalMs)
+
+                } catch (e: Exception) {
+                    Log.e("MAKEUP", "Error in periodic refresh: ${e.message}")
+                    delay(5000)
+                }
+            }
+        }
+    }
+
+    private fun populateRoutineForEdit(routine: Routine) {
+        etName.setText(routine.title)
+        etTime.setText(routine.time)
+        etComment.setText(routine.note ?: "")
+    }
+
+    private fun clearOverlayFields() {
+        etName.text.clear()
+        etTime.text.clear()
+        etComment.text.clear()
+    }
+
+    // ---- Add these functions at fragment level ----
+    private fun showAddRoutineCard() {
+        overlay.visibility = View.VISIBLE
+        card.visibility = View.VISIBLE
+        overlay.bringToFront()
+
+        overlay.alpha = 0f
+        overlay.animate().alpha(1f).setDuration(250).start()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val blurRadius = 20f
+            val renderEffect = RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP)
+            blurBackground.setRenderEffect(renderEffect)
+            blurBackground.alpha = 1f
+        } else {
+            blurBackground.alpha = 1f
+        }
+
+        card.translationY = 300f
+        card.alpha = 0f
+        card.animate()
+            .translationY(0f)
+            .alpha(1f)
+            .setDuration(300)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+    }
+
+    fun hideAddRoutineCard() {
+        card.animate()
+            .translationY(300f)
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction {
+                overlay.animate().alpha(0f).setDuration(200).withEndAction {
+                    overlay.visibility = View.GONE
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        blurBackground.setRenderEffect(null)
+                    }
+                }.start()
+            }
+            .start()
+    }
+
+    fun isOverlayVisible(): Boolean {
+        return overlay.visibility == View.VISIBLE
+    }
+
+    // Add this function to HomeFragment
+    fun closeOverlayIfVisible(): Boolean {
+        return if (overlay.visibility == View.VISIBLE) {
+            hideAddRoutineCard()
+            true
+        } else false
+    }
+
+
+    private fun startAutoRefresh() {
+        refreshJob = lifecycleScope.launch {
+            while (isActive) {
+                delay(refreshIntervalMs)
+                fetchProductsPeriodically()        // 💧 Skincare from OBF
+                fetchMakeupProductsPeriodically()
+            }
+        }
+    }
+
+    // Function (paste inside your Fragment class)
+    private fun crossfadeRecyclerView(onFadeOutComplete: () -> Unit) {
+        // Use the nullable backing binding to avoid NPEs if view was destroyed
+        val rv = _binding?.rvProducts ?: return
+
+        // Fade-out animation
+        val fadeOut = AlphaAnimation(1f, 0f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // Fade-in animation
+        val fadeIn = AlphaAnimation(0f, 1f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // When fade-out ends, update data then start fade-in
+        fadeOut.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) {}
+
+            override fun onAnimationEnd(animation: Animation?) {
+                // Ensure UI updates happen on main thread
+                activity?.runOnUiThread {
+                    // Replace adapter data / rebind UI
+                    onFadeOutComplete()
+
+                    // Start fade-in; ensure final alpha is set after animation
+                    fadeIn.setAnimationListener(object : Animation.AnimationListener {
+                        override fun onAnimationStart(animation: Animation?) {}
+                        override fun onAnimationEnd(animation: Animation?) {
+                            // explicit final state
+                            rv.alpha = 1f
+                            // remove listeners to avoid accidental repeats
+                            fadeIn.setAnimationListener(null)
+                        }
+                        override fun onAnimationRepeat(animation: Animation?) {}
+                    })
+                    rv.startAnimation(fadeIn)
+                }
+            }
+
+            override fun onAnimationRepeat(animation: Animation?) {}
+        })
+
+        // Start fade-out (ensure run on main)
+        activity?.runOnUiThread {
+            rv.startAnimation(fadeOut)
+        }
+    }
+
+    private fun crossfadeMakeupRecyclerView(onFadeOutComplete: () -> Unit) {
+        // Use the nullable backing binding to avoid NPEs if view was destroyed
+        val rv = _binding?.rvMakeup ?: return
+
+        // Fade-out animation
+        val fadeOut = AlphaAnimation(1f, 0f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // Fade-in animation
+        val fadeIn = AlphaAnimation(0f, 1f).apply {
+            duration = 400
+            fillAfter = true
+        }
+
+        // When fade-out ends, update data then start fade-in
+        fadeOut.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) {}
+
+            override fun onAnimationEnd(animation: Animation?) {
+                // Ensure UI updates happen on main thread
+                activity?.runOnUiThread {
+                    // Replace adapter data / rebind UI
+                    onFadeOutComplete()
+
+                    // Start fade-in; ensure final alpha is set after animation
+                    fadeIn.setAnimationListener(object : Animation.AnimationListener {
+                        override fun onAnimationStart(animation: Animation?) {}
+                        override fun onAnimationEnd(animation: Animation?) {
+                            // explicit final state
+                            rv.alpha = 1f
+                            // remove listeners to avoid accidental repeats
+                            fadeIn.setAnimationListener(null)
+                        }
+                        override fun onAnimationRepeat(animation: Animation?) {}
+                    })
+                    rv.startAnimation(fadeIn)
+                }
+            }
+
+            override fun onAnimationRepeat(animation: Animation?) {}
+        })
+
+        // Start fade-out (ensure run on main)
+        activity?.runOnUiThread {
+            rv.startAnimation(fadeOut)
+        }
+    }
+
+    private fun showTimePicker(view: View) {
+        val cal = Calendar.getInstance()
+        val hour = cal.get(Calendar.HOUR_OF_DAY)
+        val minute = cal.get(Calendar.MINUTE)
+
+        TimePickerDialog(view.context, { _, h, m ->
+            val formatted = String.format("%02d.%02d", h, m)
+            (view as EditText).setText(formatted)
+        }, hour, minute, true).show()
+    }
+
+
 
     override fun onResume() {
         super.onResume()
@@ -346,39 +953,7 @@ class HomeFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         carouselHandler.removeCallbacks(carouselRunnable) // stop auto-scroll
+        refreshJob?.cancel()
+        makeupRefreshJob?.cancel()
     }
-}
-
-/** Simple data class and adapter **/
-data class Routine(val id: Int, val title: String, val time: String)
-
-class RoutineAdapter(
-    private val items: List<Routine>,
-    private val onEdit: (Routine) -> Unit,
-    private val onDelete: (Routine) -> Unit
-) : RecyclerView.Adapter<RoutineAdapter.VH>() {
-
-    inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvTitle: TextView = view.findViewById(R.id.tv_routine_title)
-        val tvTime: TextView = view.findViewById(R.id.tv_routine_time)
-        val btnEdit: ImageButton = view.findViewById(R.id.btn_edit)
-        val btnDelete: ImageButton = view.findViewById(R.id.btn_delete)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_routine, parent, false)
-        return VH(v)
-    }
-
-
-
-    override fun onBindViewHolder(holder: VH, position: Int) {
-        val item = items[position]
-        holder.tvTitle.text = item.title
-        holder.tvTime.text = item.time
-        holder.btnEdit.setOnClickListener { onEdit(item) }
-        holder.btnDelete.setOnClickListener { onDelete(item) }
-    }
-
-    override fun getItemCount(): Int = items.size
 }

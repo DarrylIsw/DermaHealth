@@ -1,312 +1,517 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
-    android:id="@+id/nested_scroll"
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="#F9FAFB">
+    android:background="@color/soft_background">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nested_scroll"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/light_grey_white"
+        android:clipToPadding="false"
+        android:paddingBottom="56dp">
 
-        <!-- Header -->
-        <TextView
-            android:id="@+id/tv_today"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Today"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="#111827"
-            android:fontFamily="@font/inter_bold"
-            android:layout_marginBottom="16dp"/>
-
-        <!-- CAROUSEL: ViewPager2 (1/3 of screen + a little more) -->
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/vp_carousel"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginBottom="16dp"
-            android:clipToPadding="false"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"/>
-
-
-        <!-- Skin Health Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_skin_score"
-            android:layout_width="match_parent"
-            android:layout_height="220dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="3dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@android:color/white">
-
-            <FrameLayout
+            android:layout_height="wrap_content">
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="12dp">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-                <com.google.android.material.progressindicator.CircularProgressIndicator
-                    android:id="@+id/cp_skin"
-                    android:layout_width="160dp"
-                    android:layout_height="160dp"
-                    android:layout_gravity="center"
-                    app:indicatorSize="160dp"
-                    app:trackThickness="12dp"
-                    android:indeterminate="false"
-                    android:progress="0"
-                    app:indicatorColor="#3478F6"/>
+                <!-- Header -->
+                <TextView
+                    android:id="@+id/tv_greeting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/user_greeting"
+                    android:layout_marginBottom="10dp"
+                    android:textSize="26sp"
+                    android:textColor="@color/deep_dark_blue"
+                    android:fontFamily="@font/inter_bold"/>
 
-                <!-- Overlay texts -->
+                <!-- CAROUSEL: ViewPager2 (1/3 of screen + a little more) -->
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/vp_carousel"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_marginBottom="16dp"
+                    android:clipToPadding="false"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"/>
+
+
+                <!-- Skin Health Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="3dp"
+                    android:layout_marginBottom="16dp"
+                    android:backgroundTint="@android:color/white">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <!-- Left circular progress with overlay -->
+                        <FrameLayout
+                            android:layout_width="160dp"
+                            android:layout_height="160dp"
+                            android:layout_gravity="center">
+
+                            <!-- Circular Progress -->
+                            <com.google.android.material.progressindicator.CircularProgressIndicator
+                                android:id="@+id/cp_skin"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                app:indicatorSize="150dp"
+                                app:trackThickness="12dp"
+                                android:indeterminate="false"
+                                android:progress="0"
+                                app:indicatorColor="@color/medium_sky_blue"/>
+
+                            <!-- Overlay texts -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <!-- Score -->
+                                <TextView
+                                    android:id="@+id/tv_skin_score"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/user_score"
+                                    android:textSize="28sp"
+                                    android:textStyle="bold"
+                                    android:fontFamily="@font/inter_bold"
+                                    android:textColor="@color/deep_dark_blue"/>
+
+                                <!-- Affirmation -->
+                                <TextView
+                                    android:id="@+id/tv_skin_affirmation"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="@string/user_motivate"
+                                    android:textSize="12sp"
+                                    android:textColor="@color/light_sky_blue3"
+                                    android:fontFamily="@font/inter"/>
+                            </LinearLayout>
+                        </FrameLayout>
+
+                        <!-- Right side: live environment data -->
+                        <!-- Right side: live environment data -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center_vertical"
+                            android:paddingStart="12dp">
+
+                            <!-- UV Index -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:layout_marginBottom="12dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_sunny"/>
+
+                                    <TextView
+                                        android:id="@+id/tv_uv_index"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/uv_score"
+                                        android:layout_marginStart="8dp"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold"/>
+                                </LinearLayout>
+
+                                <ProgressBar
+                                    android:id="@+id/pb_uv"
+                                    style="@android:style/Widget.ProgressBar.Horizontal"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="6dp"
+                                    android:progress="20"
+                                    android:max="11"
+                                    android:progressTint="@color/yellow_orange"
+                                    android:backgroundTint="@color/light_grey_white3"/>
+                            </LinearLayout>
+
+                            <!-- Humidity -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:layout_marginBottom="12dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_water_drop"/>
+
+                                    <TextView
+                                        android:id="@+id/tv_humidity"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/humidity_score"
+                                        android:layout_marginStart="8dp"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold"/>
+                                </LinearLayout>
+
+                                <ProgressBar
+                                    android:id="@+id/pb_humidity"
+                                    style="@android:style/Widget.ProgressBar.Horizontal"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="6dp"
+                                    android:progress="45"
+                                    android:max="100"
+                                    android:progressTint="@color/light_sky_blue2"
+                                    android:backgroundTint="@color/light_grey_white"/>
+                            </LinearLayout>
+
+                            <!-- Pollution (AQI) -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:src="@drawable/ic_cloud"/>
+
+                                    <TextView
+                                        android:id="@+id/tv_pollution"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/aqi_score"
+                                        android:layout_marginStart="8dp"
+                                        android:textSize="14sp"
+                                        android:textStyle="bold"/>
+                                </LinearLayout>
+
+                                <ProgressBar
+                                    android:id="@+id/pb_pollution"
+                                    style="@android:style/Widget.ProgressBar.Horizontal"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="6dp"
+                                    android:progress="72"
+                                    android:max="500"
+                                    android:progressTint="@color/grass_green"
+                                    android:backgroundTint="@color/light_grey_white3"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ... rest of your layout unchanged (appointments/prescriptions/reports/tip card/recycler) -->
+                <!-- Tip of the Day -->
+                <TextView
+                    android:id="@+id/tv_tip_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tip_of_day"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/poppins_bold"
+                    android:textColor="@android:color/white"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_tip_header"/>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    android:layout_marginBottom="16dp"
+                    android:backgroundTint="@android:color/white"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <!-- Tip Icon -->
+                        <ImageView
+                            android:id="@+id/iv_tip_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_lightbulb"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="12dp"/>
+
+                        <!-- Tip Text -->
+                        <TextView
+                            android:id="@+id/tv_tip"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/tips_dummy"
+                            android:textSize="14sp"
+                            android:lineSpacingExtra="4dp"
+                            android:textColor="@color/dark_grey"
+                            android:fontFamily="@font/inter_medium"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- My Routine header -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
 
                     <TextView
-                        android:id="@+id/tv_skin_score"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="28sp"
+                        android:layout_weight="1"
+                        android:text="@string/my_routine"
                         android:textStyle="bold"
-                        android:fontFamily="@font/inter_bold"
-                        android:textColor="#111827"/>
+                        android:textSize="18sp"
+                        android:textColor="@color/deep_dark_blue"
+                        android:fontFamily="@font/inter_bold"/>
 
-                    <TextView
-                        android:id="@+id/tv_skin_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Skin Health"
-                        android:textSize="14sp"
-                        android:textColor="#6B7280"
-                        android:fontFamily="@font/inter"/>
-
-                    <TextView
-                        android:id="@+id/tv_skin_sub"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Keep up your routine to stay healthy"
-                        android:textSize="12sp"
-                        android:textColor="#9CA3AF"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="6dp"/>
+                    <ImageButton
+                        android:id="@+id/btn_add_routine"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_input_add"
+                        app:tint="@color/medium_sky_blue"
+                        android:contentDescription="@string/add_routine"/>
                 </LinearLayout>
-            </FrameLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- ... rest of your layout unchanged (appointments/prescriptions/reports/tip card/recycler) -->
-        <!-- paste the rest of your original layout here as-is -->
-        <LinearLayout
+                <!-- RecyclerView -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_routines"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"/>
+
+                <!-- Product Cards-->
+                <!-- Product Grid -->
+                <TextView
+                    android:id="@+id/tv_product_header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skincare_products"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/deep_dark_blue"
+                    android:fontFamily="@font/inter_bold"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_products"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"/>
+
+                <!-- Product Makeup Grid -->
+                <TextView
+                    android:id="@+id/tv_makeup_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/beauty_products"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/deep_dark_blue"
+                    android:fontFamily="@font/inter_bold"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvMakeup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"/>
+            </LinearLayout>
+        </FrameLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Dialog Add Routine Card-->
+    <FrameLayout
+        android:id="@+id/addRoutineOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/black_shade"
+        android:visibility="gone">
+
+        <!-- Background blur / dark fallback -->
+        <View
+            android:id="@+id/blurBackground"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="3"
-            android:layout_marginBottom="16dp">
+            android:layout_height="match_parent"
+            android:background="@color/black_shade"/>
 
-            <!-- Appointments -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                android:backgroundTint="@android:color/white"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_appointments"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitCenter"
-                        android:background="@null"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Appointments"
-                        android:textSize="14sp"
-                        android:textColor="#111827"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Prescriptions -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                android:backgroundTint="@android:color/white"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_prescriptions"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitCenter"
-                        android:background="@null"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Prescriptions"
-                        android:textSize="14sp"
-                        android:textColor="#111827"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Reports -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:layout_weight="1"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="3dp"
-                android:backgroundTint="@android:color/white"
-                android:foreground="?attr/selectableItemBackground">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_reports"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitCenter"
-                        android:background="@null"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Reports"
-                        android:textSize="14sp"
-                        android:textColor="#111827"
-                        android:fontFamily="@font/inter"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-        </LinearLayout>
-
-
-        <!-- Tip of the Day -->
-        <TextView
-            android:id="@+id/tv_tip_header"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tip_of_day"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:fontFamily="@font/poppins_bold"
-            android:textColor="@android:color/white"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/bg_tip_header"/>
-
+        <!-- Center floating card -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_add_routine"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="32dp"
+            app:cardCornerRadius="24dp"
             android:backgroundTint="@android:color/white"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="12dp">
+            app:cardElevation="16dp"
+            android:padding="24dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:orientation="vertical">
 
-                <!-- Tip Icon -->
-                <ImageView
-                    android:id="@+id/iv_tip_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_lightbulb"
-                    android:layout_marginStart="12dp"
-                    android:layout_marginEnd="12dp"/>
-
-                <!-- Tip Text -->
+                <!-- Title -->
                 <TextView
-                    android:id="@+id/tv_tip"
-                    android:layout_width="0dp"
+                    android:id="@+id/tv_add_routine_title"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="90% of skin aging is caused by sun exposure — wear sunscreen daily."
-                    android:textSize="14sp"
-                    android:lineSpacingExtra="4dp"
-                    android:textColor="#374151"
-                    android:fontFamily="@font/inter_medium"/>
+                    android:text="@string/add_routine_home"
+                    android:textSize="22sp"
+                    android:textColor="@color/medium_sky_blue"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginStart="12dp"/>
+
+                <!-- Routine Name -->
+                <EditText
+                    android:id="@+id/et_routine_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="@string/routine_title"
+                    android:inputType="textCapWords"
+                    android:fontFamily="@font/poppins"
+                    android:layout_marginBottom="16dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="@drawable/input_field_bg"/>
+
+                <!-- Time -->
+                <EditText
+                    android:id="@+id/et_routine_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="@string/set_time_home"
+                    android:inputType="none"
+                    android:focusable="false"
+                    android:fontFamily="@font/poppins"
+                    android:layout_marginBottom="16dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="@drawable/input_field_bg"/>
+
+                <!-- Comment -->
+                <EditText
+                    android:id="@+id/et_routine_comment"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="@string/short_comment_optional"
+                    android:inputType="text"
+                    android:fontFamily="@font/poppins"
+                    android:layout_marginBottom="24dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="@drawable/input_field_bg"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:orientation="horizontal"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="16dp"
+                    android:paddingBottom="8dp"
+                    android:clipChildren="false"
+                    android:clipToPadding="false">
+
+                    <!-- Cancel Button with subtle shadow -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cardElevation="6dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        android:layout_marginEnd="8dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_cancel_add"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/cancel_home"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:textColor="@color/medium_sky_blue"
+                            app:strokeColor="@color/light_gray"
+                            app:strokeWidth="0dp"
+                            app:cornerRadius="16dp"
+                            android:backgroundTint="@android:color/transparent"/>
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Add Button with subtle shadow -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cardElevation="6dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="@color/medium_sky_blue">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_save_add"
+                            android:layout_width="wrap_content"
+                            android:layout_height="48dp"
+                            android:text="@string/add_home"
+                            android:textColor="@android:color/white"
+                            app:cornerRadius="16dp"
+                            android:backgroundTint="@android:color/transparent"/>
+                    </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- My Routine header -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/my_routine"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:textColor="#111827"
-                android:fontFamily="@font/inter_bold"/>
-
-            <ImageButton
-                android:id="@+id/btn_add_routine"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_input_add"
-                app:tint="#3478F6"
-                android:contentDescription="@string/add_routine"/>
-        </LinearLayout>
-
-        <!-- RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_routines"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"/>
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+    </FrameLayout>
+</FrameLayout>

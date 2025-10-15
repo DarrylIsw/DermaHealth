@@ -1,9 +1,42 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+
+    <!-- Base application theme -->
     <style name="Base.Theme.DermaHealth" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- 🎨 Primary brand color, down here is main cards color settings-->
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- 🌊 Secondary color (optional but keeps things consistent) -->
+        <item name="colorSecondary">@color/medium_sky_blue</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <item name="colorSurfaceVariant">@color/white</item>
+        <item name="colorPrimaryContainer">@color/white</item>
+
+        <!-- 🧱 Background colors -->
+        <item name="android:windowBackground">@color/white</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/black</item>
+
+        <!-- 📱 Status bar (top bar) color -->
+        <item name="android:statusBarColor">@color/medium_sky_blue</item>
+        <!-- Use false if you want white icons, true if you want dark icons -->
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- 🧭 Navigation bar (bottom bar) color -->
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:windowLightNavigationBar" tools:ignore="NewApi">true</item>
     </style>
 
+    <style name="SplashTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/medium_sky_blue</item>
+        <item name="android:windowBackground">@drawable/splash_screen_bg</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <!-- Your app’s main theme -->
     <style name="Theme.DermaHealth" parent="Base.Theme.DermaHealth" />
+
 </resources>

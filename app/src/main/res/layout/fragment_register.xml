@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/medium_sky_blue"
+    tools:context=".RegisterFragment"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- App Logo -->
+        <ImageView
+            android:id="@+id/logoImage"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/app_logo"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/app_logo" />
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/create_account_register"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:fontFamily="@font/poppins_bold"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Registration Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/white_card_bg"
+            android:elevation="4dp"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:clipToOutline="true">
+
+            <EditText
+                android:id="@+id/inputFullName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/full_name"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp"
+                android:textColorHint="#888"
+                android:textColor="#000" />
+
+            <EditText
+                android:id="@+id/inputUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/username_register"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:textColorHint="#888"
+                android:textColor="#000" />
+
+            <EditText
+                android:id="@+id/inputEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/email"
+                android:inputType="textEmailAddress"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:textColorHint="#888"
+                android:textColor="#000" />
+
+            <EditText
+                android:id="@+id/inputPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/password_register"
+                android:inputType="textPassword"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:textColorHint="#888"
+                android:textColor="#000" />
+
+            <EditText
+                android:id="@+id/inputConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/confirm_password"
+                android:inputType="textPassword"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:textColorHint="#888"
+                android:textColor="#000" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRegister"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/create_account_register2"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:background="@drawable/btn_login_ripple"
+                app:backgroundTint="@null"
+                app:cornerRadius="50dp"
+                android:layout_marginTop="16dp" />
+
+            <TextView
+                android:id="@+id/tvLoginLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/already_have_an_account_log_in"
+                android:textColor="@color/medium_sky_blue"
+                android:layout_gravity="center"
+                android:layout_marginTop="12dp"
+                android:textSize="14sp"
+                android:fontFamily="@font/poppins" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
