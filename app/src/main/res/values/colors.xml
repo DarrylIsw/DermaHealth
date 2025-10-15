@@ -30,4 +30,6 @@
     <color name="grey2">#6B7280</color>
     <color name="white3">#EAEAEA</color>
     <color name="light_grey_white6">#E0E0E0</color>
+    <color name="soft_background">#F6F8FA</color>
+    <color name="medium_gray">#7A7A7A</color>
 </resources>

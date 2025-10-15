@@ -27,7 +27,7 @@
             android:id="@+id/tv_product_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Product Name"
+            android:text="@string/product_name"
             android:textSize="14sp"
             android:textColor="@color/deep_dark_blue"
             android:fontFamily="@font/inter_bold"
@@ -39,7 +39,7 @@
             android:id="@+id/tv_product_brand"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Brand"
+            android:text="@string/brand"
             android:textSize="12sp"
             android:textColor="@color/grey2"
             android:fontFamily="@font/inter" />

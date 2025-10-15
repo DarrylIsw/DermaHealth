@@ -4,92 +4,171 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="6dp"
-    android:animateLayoutChanges="true">
+    android:layout_marginVertical="10dp"
+    android:layout_marginHorizontal="6dp"
+    android:padding="4dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="8dp"
+    android:animateLayoutChanges="true"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/light_grey_white3"
+    android:backgroundTint="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="16dp">
 
-        <!-- Row with Image + Main Info -->
+        <!-- Header Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <ImageView
                 android:id="@+id/iv_scan"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
+                android:layout_width="85dp"
+                android:layout_height="85dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_foreground"
-                android:background="@drawable/bg_image_placeholder"
-                android:contentDescription="Scan image"
-                android:clipToOutline="true"/>
+                app:srcCompat="@drawable/dummy_melanoma"
+                android:clipToOutline="true"
+                android:layout_marginEnd="16dp" />
+
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:paddingStart="12dp">
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tv_result"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Result: Benign"
+                    android:text="@string/result_benign"
                     android:textStyle="bold"
-                    android:textSize="16sp"/>
+                    android:textSize="17sp"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:textColor="@color/deep_dark_blue"/>
 
                 <TextView
                     android:id="@+id/tv_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Date: Sep 24, 2025"
-                    android:textSize="14sp"/>
+                    android:text="@string/date_dummy"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/inter"
+                    android:textColor="#666"/>
 
                 <TextView
                     android:id="@+id/tv_notes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Notes: Monitor regularly"
+                    android:text="@string/notes_monitor_regularly"
                     android:textSize="14sp"
+                    android:fontFamily="@font/inter"
+                    android:textColor="#666"
                     android:ellipsize="end"
                     android:maxLines="1"/>
             </LinearLayout>
 
-            <!-- Expand / Collapse Button -->
             <ImageView
                 android:id="@+id/btn_expand"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:src="@drawable/ic_expand_more"
-                android:contentDescription="Expand"
+                android:contentDescription="@string/expand"
+                app:tint="@color/deep_dark_blue"
                 android:padding="4dp"/>
         </LinearLayout>
 
-        <!-- Hidden expandable section -->
+        <!-- Expandable Section -->
         <LinearLayout
             android:id="@+id/expandable_section"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="8dp"
-            android:visibility="gone">
+            android:paddingTop="10dp"
+            android:visibility="gone"
+            android:animateLayoutChanges="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/result_details"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:fontFamily="@font/poppins_semibold"
+                android:textColor="@color/deep_dark_blue"
+                android:layout_marginBottom="8dp"/>
 
             <ImageView
                 android:id="@+id/iv_cropped"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_background"
-                android:contentDescription="Cropped image"/>
+                android:src="@drawable/dummy_melanoma"
+                android:contentDescription="@string/cropped_scan_result"
+                android:layout_marginBottom="12dp"/>
 
+            <!-- Confidence -->
+            <TextView
+                android:id="@+id/tvConfidence"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/detection_confidence_92"
+                android:fontFamily="@font/inter_medium"
+                android:textColor="@color/deep_dark_blue"
+                android:textSize="15sp"
+                android:layout_marginBottom="6dp"/>
+
+            <!-- Short Analysis -->
+            <TextView
+                android:id="@+id/tvAnalysis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/lesion_dummy"
+                android:fontFamily="@font/inter"
+                android:textColor="#555"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Conclusion Box -->
+            <LinearLayout
+                android:id="@+id/conclusionBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_conclusion_safe"
+                android:layout_marginBottom="10dp"
+                android:elevation="3dp"
+                android:clipToOutline="true">
+
+                <ImageView
+                    android:id="@+id/ivStatusIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@android:color/white"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvConclusion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/safe_no_action_needed"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"
+                    android:textSize="15sp"/>
+            </LinearLayout>
+
+            <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -97,18 +176,26 @@
                 android:gravity="end"
                 android:paddingTop="8dp">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_edit"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Edit Notes"/>
+                    android:text="@string/edit_notes"
+                    android:textColor="@color/medium_sky_blue"
+                    android:fontFamily="@font/poppins_medium"
+                    app:cornerRadius="50dp"/>
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_delete"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Delete"
-                    android:layout_marginStart="8dp"/>
+                    android:text="@string/delete_history"
+                    android:textColor="@color/deep_dark_blue"
+                    android:fontFamily="@font/poppins_medium"
+                    android:layout_marginStart="8dp"
+                    app:cornerRadius="50dp"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
