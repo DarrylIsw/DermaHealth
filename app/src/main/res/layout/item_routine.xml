@@ -54,7 +54,7 @@
                     android:id="@+id/tv_routine_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Apply Sunscreen"
+                    android:text="@string/apply_sunscreen"
                     android:textColor="@color/medium_sky_blue"
                     android:textSize="18sp"
                     android:fontFamily="@font/poppins_semibold"
@@ -65,7 +65,7 @@
                     android:id="@+id/tv_routine_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="08:00 AM"
+                    android:text="@string/_08_00_am"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
                     android:fontFamily="@font/poppins"
@@ -84,7 +84,7 @@
                 android:padding="0dp"
                 android:layout_marginStart="6dp"
                 android:layout_marginEnd="18dp"
-                android:contentDescription="Edit Routine"
+                android:contentDescription="@string/edit_routine"
                 app:tint="@color/medium_sky_blue"/>
 
         </LinearLayout>
@@ -120,7 +120,7 @@
                 android:id="@+id/et_additional_comment"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:hint="Add additional comment"
+                android:hint="@string/add_additional_comment"
                 android:inputType="text"
                 android:fontFamily="@font/poppins"
                 android:paddingStart="12dp"
