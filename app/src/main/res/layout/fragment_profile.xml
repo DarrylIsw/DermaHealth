@@ -22,7 +22,7 @@
 
             <!-- Avatar -->
             <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/img_avatar"
+                android:id="@+id/img_avatar_main"
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:layout_centerHorizontal="true"
@@ -35,11 +35,11 @@
 
             <!-- Tombol Edit Avatar -->
             <ImageButton
-                android:id="@+id/btn_edit_avatar"
+                android:id="@+id/btn_edit_avatar_main"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_alignEnd="@id/img_avatar"
-                android:layout_alignBottom="@id/img_avatar"
+                android:layout_alignEnd="@id/img_avatar_main"
+                android:layout_alignBottom="@id/img_avatar_main"
                 android:layout_marginEnd="4dp"
                 android:layout_marginBottom="4dp"
                 android:background="@drawable/bg_circle_primary"
@@ -47,7 +47,7 @@
                 android:scaleType="centerInside"
                 android:padding="6dp"
                 android:contentDescription="Edit Avatar"
-                android:tint="@null"
+                app:tint="@null"
                 android:elevation="8dp" />
 
             <!-- Nama -->
@@ -55,7 +55,7 @@
                 android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/img_avatar"
+                android:layout_below="@id/img_avatar_main"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="14dp"
                 android:text="John Doe"
@@ -68,54 +68,29 @@
                 android:id="@+id/tv_mobile"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp">
+                android:layout_below="@id/tv_name"
+                android:layout_centerHorizontal="true"
+                android:text="+62 812 3456 7890"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:layout_marginTop="6dp" />
 
-                <!-- Avatar dengan border -->
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/img_avatar"
-                    android:layout_width="90dp"
-                    android:layout_height="90dp"
-                    android:src="@drawable/ic_person"
-                    android:contentDescription="Profile Avatar"
-                    android:scaleType="centerCrop"
-                    app:civ_border_width="3dp"
-                    app:civ_border_color="@color/white"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginBottom="4dp" />
-
-                <!-- Tombol Edit Avatar (kanan bawah avatar) -->
-                <ImageButton
-                    android:id="@+id/btn_edit_avatar"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_alignBottom="@id/img_avatar"
-                    android:layout_alignEnd="@id/img_avatar"
-                    android:layout_marginEnd="-12dp"
-                    android:layout_marginBottom="-6dp"
-                    android:background="@drawable/bg_circle_primary"
-                    android:src="@drawable/camera"
-                    android:scaleType="centerInside"
-                    android:padding="6dp"
-                    android:contentDescription="Edit Avatar"
-                    app:tint="@null" />
-
-                <!-- Tombol Edit Profile (lebih ke bawah) -->
-                <Button
-                    android:id="@+id/btn_edit_profile"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Edit Profile"
-                    android:textColor="@android:color/black"
-                    android:textSize="13sp"
-                    android:backgroundTint="@color/white"
-                    android:layout_below="@id/img_avatar"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="16dp"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="4dp"
-                    style="@style/Widget.MaterialComponents.Button" />
-            </RelativeLayout>
-        </LinearLayout>
+            <!-- Tombol Edit Profile -->
+            <Button
+                android:id="@+id/btn_edit_profile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit Profile"
+                android:textColor="@android:color/black"
+                android:textSize="13sp"
+                android:backgroundTint="@color/white"
+                android:layout_below="@id/tv_mobile"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="16dp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="4dp"
+                style="@style/Widget.MaterialComponents.Button" />
+        </RelativeLayout>
 
         <!-- ================= BAGIAN BAWAH DENGAN ROUNDED BACKGROUND ================= -->
         <LinearLayout
@@ -139,32 +114,38 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp">
 
                     <ImageView
                         android:layout_width="35dp"
                         android:layout_height="35dp"
-                        android:src="@drawable/agealt"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
+                        android:src="@drawable/ic_email"
+                        android:layout_marginEnd="20dp"
                         app:tint="@null" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="john.doe@email.com"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Email"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
+                        <TextView
+                            android:id="@+id/tv_email"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="john.doe@email.com"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Email"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -181,32 +162,37 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
 
                     <ImageView
                         android:layout_width="35dp"
                         android:layout_height="35dp"
-                        android:src="@drawable/qrscan"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
+                        android:src="@drawable/agealt"
+                        android:layout_marginEnd="20dp"
                         app:tint="@null" />
 
-                    <TextView
-                        android:id="@+id/tv_age_value"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="24"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Age"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
+                        <TextView
+                            android:id="@+id/tv_age_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="24"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Age"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -222,25 +208,31 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/score"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
-                        app:tint="@null" />
-
-                    <TextView
-                        android:id="@+id/tv_score_percentage"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Score: 89/100"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
+                            android:src="@drawable/score"
+                            android:layout_marginEnd="20dp"
+                            app:tint="@null" />
+
+                        <TextView
+                            android:id="@+id/tv_score_percentage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Score: 89/100"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <ProgressBar
                         android:id="@+id/score_progress"

@@ -37,8 +37,8 @@ class ProfileFragment : Fragment(), BackHandler {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
 
         // 🔹 Bind views
-        imgAvatar = view.findViewById(R.id.img_avatar)
-        btnEditAvatar = view.findViewById(R.id.btn_edit_avatar)
+        imgAvatar = view.findViewById(R.id.img_avatar_main)
+        btnEditAvatar = view.findViewById(R.id.btn_edit_avatar_main)
         tvName = view.findViewById(R.id.tv_name)
         tvEmail = view.findViewById(R.id.tv_email)
         tvMobile = view.findViewById(R.id.tv_mobile)
@@ -46,6 +46,7 @@ class ProfileFragment : Fragment(), BackHandler {
         btnEditProfile = view.findViewById(R.id.btn_edit_profile)
         btnLogout = view.findViewById(R.id.btn_logout)
         btnDeleteAccount = view.findViewById(R.id.btn_delete_account)
+
 
         // 🔹 Load saved user data
         loadUserData()
