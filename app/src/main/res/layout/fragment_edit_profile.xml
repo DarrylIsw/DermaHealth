@@ -2,63 +2,154 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    android:background="@color/background_light">
+    android:background="@color/background_light"
+    android:padding="24dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- ========== HEADER DENGAN BACK ARROW ========== -->
+        <LinearLayout
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/outline_arrow_back_ios_24"
+                android:tint="@color/black"
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit Profile"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/black" />
+        </LinearLayout>
+
+        <!-- ========== FIELD: NAME ========== -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Edit Profile"
-            android:textSize="22sp"
+            android:text="Full Name"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="6dp" />
 
-        <EditText
-            android:id="@+id/et_name"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Name"
-            android:inputType="textPersonName"
-            android:background="@drawable/edittext_background"
+            android:orientation="vertical"
+            android:background="@drawable/card_field_bg"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp">
 
-        <EditText
-            android:id="@+id/et_email"
+            <EditText
+                android:id="@+id/et_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter your name"
+                android:background="@android:color/transparent"
+                android:textColor="@color/black"
+                android:inputType="textPersonName" />
+        </LinearLayout>
+
+        <!-- ========== FIELD: EMAIL ========== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:background="@drawable/edittext_background"
+            android:orientation="vertical"
+            android:background="@drawable/card_field_bg"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp">
 
-        <EditText
-            android:id="@+id/et_phone"
+            <EditText
+                android:id="@+id/et_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter your email"
+                android:background="@android:color/transparent"
+                android:textColor="@color/black"
+                android:inputType="textEmailAddress" />
+        </LinearLayout>
+
+        <!-- ========== FIELD: PHONE ========== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone Number"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Phone Number"
-            android:inputType="phone"
-            android:background="@drawable/edittext_background"
+            android:orientation="vertical"
+            android:background="@drawable/card_field_bg"
             android:padding="12dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp">
 
-        <EditText
-            android:id="@+id/et_age"
+            <EditText
+                android:id="@+id/et_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter phone number"
+                android:background="@android:color/transparent"
+                android:textColor="@color/black"
+                android:inputType="phone" />
+        </LinearLayout>
+
+        <!-- ========== FIELD: AGE ========== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Age"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Age"
-            android:inputType="number"
-            android:background="@drawable/edittext_background"
+            android:orientation="vertical"
+            android:background="@drawable/card_field_bg"
             android:padding="12dp"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="24dp">
 
+            <EditText
+                android:id="@+id/et_age"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter your age"
+                android:background="@android:color/transparent"
+                android:textColor="@color/black"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <!-- ========== BUTTON SAVE ========== -->
         <Button
             android:id="@+id/btn_save"
             android:layout_width="match_parent"
@@ -67,14 +158,6 @@
             android:textColor="@android:color/white"
             android:backgroundTint="@color/medium_sky_blue"
             android:layout_marginBottom="12dp" />
-
-        <Button
-            android:id="@+id/btn_cancel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Cancel"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@color/danger_red" />
 
     </LinearLayout>
 </ScrollView>

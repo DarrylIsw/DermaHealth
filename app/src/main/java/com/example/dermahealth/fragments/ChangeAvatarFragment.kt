@@ -1,55 +1,26 @@
 package com.example.dermahealth.fragments
 
-import android.Manifest
-import android.app.AlertDialog
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.R
-import java.io.ByteArrayOutputStream
-import androidx.activity.OnBackPressedCallback
+import com.google.android.material.imageview.ShapeableImageView
 
 class ChangeAvatarFragment : Fragment() {
 
-    private lateinit var imgPreview: ImageView
+    private lateinit var btnBack: View
+    private lateinit var imgPreview: ShapeableImageView
     private lateinit var btnChoose: Button
     private lateinit var btnSave: Button
-    private lateinit var btnCancel: Button
 
-    private var imageUri: Uri? = null
-
-    // 📸 Ambil dari kamera
-    private val cameraLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == android.app.Activity.RESULT_OK) {
-                val imageBitmap = result.data?.extras?.get("data") as Bitmap
-                val uri = saveBitmapToCache(imageBitmap)
-                imageUri = uri
-                imgPreview.setImageURI(uri)
-            }
-        }
-
-    // 🖼️ Pilih dari galeri
-    private val galleryLauncher =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            if (uri != null) {
-                imageUri = uri
-                imgPreview.setImageURI(uri)
-            }
-        }
+    private var selectedImageUri: Uri? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,95 +28,57 @@ class ChangeAvatarFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_change_avatar, container, false)
 
+        btnBack = view.findViewById(R.id.btn_back)
         imgPreview = view.findViewById(R.id.img_preview)
         btnChoose = view.findViewById(R.id.btn_choose)
         btnSave = view.findViewById(R.id.btn_save)
-        btnCancel = view.findViewById(R.id.btn_cancel)
 
-        btnChoose.setOnClickListener {
-            showChooseDialog()
+        // Tombol back
+        btnBack.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, ProfileFragment())
+                .commit()
         }
 
+        // Pilih gambar dari galeri
+        btnChoose.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK)
+            intent.type = "image/*"
+            startActivityForResult(intent, 100)
+        }
+
+        // Simpan avatar
         btnSave.setOnClickListener {
-            if (imageUri != null) {
-                saveImageUri(imageUri!!)
-                Toast.makeText(requireContext(), "Avatar updated!", Toast.LENGTH_SHORT).show()
-                parentFragmentManager.popBackStack()
-            } else {
-                Toast.makeText(requireContext(), "Please choose an image first", Toast.LENGTH_SHORT).show()
+            selectedImageUri?.let {
+                val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
+                sharedPref.edit().putString("avatarUri", it.toString()).apply()
+
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, ProfileFragment())
+                    .commit()
             }
         }
 
-        btnCancel.setOnClickListener {
-            parentFragmentManager.popBackStack()
+        // Load avatar sebelumnya kalau ada
+        val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
+        val savedUri = sharedPref.getString("avatarUri", null)
+        if (savedUri != null) {
+            try {
+                imgPreview.setImageURI(Uri.parse(savedUri))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
+
         return view
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        // Handle back press
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (parentFragmentManager.backStackEntryCount > 0) {
-                    // Go back to ProfileFragment
-                    parentFragmentManager.popBackStack()
-                } else {
-                    // Exit app if no fragments left
-                    requireActivity().finish()
-                }
-            }
-        })
-    }
-
-
-    // 🔹 Tampilkan dialog: pilih dari Kamera atau Galeri
-    private fun showChooseDialog() {
-        val options = arrayOf("Take Photo", "Choose from Gallery")
-        AlertDialog.Builder(requireContext())
-            .setTitle("Select Avatar Source")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> openCamera()
-                    1 -> openGallery()
-                }
-            }
-            .show()
-    }
-
-    private fun openCamera() {
-        val permission = Manifest.permission.CAMERA
-        if (ContextCompat.checkSelfPermission(requireContext(), permission)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(arrayOf(permission), 101)
-        } else {
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            cameraLauncher.launch(intent)
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 100 && resultCode == Activity.RESULT_OK) {
+            selectedImageUri = data?.data
+            imgPreview.setImageURI(selectedImageUri)
         }
-    }
-
-    private fun openGallery() {
-        galleryLauncher.launch("image/*")
-    }
-
-    // 🔹 Simpan URI ke SharedPreferences
-    private fun saveImageUri(uri: Uri) {
-        val prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
-        prefs.edit().putString("avatar_uri", uri.toString()).apply()
-    }
-
-    // 🔹 Konversi Bitmap → URI untuk preview kamera
-    private fun saveBitmapToCache(bitmap: Bitmap): Uri {
-        val bytes = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-        val path = MediaStore.Images.Media.insertImage(
-            requireContext().contentResolver,
-            bitmap,
-            "temp_avatar",
-            null
-        )
-        return Uri.parse(path)
     }
 }
