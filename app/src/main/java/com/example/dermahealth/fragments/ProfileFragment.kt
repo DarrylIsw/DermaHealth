@@ -26,6 +26,10 @@ class ProfileFragment : Fragment(), BackHandler {
     private lateinit var tvEmail: TextView
     private lateinit var tvMobile: TextView
     private lateinit var tvAgeValue: TextView
+    private lateinit var tvTotalScans: TextView
+    private lateinit var tvMemberSince: TextView
+    private lateinit var tvProfile: TextView
+    private lateinit var tvOverallSkin: TextView
     private lateinit var btnEditProfile: Button
     private lateinit var btnLogout: Button
     private lateinit var btnDeleteAccount: Button
@@ -43,6 +47,10 @@ class ProfileFragment : Fragment(), BackHandler {
         tvEmail = view.findViewById(R.id.tv_email)
         tvMobile = view.findViewById(R.id.tv_mobile)
         tvAgeValue = view.findViewById(R.id.tv_age_value)
+        tvTotalScans = view.findViewById(R.id.tv_total_scans)
+        tvMemberSince = view.findViewById(R.id.tv_member_since_date)
+        tvOverallSkin = view.findViewById(R.id.tv_overall_skin_score)
+        tvProfile = view.findViewById(R.id.tv_profile_title)
         btnEditProfile = view.findViewById(R.id.btn_edit_profile)
         btnLogout = view.findViewById(R.id.btn_logout)
         btnDeleteAccount = view.findViewById(R.id.btn_delete_account)
