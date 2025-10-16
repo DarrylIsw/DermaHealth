@@ -28,7 +28,7 @@
                 android:text="Profile"
                 android:textColor="@android:color/white"
                 android:textSize="22sp"
-                android:textStyle="bold"
+                android:fontFamily="@font/inter_bold"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="24dp" />
 
@@ -71,7 +71,7 @@
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="14dp"
                 android:text="John Doe"
-                android:textStyle="bold"
+                android:fontFamily="@font/inter_bold"
                 android:textSize="20sp"
                 android:textColor="@android:color/white" />
 
@@ -84,13 +84,14 @@
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="4dp"
                 android:text="+62 812-3456-7890"
+                android:fontFamily="@font/inter_medium"
                 android:textSize="14sp"
                 android:textColor="@android:color/white" />
 
             <!-- ======= LABELS + VALUES (EMAIL | AGE | SCORE) ======= -->
             <LinearLayout
                 android:id="@+id/info_row"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/tv_mobile"
                 android:layout_centerHorizontal="true"
@@ -100,8 +101,9 @@
 
                 <!-- ==== Email Column ==== -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical"
                     android:gravity="center_horizontal">
 
@@ -109,6 +111,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Email"
+                        android:fontFamily="@font/poppins_medium"
                         android:textSize="12sp"
                         android:textColor="#B3FFFFFF" />
 
@@ -117,14 +120,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="john.doe@email.com"
+                        android:fontFamily="@font/inter_semibold"
                         android:textColor="@android:color/white"
-                        android:textStyle="bold"
                         android:textSize="13sp"
-                        android:ellipsize="none"
-                        android:singleLine="true" />
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:layout_marginStart="10dp"/>
                 </LinearLayout>
 
-                <!-- Garis Pemisah 1 -->
+                <!-- Divider -->
                 <View
                     android:layout_width="1dp"
                     android:layout_height="28dp"
@@ -133,8 +137,9 @@
 
                 <!-- ==== Age Column ==== -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical"
                     android:gravity="center_horizontal">
 
@@ -142,6 +147,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Age"
+                        android:fontFamily="@font/poppins_medium"
                         android:textSize="12sp"
                         android:textColor="#B3FFFFFF" />
 
@@ -150,12 +156,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="24"
+                        android:fontFamily="@font/inter_bold"
                         android:textColor="@android:color/white"
-                        android:textStyle="bold"
                         android:textSize="13sp" />
                 </LinearLayout>
 
-                <!-- Garis Pemisah 2 -->
+                <!-- Divider -->
                 <View
                     android:layout_width="1dp"
                     android:layout_height="28dp"
@@ -164,8 +170,9 @@
 
                 <!-- ==== Score Column ==== -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:orientation="vertical"
                     android:gravity="center_horizontal">
 
@@ -173,6 +180,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Score"
+                        android:fontFamily="@font/poppins_medium"
                         android:textSize="12sp"
                         android:textColor="#B3FFFFFF" />
 
@@ -181,13 +189,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="89/100"
+                        android:fontFamily="@font/inter_bold"
                         android:textColor="@android:color/white"
-                        android:textStyle="bold"
                         android:textSize="13sp" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Tombol Edit Profile -->
+
             <Button
                 android:id="@+id/btn_edit_profile"
                 android:layout_width="wrap_content"
@@ -196,6 +204,7 @@
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="16dp"
                 android:text="Edit Profile"
+                android:fontFamily="@font/poppins_semibold"
                 android:textColor="@color/black"
                 android:textSize="13sp"
                 android:backgroundTint="@android:color/white"
@@ -204,7 +213,7 @@
                 android:elevation="6dp" />
         </RelativeLayout>
 
-        <!-- ================= BAGIAN BAWAH DENGAN ROUNDED BACKGROUND ================= -->
+        <!-- ================= LOWER SECTION ================= -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -214,7 +223,7 @@
             android:paddingHorizontal="20dp"
             android:layout_marginTop="-10dp">
 
-            <!-- CARD: Total Scans -->
+            <!-- Total Scans -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -235,21 +244,23 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="128"
+                        android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textSize="18sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Total Scans"
+                        android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginTop="2dp"
+                        android:layout_marginStart="10dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- CARD: Detected Categories -->
+            <!-- Detected Categories -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -268,10 +279,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Detected Categories"
+                        android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
 
-                    <!-- Daftar kategori -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -282,6 +293,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="• Benign: 62"
+                            android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
 
@@ -289,6 +301,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="• Neutral: 38"
+                            android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
 
@@ -296,6 +309,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="• Suspicious: 19"
+                            android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
 
@@ -303,13 +317,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="• Malignant: 9"
+                            android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- CARD: Member Since -->
+            <!-- Member Since -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -329,21 +344,22 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="January 12, 2023"
+                        android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:textSize="16sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Member Since"
+                        android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:layout_marginTop="4dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- CARD: Overall Skin Score -->
+            <!-- Overall Skin Score -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -363,9 +379,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="92 / 100"
+                        android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        android:textSize="18sp" />
 
                     <ProgressBar
                         android:id="@+id/skin_score_progress"
@@ -382,15 +398,15 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Overall Skin Score"
+                        android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:layout_marginTop="6dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
         </LinearLayout>
 
-        <!-- ================= BOTTOM CONTENT ================= -->
+        <!-- BOTTOM BUTTONS -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -400,7 +416,6 @@
             android:paddingHorizontal="20dp"
             android:layout_marginTop="-10dp">
 
-            <!-- Tombol Logout dan Delete -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -414,6 +429,7 @@
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
                     android:text="Logout"
+                    android:fontFamily="@font/poppins_semibold"
                     android:textColor="@android:color/white"
                     android:backgroundTint="@color/medium_sky_blue"
                     style="@style/Widget.MaterialComponents.Button"
@@ -424,6 +440,7 @@
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
                     android:text="Delete Account"
+                    android:fontFamily="@font/poppins_semibold"
                     android:textColor="@android:color/white"
                     android:backgroundTint="@color/danger_red"
                     style="@style/Widget.MaterialComponents.Button" />
