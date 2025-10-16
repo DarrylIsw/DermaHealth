@@ -35,7 +35,7 @@
                     android:layout_marginBottom="10dp"
                     android:textSize="26sp"
                     android:textColor="@color/deep_dark_blue"
-                    android:fontFamily="@font/inter_bold"/>
+                    android:fontFamily="@font/poppins_semibold"/>
 
                 <!-- CAROUSEL: ViewPager2 (1/3 of screen + a little more) -->
                 <androidx.viewpager2.widget.ViewPager2

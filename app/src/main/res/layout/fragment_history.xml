@@ -27,7 +27,7 @@
             android:text="@string/history_title"
             android:textSize="26sp"
             android:textColor="@color/deep_dark_blue"
-            android:fontFamily="@font/inter_bold"
+            android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.02"
             android:layout_marginBottom="2dp" />
     </LinearLayout>
