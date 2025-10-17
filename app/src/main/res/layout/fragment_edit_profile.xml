@@ -33,6 +33,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/edit_profile"
+                android:fontFamily="@font/inter_bold"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="@color/black" />
@@ -43,6 +44,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/full_name"
+            android:fontFamily="@font/inter_semibold"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -62,6 +64,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/enter_your_name"
                 android:background="@android:color/transparent"
+                android:fontFamily="@font/poppins"
                 android:textColor="@color/black"
                 android:inputType="textPersonName" />
         </LinearLayout>
@@ -73,6 +76,7 @@
             android:text="@string/email_holder"
             android:textSize="14sp"
             android:textStyle="bold"
+            android:fontFamily="@font/inter_semibold"
             android:textColor="@color/black"
             android:layout_marginBottom="6dp" />
 
@@ -89,6 +93,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/enter_your_email"
+                android:fontFamily="@font/poppins"
                 android:background="@android:color/transparent"
                 android:textColor="@color/black"
                 android:inputType="textEmailAddress" />
@@ -99,6 +104,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/phone_number"
+            android:fontFamily="@font/inter_semibold"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -139,6 +145,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0.7"
                 android:hint="@string/enter_phone_number"
+                android:fontFamily="@font/poppins"
                 android:maxLength="11"
                 android:background="@android:color/transparent"
                 android:textColor="@color/black"
@@ -150,6 +157,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/age"
+            android:fontFamily="@font/inter_semibold"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -168,11 +176,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/enter_your_age"
+                android:fontFamily="@font/poppins"
                 android:background="@android:color/transparent"
                 android:textColor="@color/black"
                 android:inputType="number"
                 android:maxLength="2"
-                android:textSize="14sp"
+                android:textSize="17.5sp"
                 android:paddingVertical="4dp" />
         </LinearLayout>
 
@@ -182,6 +191,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/save"
+            android:fontFamily="@font/inter_semibold"
             android:textColor="@android:color/white"
             android:backgroundTint="@color/medium_sky_blue"
             android:layout_marginBottom="12dp" />
