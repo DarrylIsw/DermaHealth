@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 
 class LoginFragment : Fragment() {
 
+    // --- Views ---
     private lateinit var inputUsername: EditText
     private lateinit var inputPassword: EditText
     private lateinit var btnLogin: Button
@@ -24,23 +25,26 @@ class LoginFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Inflate the login layout
         return inflater.inflate(R.layout.fragment_login, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // --- Initialize views ---
         inputUsername = view.findViewById(R.id.inputUsername)
         inputPassword = view.findViewById(R.id.inputPassword)
         btnLogin = view.findViewById(R.id.btnLogin)
         btnRegister = view.findViewById(R.id.btnRegister)
         tvRegisterLink = view.findViewById(R.id.tvRegisterLink)
 
+        // --- Login button click ---
         btnLogin.setOnClickListener {
             val username = inputUsername.text.toString().trim()
             val password = inputPassword.text.toString().trim()
 
-            // Validate Username
+            // --- Validate username ---
             if (username.isEmpty()) {
                 inputUsername.error = "Username is required"
                 inputUsername.requestFocus()
@@ -53,7 +57,7 @@ class LoginFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Validate Password
+            // --- Validate password ---
             if (password.isEmpty()) {
                 inputPassword.error = "Password is required"
                 inputPassword.requestFocus()
@@ -66,7 +70,7 @@ class LoginFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Dummy check (replace with Firebase/Auth later)
+            // --- Dummy authentication (replace with Firebase/Auth later) ---
             if (username == "user" && password == "123456") {
                 Toast.makeText(requireContext(), "Login successful!", Toast.LENGTH_SHORT).show()
                 val intent = Intent(requireActivity(), MainActivity::class.java)
@@ -77,19 +81,15 @@ class LoginFragment : Fragment() {
             }
         }
 
-        // Go to RegisterFragment
-        btnRegister.setOnClickListener {
+        // --- Navigate to RegisterFragment ---
+        val goToRegister = {
             requireActivity().supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, RegisterFragment())
                 .addToBackStack(null)
                 .commit()
         }
 
-        tvRegisterLink.setOnClickListener {
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, RegisterFragment())
-                .addToBackStack(null)
-                .commit()
-        }
+        btnRegister.setOnClickListener { goToRegister() }
+        tvRegisterLink.setOnClickListener { goToRegister() }
     }
 }

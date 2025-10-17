@@ -13,6 +13,7 @@ class LoginRegisterActivity : AppCompatActivity() {
         binding = ActivityLoginRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Load LoginFragment only once
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, LoginFragment())

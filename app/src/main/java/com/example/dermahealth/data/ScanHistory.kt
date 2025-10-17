@@ -1,19 +1,12 @@
 package com.example.dermahealth.data
 
-//data class ScanHistory(
-//    val id: Int,
-//    val imageRes: Int,
-//    val result: String,
-//    val date: String,
-//    var notes: String
-//)
-
+// Represents a single scan history entry in the app
 data class ScanHistory(
-    val id: Long,
-    val imageUrl: String?,        // use URL/path; fallback to placeholder
-    val result: String,           // "Benign" | "Suspicious" | "Malignant"...
-    val dateIso: String,          // store ISO (e.g., 2025-09-24) and format in UI
-    val notes: String,
-    val croppedUrl: String? = null,
-    val isExpanded: Boolean = false
+    val id: Long,                  // Unique identifier for the scan
+    val imageUrl: String?,         // Full image URL/path; fallback to placeholder if null
+    val result: String,            // Scan result: "Benign", "Suspicious", "Malignant", etc.
+    val dateIso: String,           // ISO date string (e.g., "2025-09-24"); format for UI display
+    val notes: String,             // User or system notes about the scan
+    val croppedUrl: String? = null,// Optional cropped image URL/path
+    val isExpanded: Boolean = false// UI state: whether this item is expanded in RecyclerView
 )

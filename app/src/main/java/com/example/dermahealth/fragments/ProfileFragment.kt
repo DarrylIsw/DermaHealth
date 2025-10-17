@@ -15,11 +15,8 @@ import de.hdodenhof.circleimageview.CircleImageView
 import com.example.dermahealth.helper.BackHandler
 
 class ProfileFragment : Fragment(), BackHandler {
-    override fun onBackPressed(): Boolean {
-        // nothing special to handle → just return false
-        return false
-    }
 
+    // --- Views ---
     private lateinit var imgAvatar: CircleImageView
     private lateinit var btnEditAvatar: View
     private lateinit var tvName: TextView
@@ -28,11 +25,16 @@ class ProfileFragment : Fragment(), BackHandler {
     private lateinit var tvAgeValue: TextView
     private lateinit var tvTotalScans: TextView
     private lateinit var tvMemberSince: TextView
-    private lateinit var tvProfile: TextView
     private lateinit var tvOverallSkin: TextView
+    private lateinit var tvProfile: TextView
     private lateinit var btnEditProfile: Button
     private lateinit var btnLogout: Button
     private lateinit var btnDeleteAccount: Button
+
+    override fun onBackPressed(): Boolean {
+        // Nothing special to handle → just return false
+        return false
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,7 +42,7 @@ class ProfileFragment : Fragment(), BackHandler {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
 
-        // 🔹 Bind views
+        // --- Bind views ---
         imgAvatar = view.findViewById(R.id.img_avatar_main)
         btnEditAvatar = view.findViewById(R.id.btn_edit_avatar_main)
         tvName = view.findViewById(R.id.tv_name)
@@ -55,11 +57,17 @@ class ProfileFragment : Fragment(), BackHandler {
         btnLogout = view.findViewById(R.id.btn_logout)
         btnDeleteAccount = view.findViewById(R.id.btn_delete_account)
 
-
-        // 🔹 Load saved user data
+        // --- Load saved user data ---
         loadUserData()
 
-        // 🔹 Edit Profile
+        // --- Button listeners ---
+        setupListeners()
+
+        return view
+    }
+
+    private fun setupListeners() {
+        // Edit Profile
         btnEditProfile.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, EditProfileFragment())
@@ -67,52 +75,52 @@ class ProfileFragment : Fragment(), BackHandler {
                 .commit()
         }
 
-        // 🔹 Logout
+        // Logout
         btnLogout.setOnClickListener {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Logout")
-                .setMessage("Are you sure you want to log out?")
-                .setPositiveButton("Yes") { _, _ ->
-                    val sharedPref =
-                        requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
-                    sharedPref.edit().clear().apply()
-                    // Reset UI
-                    loadUserData()
-                    imgAvatar.setImageResource(R.drawable.ic_person)
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
+            showConfirmationDialog(
+                title = "Logout",
+                message = "Are you sure you want to log out?"
+            ) {
+                clearUserData()
+            }
         }
 
-        // 🔹 Delete Account
+        // Delete Account
         btnDeleteAccount.setOnClickListener {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Delete Account")
-                .setMessage("This action cannot be undone. Continue?")
-                .setPositiveButton("Delete") { _, _ ->
-                    val sharedPref =
-                        requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
-                    sharedPref.edit().clear().apply()
-                    // Reset UI
-                    loadUserData()
-                    imgAvatar.setImageResource(R.drawable.ic_person)
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
+            showConfirmationDialog(
+                title = "Delete Account",
+                message = "This action cannot be undone. Continue?"
+            ) {
+                clearUserData()
+            }
         }
 
-        // 🔹 Edit Avatar
+        // Edit Avatar
         btnEditAvatar.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, ChangeAvatarFragment())
                 .addToBackStack(null)
                 .commit()
         }
-
-        return view
     }
 
-    // 🔹 Load user data (nama, email, phone, age, avatar)
+    private fun showConfirmationDialog(title: String, message: String, onConfirm: () -> Unit) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("Yes") { _, _ -> onConfirm() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun clearUserData() {
+        val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
+        sharedPref.edit().clear().apply()
+        loadUserData()
+        imgAvatar.setImageResource(R.drawable.ic_person)
+    }
+
+    // --- Load user data (name, email, phone, age, avatar) ---
     private fun loadUserData() {
         val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
         val name = sharedPref.getString("name", "John Doe")
@@ -141,7 +149,7 @@ class ProfileFragment : Fragment(), BackHandler {
 
     override fun onResume() {
         super.onResume()
-        // Muat ulang data setiap kali kembali dari fragment lain
+        // Reload data when returning from other fragments
         loadUserData()
     }
 }

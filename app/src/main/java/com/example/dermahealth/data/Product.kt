@@ -1,6 +1,6 @@
 package com.example.dermahealth.data
 data class Product(
-    val name: String?,
-    val brand: String?,
-    val imageUrl: String?
+    val name: String?, // Product Title
+    val brand: String?, // Product Brand
+    val imageUrl: String? // Product image URL
 )

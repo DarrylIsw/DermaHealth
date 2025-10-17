@@ -19,14 +19,19 @@ import com.google.android.material.snackbar.Snackbar
 import com.example.dermahealth.helper.BackHandler
 
 class HistoryFragment : Fragment(), BackHandler {
+
+    // Handle physical back press (returns false = not consumed)
     override fun onBackPressed(): Boolean = false
 
+    // ViewBinding
     private var _b: FragmentHistoryBinding? = null
     private val b get() = _b!!
 
+    // Adapter for scan history RecyclerView
     private val adapter by lazy {
         HistoryAdapter(
             onEdit = { scan ->
+                // Show dialog to edit notes (currently simple display)
                 AlertDialog.Builder(requireContext())
                     .setTitle(getString(R.string.edit_notes))
                     .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
@@ -34,9 +39,10 @@ class HistoryFragment : Fragment(), BackHandler {
                     .show()
             },
             onDelete = { scan ->
-                confirmDelete(scan)
+                confirmDelete(scan) // Ask confirmation before deleting
             },
             onToggleExpand = { pos, expanded ->
+                // Scroll to item when expanded
                 if (expanded) {
                     b.rvHistory.post { b.rvHistory.smoothScrollToPosition(pos) }
                 }
@@ -44,6 +50,7 @@ class HistoryFragment : Fragment(), BackHandler {
         )
     }
 
+    // Confirm deletion dialog
     private fun confirmDelete(scan: ScanHistory) {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.delete_scan_title)
@@ -53,6 +60,7 @@ class HistoryFragment : Fragment(), BackHandler {
             .show()
     }
 
+    // Remove item with undo option
     private fun removeWithUndo(scan: ScanHistory) {
         val current = adapter.currentList.toMutableList()
         val idx = current.indexOfFirst { it.id == scan.id }
@@ -61,6 +69,7 @@ class HistoryFragment : Fragment(), BackHandler {
         adapter.submitList(current)
         updateEmptyState()
 
+        // Show Snackbar with Undo
         Snackbar.make(b.root, getString(R.string.scan_deleted), Snackbar.LENGTH_LONG)
             .setAction(R.string.undo) {
                 val restored = adapter.currentList.toMutableList()
@@ -77,17 +86,19 @@ class HistoryFragment : Fragment(), BackHandler {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // Setup RecyclerView
         b.rvHistory.layoutManager = LinearLayoutManager(requireContext())
         b.rvHistory.adapter = adapter
         b.rvHistory.setHasFixedSize(false) // items can change height
-
         (b.rvHistory.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
+        // Extra padding at bottom
         val extra = resources.getDimensionPixelSize(R.dimen.rv_extra_scroll)
         b.rvHistory.post {
             b.rvHistory.updatePadding(bottom = b.rvHistory.paddingBottom + extra)
         }
 
+        // --- Swipe actions ---
         val swipe = SwipeActionsCallback(
             context = requireContext(),
             onRequestLeft = { pos, done ->   // DELETE
@@ -116,8 +127,7 @@ class HistoryFragment : Fragment(), BackHandler {
         )
         ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
 
-
-        // seed dummy
+        // --- Seed dummy data ---
         val seed = listOf(
             ScanHistory(1, null, "Benign", "2025-09-24", "Looks fine, monitor", null),
             ScanHistory(2, null, "Suspicious", "2025-09-20", "Visit dermatologist soon", null),
@@ -128,6 +138,7 @@ class HistoryFragment : Fragment(), BackHandler {
         updateEmptyState()
     }
 
+    // Show/hide empty state views
     private fun updateEmptyState() {
         val isEmpty = adapter.itemCount == 0
         b.emptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE

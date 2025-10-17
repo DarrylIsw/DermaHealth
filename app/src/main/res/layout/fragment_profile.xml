@@ -25,7 +25,8 @@
                 android:id="@+id/tv_profile_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Profile"
+
+                android:text="@string/profile_title"
                 android:textColor="@android:color/white"
                 android:textSize="22sp"
                 android:fontFamily="@font/poppins_semibold"
@@ -43,7 +44,7 @@
                 app:civ_border_width="3dp"
                 app:civ_border_color="@android:color/white"
                 android:scaleType="centerCrop"
-                android:contentDescription="Profile Avatar" />
+                android:contentDescription="@string/profile_avatar_title" />
 
             <!-- Tombol Edit Avatar -->
             <ImageButton
@@ -58,7 +59,7 @@
                 android:src="@drawable/camera"
                 android:scaleType="centerInside"
                 android:padding="6dp"
-                android:contentDescription="Edit Avatar"
+                android:contentDescription="@string/edit_avatar"
                 app:tint="@null"
                 android:elevation="8dp" />
 
@@ -70,7 +71,7 @@
                 android:layout_below="@id/img_avatar_main"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="14dp"
-                android:text="John Doe"
+                android:text="@string/dummy_user"
                 android:fontFamily="@font/inter_bold"
                 android:textSize="20sp"
                 android:textColor="@android:color/white" />
@@ -83,7 +84,7 @@
                 android:layout_below="@id/tv_name"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="4dp"
-                android:text="+62 812-3456-7890"
+                android:text="@string/dummy_number"
                 android:fontFamily="@font/inter_medium"
                 android:textSize="14sp"
                 android:textColor="@android:color/white" />
@@ -110,7 +111,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Email"
+                        android:text="@string/email_holder"
                         android:fontFamily="@font/poppins_medium"
                         android:textSize="12sp"
                         android:textColor="#B3FFFFFF" />
@@ -119,7 +120,7 @@
                         android:id="@+id/tv_email"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="john.doe@email.com"
+                        android:text="@string/dummy_email"
                         android:fontFamily="@font/inter_semibold"
                         android:textColor="@android:color/white"
                         android:textSize="13sp"
@@ -146,7 +147,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Age"
+                        android:text="@string/age_title"
                         android:fontFamily="@font/poppins_medium"
                         android:textSize="12sp"
                         android:textColor="#B3FFFFFF" />
@@ -155,7 +156,7 @@
                         android:id="@+id/tv_age_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="24"
+                        android:text="@string/dummy_age"
                         android:fontFamily="@font/inter_bold"
                         android:textColor="@android:color/white"
                         android:textSize="13sp" />
@@ -179,7 +180,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Score"
+                        android:text="@string/score_title"
                         android:fontFamily="@font/poppins_medium"
                         android:textSize="12sp"
                         android:textColor="#B3FFFFFF" />
@@ -188,7 +189,7 @@
                         android:id="@+id/tv_score"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="89/100"
+                        android:text="@string/dummy_score"
                         android:fontFamily="@font/inter_bold"
                         android:textColor="@android:color/white"
                         android:textSize="13sp" />
@@ -203,7 +204,7 @@
                 android:layout_below="@id/info_row"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="16dp"
-                android:text="Edit Profile"
+                android:text="@string/edit_profile"
                 android:fontFamily="@font/poppins_semibold"
                 android:textColor="@color/black"
                 android:textSize="13sp"
@@ -243,7 +244,7 @@
                         android:id="@+id/tv_total_scans"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="128"
+                        android:text="@string/total_scan_dummy"
                         android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
                         android:textSize="18sp" />
@@ -251,7 +252,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Total Scans"
+                        android:text="@string/total_scans"
                         android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
@@ -278,7 +279,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Detected Categories"
+                        android:text="@string/detected_categories"
                         android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
@@ -292,7 +293,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="• Benign: 62"
+                            android:text="@string/benign_62"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
@@ -300,7 +301,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="• Neutral: 38"
+                            android:text="@string/neutral_38"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
@@ -308,7 +309,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="• Suspicious: 19"
+                            android:text="@string/suspicious_19"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
@@ -316,7 +317,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="• Malignant: 9"
+                            android:text="@string/malignant_9"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
@@ -343,7 +344,7 @@
                         android:id="@+id/tv_member_since_date"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="January 12, 2023"
+                        android:text="@string/dummy_date"
                         android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
                         android:textSize="16sp" />
@@ -351,7 +352,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Member Since"
+                        android:text="@string/member_since"
                         android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
@@ -378,7 +379,7 @@
                         android:id="@+id/tv_overall_skin_score"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="92 / 100"
+                        android:text="@string/dummy_overall"
                         android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
                         android:textSize="18sp" />
@@ -397,7 +398,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Overall Skin Score"
+                        android:text="@string/overall_skin_score"
                         android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
@@ -428,7 +429,7 @@
                     android:id="@+id/btn_logout"
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="Logout"
+                    android:text="@string/logout"
                     android:fontFamily="@font/poppins_semibold"
                     android:textColor="@android:color/white"
                     android:backgroundTint="@color/medium_sky_blue"
@@ -439,7 +440,7 @@
                     android:id="@+id/btn_delete_account"
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="Delete Account"
+                    android:text="@string/delete_account"
                     android:fontFamily="@font/poppins_semibold"
                     android:textColor="@android:color/white"
                     android:backgroundTint="@color/danger_red"

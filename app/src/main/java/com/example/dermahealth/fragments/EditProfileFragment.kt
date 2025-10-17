@@ -14,6 +14,7 @@ import androidx.activity.OnBackPressedCallback
 
 class EditProfileFragment : Fragment() {
 
+    // UI elements
     private lateinit var etName: EditText
     private lateinit var etEmail: EditText
     private lateinit var etPhone: EditText
@@ -25,8 +26,10 @@ class EditProfileFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_edit_profile, container, false)
 
+        // Initialize UI elements
         etName = view.findViewById(R.id.et_name)
         etEmail = view.findViewById(R.id.et_email)
         etPhone = view.findViewById(R.id.et_phone)
@@ -34,24 +37,26 @@ class EditProfileFragment : Fragment() {
         btnSave = view.findViewById(R.id.btn_save)
         btnBack = view.findViewById(R.id.btn_back)
 
+        // Load previously saved profile data from SharedPreferences
         val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
         etName.setText(sharedPref.getString("name", ""))
         etEmail.setText(sharedPref.getString("email", ""))
         etPhone.setText(sharedPref.getString("phone", ""))
         etAge.setText(sharedPref.getString("age", ""))
 
+        // Save button: store entered data in SharedPreferences
         btnSave.setOnClickListener {
             val editor = sharedPref.edit()
             editor.putString("name", etName.text.toString())
             editor.putString("email", etEmail.text.toString())
             editor.putString("phone", etPhone.text.toString())
             editor.putString("age", etAge.text.toString())
-            editor.apply()
+            editor.apply() // Save changes asynchronously
 
-            parentFragmentManager.popBackStack()
+            parentFragmentManager.popBackStack() // Navigate back to previous fragment
         }
 
-        // Tombol back di header
+        // Back button in header: navigate back without saving
         btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
@@ -62,14 +67,18 @@ class EditProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Handle physical back button presses
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (parentFragmentManager.backStackEntryCount > 0) {
+                    // Pop back stack if there are fragments
                     parentFragmentManager.popBackStack()
                 } else {
+                    // Finish activity if no fragments left
                     requireActivity().finish()
                 }
             }
         })
     }
 }
+
