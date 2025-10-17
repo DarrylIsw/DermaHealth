@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_light"
@@ -25,13 +26,13 @@
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:src="@drawable/outline_arrow_back_ios_24"
-                android:tint="@color/black"
+                app:tint="@color/black"
                 android:layout_marginEnd="6dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit Profile"
+                android:text="@string/edit_profile"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="@color/black" />
@@ -41,7 +42,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Full Name"
+            android:text="@string/full_name"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -59,7 +60,7 @@
                 android:id="@+id/et_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter your name"
+                android:hint="@string/enter_your_name"
                 android:background="@android:color/transparent"
                 android:textColor="@color/black"
                 android:inputType="textPersonName" />
@@ -69,7 +70,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Email"
+            android:text="@string/email_holder"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -87,7 +88,7 @@
                 android:id="@+id/et_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter your email"
+                android:hint="@string/enter_your_email"
                 android:background="@android:color/transparent"
                 android:textColor="@color/black"
                 android:inputType="textEmailAddress" />
@@ -97,7 +98,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Phone Number"
+            android:text="@string/phone_number"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -106,16 +107,39 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:background="@drawable/card_field_bg"
-            android:padding="12dp"
+            android:padding="8dp"
+            android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
 
+            <!-- Country Code Selector -->
+            <Spinner
+                android:id="@+id/spinner_country_code"
+                android:layout_width="10dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.3"
+                android:entries="@array/country_codes"
+                android:spinnerMode="dropdown"
+                android:background="@android:color/transparent"
+                android:padding="8dp"
+                android:textAlignment="center" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="24dp"
+                android:background="@color/light_grey_white3"
+                android:layout_marginHorizontal="8dp" />
+
+            <!-- Phone Input -->
             <EditText
                 android:id="@+id/et_phone"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="Enter phone number"
+                android:layout_weight="0.7"
+                android:hint="@string/enter_phone_number"
+                android:maxLength="11"
                 android:background="@android:color/transparent"
                 android:textColor="@color/black"
                 android:inputType="phone" />
@@ -125,7 +149,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Age"
+            android:text="@string/age"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -143,10 +167,13 @@
                 android:id="@+id/et_age"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter your age"
+                android:hint="@string/enter_your_age"
                 android:background="@android:color/transparent"
                 android:textColor="@color/black"
-                android:inputType="number" />
+                android:inputType="number"
+                android:maxLength="2"
+                android:textSize="14sp"
+                android:paddingVertical="4dp" />
         </LinearLayout>
 
         <!-- ========== BUTTON SAVE ========== -->
@@ -154,7 +181,7 @@
             android:id="@+id/btn_save"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save"
+            android:text="@string/save"
             android:textColor="@android:color/white"
             android:backgroundTint="@color/medium_sky_blue"
             android:layout_marginBottom="12dp" />
