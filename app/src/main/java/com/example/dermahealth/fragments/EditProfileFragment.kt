@@ -37,12 +37,6 @@ class EditProfileFragment : Fragment() {
 
         val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
 
-        // === Load saved data ===
-        etName.setText(sharedPref.getString("name", ""))
-        etEmail.setText(sharedPref.getString("email", ""))
-        etPhone.setText(sharedPref.getString("phone", ""))
-        etAge.setText(sharedPref.getString("age", ""))
-
         // Load spinner data
         val savedCountryIndex = sharedPref.getInt("countryCodeIndex", 3) // Default: +62 (ID)
         spinnerCountryCode.setSelection(savedCountryIndex)
