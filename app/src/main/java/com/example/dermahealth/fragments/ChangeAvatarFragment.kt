@@ -38,7 +38,7 @@ class ChangeAvatarFragment : Fragment() {
         // --- Back button: returns to ProfileFragment ---
         btnBack.setOnClickListener {
             parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, ProfileFragment())
+                .replace(R.id.fragmentContainer, ProfileFragment())
                 .commit()
         }
 
@@ -58,7 +58,7 @@ class ChangeAvatarFragment : Fragment() {
 
                 // Return to ProfileFragment after saving
                 parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, ProfileFragment())
+                    .replace(R.id.fragmentContainer, ProfileFragment())
                     .commit()
             }
         }
