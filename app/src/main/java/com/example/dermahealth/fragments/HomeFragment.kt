@@ -411,9 +411,9 @@ class HomeFragment : Fragment(), BackHandler {
 
         // --- Dummy routines (only once) ---
         if (routineList.isEmpty()) {
-            routineList.add(Routine(1, "Apply sunscreen", "08:00 AM"))
-            routineList.add(Routine(2, "Moisturize before bed", "10:00 PM"))
-            routineList.add(Routine(3, "Drink more water", "Throughout the day"))
+            routineList.add(Routine(1, "Apply sunscreen", "08:00 AM", "Use SPF 50"))
+            routineList.add(Routine(2, "Moisturize before bed", "10:00 PM", "Use night cream"))
+            routineList.add(Routine(3, "Drink more water", "Throughout the day", "At least 8 glasses"))
         }
 
         // --- TimePicker listener (use same etTime) ---
@@ -465,7 +465,7 @@ class HomeFragment : Fragment(), BackHandler {
         tvTip.text = tips[tipIndex]
         startTipRotation()
 
-// --- RecyclerView Adapter for edit/delete ---
+        // --- RecyclerView Adapter for edit/delete ---
         adapter = RoutineAdapter(
             routineList,
             onEdit = { routine ->

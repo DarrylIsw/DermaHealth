@@ -19,6 +19,7 @@ class RoutineAdapter(
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val tvTitle: TextView = view.findViewById(R.id.tv_routine_title) // Routine title
         val tvTime: TextView = view.findViewById(R.id.tv_routine_time)   // Routine time
+        val tvComment: TextView = view.findViewById(R.id.et_additional_comment) // Routine comment
         val btnEdit: ImageButton = view.findViewById(R.id.btn_edit)      // Edit button
     }
 
@@ -33,24 +34,30 @@ class RoutineAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
 
-        // Set title and time
         holder.tvTitle.text = item.title
         holder.tvTime.text = item.time
 
-        // Set edit button click listener
+        // Show/hide comment dynamically
+        if (item.note.isNullOrBlank()) {
+            holder.tvComment.visibility = View.GONE
+        } else {
+            holder.tvComment.visibility = View.VISIBLE
+            holder.tvComment.text = item.note
+        }
+
         holder.btnEdit.setOnClickListener { onEdit(item) }
 
-        // --- Fade-in + slide-up animation ---
-        // Gives a nice entrance effect for each item
+        // Animation
         holder.itemView.alpha = 0f
         holder.itemView.translationY = 50f
         holder.itemView.animate()
             .alpha(1f)
             .translationY(0f)
-            .setDuration(300)                 // Duration of animation
-            .setStartDelay(position * 80L)    // Stagger animation for each item
+            .setDuration(300)
+            .setStartDelay(position * 80L)
             .start()
     }
+
 
     // Return total number of items
     override fun getItemCount(): Int = items.size
