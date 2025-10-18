@@ -143,11 +143,7 @@ class ScanFragment : Fragment(), BackHandler {
 
         // Click listeners
         btnTake.setOnClickListener {
-            if (!hasCameraPermission()) {
-                requestCameraAndMaybeStorage()
-            } else {
-                takePhotoAndCrop()
-            }
+            takePhotoAndCrop()
         }
 
         btnGallery.setOnClickListener {
@@ -187,8 +183,13 @@ class ScanFragment : Fragment(), BackHandler {
             }
         }
 
-        // Start camera if permission already granted
-        if (hasCameraPermission()) startCamera()
+        // Request camera permission on fragment start
+        if (!hasCameraPermission()) {
+            requestCameraAndMaybeStorage()
+        } else {
+            startCamera()
+        }
+
     }
 
     /** Convert content uri to a file: copy into cache and return file:// URI */
