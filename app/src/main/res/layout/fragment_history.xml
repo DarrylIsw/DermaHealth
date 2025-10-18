@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:paddingHorizontal="16dp"
     android:paddingTop="20dp"
-    android:paddingBottom="56dp"
     android:background="@color/soft_background">
 
     <!-- 🩵 Section Header -->
