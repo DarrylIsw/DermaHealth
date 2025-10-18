@@ -16,7 +16,7 @@ class LoginRegisterActivity : AppCompatActivity() {
         // Load LoginFragment only once
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, LoginFragment())
+                .replace(R.id.fragment_container, LoginFragment())
                 .commit()
         }
     }

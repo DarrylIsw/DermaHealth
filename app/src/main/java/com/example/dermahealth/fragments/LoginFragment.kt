@@ -84,7 +84,7 @@ class LoginFragment : Fragment() {
         // --- Navigate to RegisterFragment ---
         val goToRegister = {
             requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, RegisterFragment())
+                .replace(R.id.fragment_container, RegisterFragment())
                 .addToBackStack(null)
                 .commit()
         }
