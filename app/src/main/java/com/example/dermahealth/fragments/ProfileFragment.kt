@@ -2,6 +2,7 @@ package com.example.dermahealth.fragments
 
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,6 +12,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.LoginFragment
+import com.example.dermahealth.LoginRegisterActivity
 import com.example.dermahealth.R
 import de.hdodenhof.circleimageview.CircleImageView
 import com.example.dermahealth.helper.BackHandler
@@ -83,16 +85,12 @@ class ProfileFragment : Fragment(), BackHandler {
                 message = "Are you sure you want to log out?"
             ) {
                 clearUserData()
-
-                // --- Bersihkan back stack agar user tidak bisa kembali ke halaman sebelumnya ---
-                parentFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-
-                // --- Navigate to LoginFragment ---
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, LoginFragment())
-                    .commit()
+                val intent = Intent(requireActivity(), LoginRegisterActivity::class.java)
+                startActivity(intent)
+                requireActivity().finish()
             }
         }
+
 
         // Delete Account
         btnDeleteAccount.setOnClickListener {
@@ -102,13 +100,13 @@ class ProfileFragment : Fragment(), BackHandler {
             ) {
                 clearUserData()
 
-                // --- Bersihkan back stack dan kembali ke login ---
-                parentFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, LoginFragment())
-                    .commit()
+                // Start LoginRegisterActivity and finish MainActivity
+                val intent = Intent(requireActivity(), LoginRegisterActivity::class.java)
+                startActivity(intent)
+                requireActivity().finish() // <-- removes MainActivity with bottom nav
             }
         }
+
 
         // Edit Avatar
         btnEditAvatar.setOnClickListener {
