@@ -58,6 +58,12 @@ class EditProfileFragment : Fragment() {
                     return@setOnClickListener
                 }
 
+                !name.matches(Regex("^[A-Za-z ]+$")) -> {
+                    etName.error = "Name can only contain letters and spaces"
+                    etName.requestFocus()
+                    return@setOnClickListener
+                }
+
                 email.isEmpty() -> {
                     etEmail.error = "Email cannot be empty"
                     etEmail.requestFocus()
@@ -76,7 +82,7 @@ class EditProfileFragment : Fragment() {
                     return@setOnClickListener
                 }
 
-                !phone.matches(Regex("^[0-9]{9,11}\$")) -> { // only digits, 9–11 digits long
+                !phone.matches(Regex("^[0-9]{9,11}\$")) -> {
                     etPhone.error = "Enter a valid phone number (9–11 digits)"
                     etPhone.requestFocus()
                     return@setOnClickListener
@@ -88,7 +94,7 @@ class EditProfileFragment : Fragment() {
                     return@setOnClickListener
                 }
 
-                !age.matches(Regex("^[0-9]{1,2}\$")) -> { // only 1–2 digits
+                !age.matches(Regex("^[0-9]{1,2}\$")) -> {
                     etAge.error = "Enter a valid age (1–99)"
                     etAge.requestFocus()
                     return@setOnClickListener
