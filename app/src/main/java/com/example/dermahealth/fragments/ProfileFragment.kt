@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.example.dermahealth.LoginFragment
 import com.example.dermahealth.R
 import de.hdodenhof.circleimageview.CircleImageView
 import com.example.dermahealth.helper.BackHandler
@@ -82,6 +83,14 @@ class ProfileFragment : Fragment(), BackHandler {
                 message = "Are you sure you want to log out?"
             ) {
                 clearUserData()
+
+                // --- Bersihkan back stack agar user tidak bisa kembali ke halaman sebelumnya ---
+                parentFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+
+                // --- Navigate to LoginFragment ---
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, LoginFragment())
+                    .commit()
             }
         }
 
@@ -92,6 +101,12 @@ class ProfileFragment : Fragment(), BackHandler {
                 message = "This action cannot be undone. Continue?"
             ) {
                 clearUserData()
+
+                // --- Bersihkan back stack dan kembali ke login ---
+                parentFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, LoginFragment())
+                    .commit()
             }
         }
 
@@ -105,13 +120,25 @@ class ProfileFragment : Fragment(), BackHandler {
     }
 
     private fun showConfirmationDialog(title: String, message: String, onConfirm: () -> Unit) {
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("Yes") { _, _ -> onConfirm() }
             .setNegativeButton("Cancel", null)
-            .show()
+            .create()
+
+        dialog.setOnShowListener {
+            // Ambil warna dari resource
+            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+
+            // Ubah warna tombol
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+        }
+
+        dialog.show()
     }
+
 
     private fun clearUserData() {
         val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)

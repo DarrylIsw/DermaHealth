@@ -27,16 +27,27 @@ class HistoryFragment : Fragment(), BackHandler {
     private var _b: FragmentHistoryBinding? = null
     private val b get() = _b!!
 
+    // Tambahkan property di fragment
+    private var swipeDialogShown = false
+
+
     // Adapter for scan history RecyclerView
     private val adapter by lazy {
         HistoryAdapter(
             onEdit = { scan ->
                 // Show dialog to edit notes (currently simple display)
-                AlertDialog.Builder(requireContext())
+                val dialog = AlertDialog.Builder(requireContext())
                     .setTitle(getString(R.string.edit_notes))
                     .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
                     .setPositiveButton(android.R.string.ok, null)
-                    .show()
+                    .create()
+
+                dialog.setOnShowListener {
+                    val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+                }
+
+                dialog.show()
             },
             onDelete = { scan ->
                 confirmDelete(scan) // Ask confirmation before deleting
@@ -52,13 +63,22 @@ class HistoryFragment : Fragment(), BackHandler {
 
     // Confirm deletion dialog
     private fun confirmDelete(scan: ScanHistory) {
-        AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.delete_scan_title)
             .setMessage(R.string.delete_scan_msg)
             .setPositiveButton(R.string.yes) { _, _ -> removeWithUndo(scan) }
             .setNegativeButton(R.string.no, null)
-            .show()
+            .create()
+
+        dialog.setOnShowListener {
+            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+        }
+
+        dialog.show()
     }
+
 
     // Remove item with undo option
     private fun removeWithUndo(scan: ScanHistory) {
@@ -99,33 +119,81 @@ class HistoryFragment : Fragment(), BackHandler {
         }
 
         // --- Swipe actions ---
+// --- Swipe actions ---
         val swipe = SwipeActionsCallback(
             context = requireContext(),
-            onRequestLeft = { pos, done ->   // DELETE
+            onRequestLeft = { pos, done ->
                 val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
-                AlertDialog.Builder(requireContext())
-                    .setTitle(R.string.delete_scan_title)
-                    .setMessage(R.string.delete_scan_msg)
-                    .setPositiveButton(R.string.yes) { _, _ ->
-                        removeWithUndo(scan)
-                        done()
+
+                // Only show one delete dialog at a time
+                if (!swipeDialogShown) {
+                    swipeDialogShown = true
+                    val dialog = AlertDialog.Builder(requireContext())
+                        .setTitle(R.string.delete_scan_title)
+                        .setMessage(R.string.delete_scan_msg)
+                        .setPositiveButton(R.string.yes) { _, _ ->
+                            removeWithUndo(scan)
+                            swipeDialogShown = false
+                            done() // mark swipe as handled
+                        }
+                        .setNegativeButton(R.string.no) { _, _ ->
+                            swipeDialogShown = false
+                            done() // mark swipe as handled
+                        }
+                        .setOnCancelListener {
+                            // Ensure swipe is marked done if dialog is canceled
+                            swipeDialogShown = false
+                            done()
+                        }
+                        .create()
+
+                    dialog.setOnShowListener {
+                        val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
                     }
-                    .setNegativeButton(R.string.no) { _, _ -> done() }
-                    .setOnDismissListener { done() }
-                    .show()
+
+                    dialog.show()
+                } else {
+                    // If dialog is already shown, immediately mark swipe done
+                    done()
+                }
             },
-            onRequestRight = { pos, done ->  // EDIT
+            onRequestRight = { pos, done ->
                 val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
-                AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.edit_notes))
-                    .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
-                    .setPositiveButton(android.R.string.ok) { _, _ -> done() }
-                    .setOnDismissListener { done() }
-                    .show()
+
+                // Prevent spamming multiple edit dialogs
+                if (!swipeDialogShown) {
+                    swipeDialogShown = true
+                    val dialog = AlertDialog.Builder(requireContext())
+                        .setTitle(getString(R.string.edit_notes))
+                        .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            swipeDialogShown = false
+                            done() // mark swipe as handled
+                        }
+                        .setOnCancelListener {
+                            // Ensure swipe is marked done if dialog is canceled
+                            swipeDialogShown = false
+                            done()
+                        }
+                        .create()
+
+                    dialog.setOnShowListener {
+                        val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+                    }
+
+                    dialog.show()
+                } else {
+                    done() // if another dialog is open, skip
+                }
             },
             swipeThreshold = 0.35f
         )
+
         ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
+
 
         // --- Seed dummy data ---
         val seed = listOf(
