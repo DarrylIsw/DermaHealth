@@ -117,7 +117,7 @@ class ProfileFragment : Fragment(), BackHandler {
         val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
         sharedPref.edit().clear().apply()
         loadUserData()
-        imgAvatar.setImageResource(R.drawable.ic_person)
+        imgAvatar.setImageResource(R.drawable.ic_person_grey)
     }
 
     // --- Load user data (name, email, phone, age, avatar) ---
@@ -140,10 +140,10 @@ class ProfileFragment : Fragment(), BackHandler {
                 imgAvatar.setImageURI(uri)
             } catch (e: Exception) {
                 e.printStackTrace()
-                imgAvatar.setImageResource(R.drawable.ic_person)
+                imgAvatar.setImageResource(R.drawable.ic_person_grey)
             }
         } else {
-            imgAvatar.setImageResource(R.drawable.ic_person)
+            imgAvatar.setImageResource(R.drawable.ic_person_grey)
         }
     }
 
