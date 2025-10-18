@@ -59,7 +59,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-
 class HomeFragment : Fragment(), BackHandler {
 
     private lateinit var cpSkin: CircularProgressIndicator
@@ -90,11 +89,12 @@ class HomeFragment : Fragment(), BackHandler {
     private lateinit var overlay: FrameLayout
     private lateinit var blurBackground: View
     private lateinit var card: MaterialCardView
-    // --- Routine overlay fields ---
+    // Class-level lateinit properties at the top of HomeFragment
     private lateinit var etName: EditText
     private lateinit var etTime: EditText
     private lateinit var etComment: EditText
     private lateinit var btnSave: Button
+    private lateinit var tvTitle: TextView
     private lateinit var btnCancel: Button
 
     // Put your image resource ids here (or URLs if you load remotely with Glide/Picasso)
@@ -328,16 +328,14 @@ class HomeFragment : Fragment(), BackHandler {
         card = overlay.findViewById(R.id.card_add_routine)
 
         // --- EditTexts and Buttons inside the card ---
-        val etName = overlay.findViewById<EditText>(R.id.et_routine_name)
-        val etTime = overlay.findViewById<EditText>(R.id.et_routine_time)
-        val etComment = overlay.findViewById<EditText>(R.id.et_routine_comment)
-        val btnCancel = overlay.findViewById<Button>(R.id.btn_cancel_add)
-        val btnSave = overlay.findViewById<Button>(R.id.btn_save_add)
-        val tvTitle = overlay.findViewById<TextView>(R.id.tv_add_routine_title)
-
+        etName = overlay.findViewById(R.id.et_routine_name)
+        etTime = overlay.findViewById(R.id.et_routine_time)
+        etComment = overlay.findViewById(R.id.et_routine_comment)
+        btnSave = overlay.findViewById(R.id.btn_save_add)
+        tvTitle = overlay.findViewById(R.id.tv_add_routine_title)
+        btnCancel = overlay.findViewById(R.id.btn_cancel_add)
 
         // --- Add Routine FAB ---
-// --- Add Routine FAB ---
         btnAddRoutine.setOnClickListener {
             tvTitle.text = "Add Routine"       // Reset title
             etName.text.clear()
