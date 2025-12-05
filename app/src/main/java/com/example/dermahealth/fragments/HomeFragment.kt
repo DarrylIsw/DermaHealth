@@ -1,10 +1,12 @@
 package com.example.dermahealth.fragments
 
+import android.Manifest
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
@@ -20,6 +22,9 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.view.animation.DecelerateInterpolator
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
@@ -37,6 +42,8 @@ import com.example.dermahealth.databinding.FragmentHomeBinding
 import com.example.dermahealth.helper.BackHandler
 import com.example.dermahealth.helper.SwipeToDeleteCallback
 import com.example.dermahealth.viewmodel.SharedViewModel
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
@@ -129,11 +136,7 @@ class HomeFragment : Fragment(), BackHandler {
 
     // --- Stats TextViews ---
     private lateinit var tvTotalScans: TextView
-    private lateinit var tvBenign: TextView
-    private lateinit var tvNeutral: TextView
-    private lateinit var tvSuspicious: TextView
-    private lateinit var tvMalignant: TextView
-
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private val sharedViewModel: SharedViewModel by activityViewModels()
 
@@ -213,6 +216,14 @@ class HomeFragment : Fragment(), BackHandler {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
+        if (checkLocationPermission()) {
+            getUserLocation()
+        } else {
+            //requestLocationPermission()
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
         // --- Progress Bars (Right-side) ---
         pbUv = view.findViewById(R.id.pb_uv)
         pbHumidity = view.findViewById(R.id.pb_humidity)
@@ -221,7 +232,6 @@ class HomeFragment : Fragment(), BackHandler {
         tvUv = view.findViewById(R.id.tv_uv_index)
         tvHumidity = view.findViewById(R.id.tv_humidity)
         tvPollution = view.findViewById(R.id.tv_pollution)
-
 
         // --- Core Views ---
         rvRoutines = view.findViewById(R.id.rv_routines)
@@ -235,11 +245,6 @@ class HomeFragment : Fragment(), BackHandler {
 
         // Total scans & detected categories
         tvTotalScans = view.findViewById(R.id.tv_total_scans)
-
-        // --- Fetch environment data (updates ProgressBars and TextViews) ---
-        val latitude = -6.200000  // Replace with actual user location
-        val longitude = 106.816666
-        fetchEnvironmentData(latitude, longitude)
 
         sharedViewModel.history.observe(viewLifecycleOwner) { historyList ->
             updateOverallSkinScore(historyList)
@@ -436,11 +441,72 @@ class HomeFragment : Fragment(), BackHandler {
         sortRoutines()
     }
 
+    private fun checkLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestLocationPermission() {
+        ActivityCompat.requestPermissions(
+            requireActivity(),
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
+
+    private val locationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                getUserLocation()
+            } else {
+                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+    companion object {
+        const val LOCATION_PERMISSION_REQUEST_CODE = 101
+    }
+
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                getUserLocation()
+            } else {
+                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun getUserLocation() {
+        if (!checkLocationPermission()) {
+            requestLocationPermission()
+            return
+        }
+
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    val latitude = location.latitude
+                    val longitude = location.longitude
+                    fetchEnvironmentData(latitude, longitude) // call your API function
+                } else {
+                    Toast.makeText(requireContext(), "Unable to get location", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     // ---------------------------
     // UI helpers & logic
     // ---------------------------
-
-
     private fun updateOverallSkinScore(historyList: List<ScanHistory>) {
         if (historyList.isEmpty()) {
             animateSkinScore(0)
@@ -548,7 +614,6 @@ class HomeFragment : Fragment(), BackHandler {
         animator.start()
     }
 
-
     private fun enterAddMode() {
         isEditing = false
         editingRoutineId = null
@@ -559,7 +624,6 @@ class HomeFragment : Fragment(), BackHandler {
         updateDynamicInputsVisibility()
         showAddRoutineCard()
     }
-
 
     private fun enterEditMode(routine: Routine) {
         isEditing = true
@@ -736,112 +800,8 @@ class HomeFragment : Fragment(), BackHandler {
     fun isOverlayVisible(): Boolean {
         return overlay.visibility == View.VISIBLE
     }
-}
 
-//    private fun updateOverallSkinScore(historyList: List<ScanHistory>) {
-//        if (historyList.isEmpty()) {
-//            animateSkinScore(0)
-//            return
-//        }
-//
-//        // Compute average score per card
-//        val perCardAverages = historyList.map { scan ->
-//            val scores = scan.images.mapNotNull { it.score }
-//            if (scores.isNotEmpty()) {
-//                val avg = scores.sum() / scores.size
-//                if (avg <= 1f) avg * 100f else avg // convert 0..1 to 0..100
-//            } else 0f
-//        }
-//
-//        // Overall skin score = sum of per-card averages / number of cards
-//        val overallScore = perCardAverages.sum() / perCardAverages.size
-//
-//        // Animate circular progress bar and score TextView
-//        animateSkinScore(overallScore.toInt())
-//    }
-//
-//    private fun animateProgressBarValue(progressBar: ProgressBar, target: Int) {
-//        val animator = ValueAnimator.ofInt(0, target)
-//        animator.duration = 800
-//        animator.addUpdateListener { valueAnimator ->
-//            progressBar.progress = valueAnimator.animatedValue as Int
-//        }
-//        animator.start()
-//    }
-//
-//    private fun fetchEnvironmentData(lat: Double, lon: Double) {
-//        val weatherApiKey = getString(R.string.openweather_api_key)
-//        val uvApiKey = getString(R.string.openuv_api_key)
-//
-//        // --- OpenWeatherMap Weather (humidity) ---
-//        val weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$weatherApiKey&units=metric"
-//
-//        // --- OpenWeatherMap Air Pollution (AQI) ---
-//        val aqiUrl = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$weatherApiKey"
-//
-//        // --- OpenUV (UV index) ---
-//        val uvUrl = "https://api.openuv.io/api/v1/uv?lat=$lat&lng=$lon"
-//
-//        val client = OkHttpClient()
-//
-//        // Fetch Humidity
-//        val weatherRequest = Request.Builder().url(weatherUrl).build()
-//        client.newCall(weatherRequest).enqueue(object : Callback {
-//            override fun onFailure(call: Call, e: IOException) {
-//                e.printStackTrace()
-//            }
-//            override fun onResponse(call: Call, response: Response) {
-//                response.body?.string()?.let { body ->
-//                    val json = JSONObject(body)
-//                    val humidity = json.getJSONObject("main").getInt("humidity") // 0-100
-//                    requireActivity().runOnUiThread {
-//                        animateProgressBar(pbHumidity, humidity)
-//                        tvHumidity.text = "Humidity: $humidity%"
-//                    }
-//                }
-//            }
-//        })
-//
-//        // Fetch AQI
-//        val aqiRequest = Request.Builder().url(aqiUrl).build()
-//        client.newCall(aqiRequest).enqueue(object : Callback {
-//            override fun onFailure(call: Call, e: IOException) {
-//                e.printStackTrace()
-//            }
-//            override fun onResponse(call: Call, response: Response) {
-//                response.body?.string()?.let { body ->
-//                    val json = JSONObject(body)
-//                    val aqiValue = json.getJSONArray("list")
-//                        .getJSONObject(0)
-//                        .getJSONObject("main")
-//                        .getInt("aqi") // 1-5
-//                    val scaledAqi = (aqiValue / 5.0 * 500).toInt() // scale to 0-500
-//                    requireActivity().runOnUiThread {
-//                        animateProgressBar(pbPollution, scaledAqi)
-//                        tvPollution.text = "AQI: $scaledAqi"
-//                    }
-//                }
-//            }
-//        })
-//
-//        // Fetch UV index
-//        val uvRequest = Request.Builder()
-//            .url(uvUrl)
-//            .addHeader("x-access-token", uvApiKey)
-//            .build()
-//        client.newCall(uvRequest).enqueue(object : Callback {
-//            override fun onFailure(call: Call, e: IOException) {
-//                e.printStackTrace()
-//            }
-//            override fun onResponse(call: Call, response: Response) {
-//                response.body?.string()?.let { body ->
-//                    val json = JSONObject(body)
-//                    val uvIndex = json.getJSONObject("result").getDouble("uv") // 0-11+
-//                    requireActivity().runOnUiThread {
-//                        animateProgressBar(pbUv, uvIndex.toInt())
-//                        tvUv.text = "UV: $uvIndex"
-//                    }
-//                }
-//            }
-//        })
-//    }
+    // Location
+
+
+}

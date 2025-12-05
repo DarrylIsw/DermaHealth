@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     implementation(libs.coil)
+    implementation(libs.play.services.location)
 //    implementation(libs.coil.transformations)
 
     testImplementation(libs.junit)

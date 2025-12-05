@@ -12,6 +12,7 @@ constraintlayout = "2.2.1"
 ucrop = "2.2.8"
 
 coil = "2.6.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 androidx-appcompat-v170 = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -27,6 +28,7 @@ ucrop = { module = "com.github.yalantis:ucrop", version = "2.2.8" }
 
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-transformations = { group = "io.coil-kt", name = "coil-transformations", version.ref = "coil" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
