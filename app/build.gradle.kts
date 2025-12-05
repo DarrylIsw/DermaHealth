@@ -79,4 +79,12 @@ dependencies {
 // Glide for images
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
+
+    implementation("com.github.yalantis:ucrop:2.2.8")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    // Fragment KTX (needed for activityViewModels(), viewModels(), etc.)
+    implementation("androidx.fragment:fragment-ktx:1.8.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
 }

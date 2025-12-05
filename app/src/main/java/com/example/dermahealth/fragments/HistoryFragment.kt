@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.SimpleItemAnimator
@@ -14,46 +15,28 @@ import com.example.dermahealth.R
 import com.example.dermahealth.adapter.HistoryAdapter
 import com.example.dermahealth.data.ScanHistory
 import com.example.dermahealth.databinding.FragmentHistoryBinding
-import com.example.dermahealth.ui.SwipeActionsCallback
-import com.google.android.material.snackbar.Snackbar
 import com.example.dermahealth.helper.BackHandler
+import com.example.dermahealth.ui.SwipeActionsCallback
+import com.example.dermahealth.viewmodel.SharedViewModel
+import com.google.android.material.snackbar.Snackbar
 
 class HistoryFragment : Fragment(), BackHandler {
 
-    // Handle physical back press (returns false = not consumed)
     override fun onBackPressed(): Boolean = false
 
-    // ViewBinding
     private var _b: FragmentHistoryBinding? = null
     private val b get() = _b!!
 
-    // Tambahkan property di fragment
+    private val sharedViewModel: SharedViewModel by activityViewModels()
+
+    // Prevent double-dialog spam on swipe
     private var swipeDialogShown = false
 
-
-    // Adapter for scan history RecyclerView
     private val adapter by lazy {
         HistoryAdapter(
-            onEdit = { scan ->
-                // Show dialog to edit notes (currently simple display)
-                val dialog = AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.edit_notes))
-                    .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
-                    .setPositiveButton(android.R.string.ok, null)
-                    .create()
-
-                dialog.setOnShowListener {
-                    val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
-                }
-
-                dialog.show()
-            },
-            onDelete = { scan ->
-                confirmDelete(scan) // Ask confirmation before deleting
-            },
+            onEdit = { scan -> showEditDialog(scan) },
+            onDelete = { scan -> confirmDelete(scan) },
             onToggleExpand = { pos, expanded ->
-                // Scroll to item when expanded
                 if (expanded) {
                     b.rvHistory.post { b.rvHistory.smoothScrollToPosition(pos) }
                 }
@@ -61,7 +44,21 @@ class HistoryFragment : Fragment(), BackHandler {
         )
     }
 
-    // Confirm deletion dialog
+    private fun showEditDialog(scan: ScanHistory) {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.edit_notes))
+            .setMessage("Edit notes for: ${scan.mainImage?.label ?: "Unknown"}\n\n${scan.notes}")
+            .setPositiveButton(android.R.string.ok, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+        }
+
+        dialog.show()
+    }
+
     private fun confirmDelete(scan: ScanHistory) {
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.delete_scan_title)
@@ -79,17 +76,15 @@ class HistoryFragment : Fragment(), BackHandler {
         dialog.show()
     }
 
-
-    // Remove item with undo option
     private fun removeWithUndo(scan: ScanHistory) {
         val current = adapter.currentList.toMutableList()
         val idx = current.indexOfFirst { it.id == scan.id }
         if (idx == -1) return
+
         current.removeAt(idx)
         adapter.submitList(current)
         updateEmptyState()
 
-        // Show Snackbar with Undo
         Snackbar.make(b.root, getString(R.string.scan_deleted), Snackbar.LENGTH_LONG)
             .setAction(R.string.undo) {
                 val restored = adapter.currentList.toMutableList()
@@ -106,26 +101,25 @@ class HistoryFragment : Fragment(), BackHandler {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // Setup RecyclerView
+
+        // RecyclerView setup
         b.rvHistory.layoutManager = LinearLayoutManager(requireContext())
         b.rvHistory.adapter = adapter
-        b.rvHistory.setHasFixedSize(false) // items can change height
+        b.rvHistory.setHasFixedSize(false)
         (b.rvHistory.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        // Extra padding at bottom
+        // Extra bottom padding
         val extra = resources.getDimensionPixelSize(R.dimen.rv_extra_scroll)
         b.rvHistory.post {
             b.rvHistory.updatePadding(bottom = b.rvHistory.paddingBottom + extra)
         }
 
-        // --- Swipe actions ---
-// --- Swipe actions ---
+        // Swipe actions
         val swipe = SwipeActionsCallback(
             context = requireContext(),
             onRequestLeft = { pos, done ->
                 val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
 
-                // Only show one delete dialog at a time
                 if (!swipeDialogShown) {
                     swipeDialogShown = true
                     val dialog = AlertDialog.Builder(requireContext())
@@ -134,14 +128,13 @@ class HistoryFragment : Fragment(), BackHandler {
                         .setPositiveButton(R.string.yes) { _, _ ->
                             removeWithUndo(scan)
                             swipeDialogShown = false
-                            done() // mark swipe as handled
+                            done()
                         }
                         .setNegativeButton(R.string.no) { _, _ ->
                             swipeDialogShown = false
-                            done() // mark swipe as handled
+                            done()
                         }
                         .setOnCancelListener {
-                            // Ensure swipe is marked done if dialog is canceled
                             swipeDialogShown = false
                             done()
                         }
@@ -155,25 +148,24 @@ class HistoryFragment : Fragment(), BackHandler {
 
                     dialog.show()
                 } else {
-                    // If dialog is already shown, immediately mark swipe done
                     done()
                 }
             },
+
             onRequestRight = { pos, done ->
                 val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
 
-                // Prevent spamming multiple edit dialogs
                 if (!swipeDialogShown) {
                     swipeDialogShown = true
+
                     val dialog = AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.edit_notes))
-                        .setMessage("Edit notes for: ${scan.result}\n\n${scan.notes}")
+                        .setMessage("Edit notes for: ${scan.mainImage?.label ?: "Unknown"}\n\n${scan.notes}")
                         .setPositiveButton(android.R.string.ok) { _, _ ->
                             swipeDialogShown = false
-                            done() // mark swipe as handled
+                            done()
                         }
                         .setOnCancelListener {
-                            // Ensure swipe is marked done if dialog is canceled
                             swipeDialogShown = false
                             done()
                         }
@@ -186,27 +178,22 @@ class HistoryFragment : Fragment(), BackHandler {
 
                     dialog.show()
                 } else {
-                    done() // if another dialog is open, skip
+                    done()
                 }
             },
+
             swipeThreshold = 0.35f
         )
 
         ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
 
-
-        // --- Seed dummy data ---
-        val seed = listOf(
-            ScanHistory(1, null, "Benign", "2025-09-24", "Looks fine, monitor", null),
-            ScanHistory(2, null, "Suspicious", "2025-09-20", "Visit dermatologist soon", null),
-            ScanHistory(3, null, "Malignant", "2025-09-18", "Seek consultation ASAP", null),
-            ScanHistory(4, null, "Neutral", "2025-09-15", "No abnormality detected", null)
-        )
-        adapter.submitList(seed)
-        updateEmptyState()
+        // Observe ViewModel — replaces seed list
+        sharedViewModel.history.observe(viewLifecycleOwner) { list ->
+            adapter.submitList(list)
+            updateEmptyState()
+        }
     }
 
-    // Show/hide empty state views
     private fun updateEmptyState() {
         val isEmpty = adapter.itemCount == 0
         b.emptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE

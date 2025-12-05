@@ -2,29 +2,27 @@ package com.example.dermahealth
 
 import android.Manifest
 import android.app.Activity
-import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.activity.OnBackPressedCallback
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.result.ActivityResultCallback
+import android.view.*
+import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import com.example.dermahealth.data.ScanHistory
+import com.example.dermahealth.data.ScanImage
+import com.example.dermahealth.helper.TFLiteClassifier
+import com.example.dermahealth.viewmodel.SharedViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
@@ -34,69 +32,60 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import com.example.dermahealth.helper.BackHandler
 
+class ScanFragment : Fragment() {
 
-class ScanFragment : Fragment(), BackHandler {
-    override fun onBackPressed(): Boolean {
-        // nothing special to handle → just return false
-        return false
-    }
     private lateinit var previewView: PreviewView
     private lateinit var btnTake: MaterialCardView
     private lateinit var btnGallery: MaterialCardView
     private lateinit var cardClassification: MaterialCardView
     private lateinit var tvClassResult: TextView
-    private lateinit var btnSaveHistory: com.google.android.material.button.MaterialButton
+    private lateinit var btnSaveHistory: MaterialButton
     private lateinit var ivCropped: ImageView
     private lateinit var croppedCard: MaterialCardView
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
-    // Temp URIs
-    private var lastSavedUri: Uri? = null
+    // temp values
     private var lastCroppedUri: Uri? = null
+    private var lastClassificationLabel: String? = null
+    private var lastClassificationScore: Float? = null
 
-    // Activity result launchers
-    private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var pickGalleryLauncher: ActivityResultLauncher<String>
     private lateinit var uCropLauncher: ActivityResultLauncher<Intent>
+
+    private val sharedViewModel: SharedViewModel by activityViewModels()
+    private lateinit var tflite: TFLiteClassifier
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         cameraExecutor = Executors.newSingleThreadExecutor()
+        tflite = TFLiteClassifier(requireContext())
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        tflite.close()
         cameraExecutor.shutdown()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_scan, container, false)
     }
 
-    private fun hasCameraPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-    }
+    private fun hasCameraPermission() =
+        ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
 
     private fun hasReadPermission(): Boolean {
-        val readPerm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13+ uses READ_MEDIA_IMAGES; but we'll request READ_EXTERNAL_STORAGE as fallback
+        val perm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             Manifest.permission.READ_MEDIA_IMAGES
-        } else {
+        else
             Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-        val res = ContextCompat.checkSelfPermission(requireContext(), readPerm)
-        // If readPerm is not defined on older SDK, will evaluate to PERMISSION_DENIED - but app manifest should include legacy permission.
-        return res == PackageManager.PERMISSION_GRANTED
+
+        return ContextCompat.checkSelfPermission(requireContext(), perm) ==
+                PackageManager.PERMISSION_GRANTED
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -108,225 +97,331 @@ class ScanFragment : Fragment(), BackHandler {
         btnSaveHistory = view.findViewById(R.id.btn_save_history)
         ivCropped = view.findViewById(R.id.iv_cropped)
         croppedCard = view.findViewById(R.id.card_cropped_preview)
-        val infoCard = view.findViewById<MaterialCardView>(R.id.btn_info_dropdown)
-        val infoContent = view.findViewById<LinearLayout>(R.id.info_content_container)
-        val arrow = view.findViewById<ImageView>(R.id.iv_dropdown_arrow)
 
-        // Permission launcher
-        requestPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions(),
-            ActivityResultCallback { results ->
-                val granted = results.values.all { it }
-                if (granted) {
-                    startCamera()
-                } else {
-                    Toast.makeText(requireContext(), "Camera permission required", Toast.LENGTH_SHORT).show()
-                }
+        // ---- GALLERY PICKER ----
+        pickGalleryLauncher = registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri ->
+            uri?.let {
+                val internal = copyToCache(it)
+                showCropOrSkipDialog(internal)
             }
-        )
-
-        // Gallery pick launcher (returns URI)
-        pickGalleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let { startCrop(uriToFileUri(uri)) } // convert content uri to file uri via copy -> uCrop needs file-based uri ideally
         }
 
-        // uCrop launcher using startActivityForResult (UCrop uses its own activity)
-        uCropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        // ---- UCROP RESULT ----
+        uCropLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                val resultUri = UCrop.getOutput(result.data!!)
-                resultUri?.let { onCropped(it) }
-            } else if (result.resultCode == UCrop.RESULT_ERROR) {
-                val cropError = UCrop.getError(result.data!!)
-                Toast.makeText(requireContext(), "Crop error: ${cropError?.message}", Toast.LENGTH_SHORT).show()
+                val output = UCrop.getOutput(result.data!!)
+                output?.let { onCropped(it) }
             }
         }
 
-        // Click listeners
-        btnTake.setOnClickListener {
-            takePhotoAndCrop()
-        }
+        btnTake.setOnClickListener { captureImage() }
 
         btnGallery.setOnClickListener {
-            // check read permission
-            if (!hasReadPermission()) {
-                requestReadPermissionThenGallery()
-            } else {
-                pickGalleryLauncher.launch("image/*")
-            }
+            if (!hasReadPermission()) requestReadPermissionThenGallery() else pickGalleryLauncher.launch("image/*")
         }
 
         btnSaveHistory.setOnClickListener {
             lastCroppedUri?.let { uri ->
-                // Save to history (dummy) — here we simply show Snackbar
-                Snackbar.make(requireView(), "Scan saved successfully", Snackbar.LENGTH_LONG)
-                    .setAction("Undo") {
-                        // undo logic if needed
-                    }.show()
-                // In real app: persist to database/storage
+                btnSaveHistoryClicked(uri)
             }
         }
 
-        infoCard.setOnClickListener {
-            if (infoContent.visibility == View.GONE) {
-                // expand with fade-in
-                infoContent.visibility = View.VISIBLE
-                infoContent.alpha = 0f
-                infoContent.animate().alpha(1f).setDuration(250).start()
-                // rotate arrow
-                arrow.animate().rotation(180f).setDuration(250).start()
-            } else {
-                // collapse
-                infoContent.animate().alpha(0f).setDuration(250).withEndAction {
-                    infoContent.visibility = View.GONE
-                }.start()
-                arrow.animate().rotation(0f).setDuration(250).start()
-            }
-        }
-
-        // Request camera permission on fragment start
         if (!hasCameraPermission()) {
-            requestCameraAndMaybeStorage()
+            requestPermissions(arrayOf(Manifest.permission.CAMERA), 101)
         } else {
             startCamera()
         }
 
-    }
-
-    /** Convert content uri to a file: copy into cache and return file:// URI */
-    private fun uriToFileUri(contentUri: Uri): Uri {
-        // Create temp file in cache
-        val inputStream = requireContext().contentResolver.openInputStream(contentUri)
-        val tempFile = File(requireContext().cacheDir, "picked_${System.currentTimeMillis()}.jpg")
-        inputStream.use { input ->
-            tempFile.outputStream().use { out ->
-                input?.copyTo(out)
-            }
-        }
-        return Uri.fromFile(tempFile)
-    }
-
-    private fun requestCameraAndMaybeStorage() {
-        val perms = mutableListOf<String>()
-        perms.add(Manifest.permission.CAMERA)
-        // for older devices maybe request read storage too
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            perms.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-        requestPermissionLauncher.launch(perms.toTypedArray())
+        cardClassification.visibility = View.GONE
+        croppedCard.visibility = View.GONE
+        btnSaveHistory.isEnabled = false
     }
 
     private fun requestReadPermissionThenGallery() {
-        val perm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
         }
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) pickGalleryLauncher.launch("image/*") else
-                Toast.makeText(requireContext(), "Storage permission required to pick image", Toast.LENGTH_SHORT).show()
-        }.launch(perm)
+
+        val launcher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                pickGalleryLauncher.launch("image/*")
+            } else {
+                Toast.makeText(requireContext(), "Storage permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        launcher.launch(permission)
     }
 
-    private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-        cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
 
-            val preview = Preview.Builder()
-                .build()
-                .also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
+    // ---------------- CAMERA SETUP --------------------
+
+    private fun startCamera() {
+        val providerFuture = ProcessCameraProvider.getInstance(requireContext())
+        providerFuture.addListener({
+            val provider = providerFuture.get()
+
+            val preview = Preview.Builder().build()
+            preview.setSurfaceProvider(previewView.surfaceProvider)
 
             imageCapture = ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build()
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
             try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
-            } catch (exc: Exception) {
-                Toast.makeText(requireContext(), "Camera start failed: ${exc.message}", Toast.LENGTH_SHORT).show()
+                provider.unbindAll()
+                provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageCapture)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Camera error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+
         }, ContextCompat.getMainExecutor(requireContext()))
     }
 
-    private fun takePhotoAndCrop() {
-        val imageCapture = imageCapture ?: return
+    private fun captureImage() {
+        val cap = imageCapture ?: return
 
-        // Create time-stamped output file to hold the image
-        val name = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "DERMA_IMG_$name")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-        }
+        val file = File(requireContext().cacheDir, "CAP_${System.currentTimeMillis()}.jpg")
+        val opts = ImageCapture.OutputFileOptions.Builder(file).build()
 
-        // Use external media store for persist or cache file for quick crop
-        val outputFileOptions = ImageCapture.OutputFileOptions.Builder(
-            requireContext().contentResolver,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues
-        ).build()
-
-        imageCapture.takePicture(outputFileOptions, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
+        cap.takePicture(opts, cameraExecutor, object : ImageCapture.OnImageSavedCallback {
             override fun onError(exc: ImageCaptureException) {
                 requireActivity().runOnUiThread {
-                    Toast.makeText(requireContext(), "Photo capture failed: ${exc.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Capture failed: ${exc.message}", Toast.LENGTH_SHORT).show()
                 }
             }
 
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                val savedUri = output.savedUri
-                lastSavedUri = savedUri
-                // Convert to file Uri for cropping (uCrop works with file URIs)
-                val uriToCrop = savedUri ?: return
-                // launch crop
+            override fun onImageSaved(result: ImageCapture.OutputFileResults) {
+                val uri = Uri.fromFile(file)
                 requireActivity().runOnUiThread {
-                    startCrop(uriToCrop)
+                    showCropOrSkipDialog(uri)
                 }
             }
         })
     }
 
-    private fun startCrop(sourceUri: Uri) {
-        // Destination
-        val destFile = File(requireContext().cacheDir, "ucrop_${System.currentTimeMillis()}.jpg")
-        val destUri = Uri.fromFile(destFile)
+    // ---------------- IMAGE / CROP --------------------
 
-        lastCroppedUri = null
+    private fun copyToCache(uri: Uri): Uri {
+        val input = requireContext().contentResolver.openInputStream(uri)
+        val dest = File(requireContext().cacheDir, "IMG_${System.currentTimeMillis()}.jpg")
+        input.use { inp -> dest.outputStream().use { out -> inp?.copyTo(out) } }
+        return Uri.fromFile(dest)
+    }
 
-        // uCrop options: square default or free aspect
-        val uCrop = UCrop.of(sourceUri, destUri)
-            .withAspectRatio(1f, 1f) // enforce square crop for model input consistency
+    private fun showCropOrSkipDialog(uri: Uri) {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Crop image?")
+            .setMessage("Do you want to crop before classification?")
+            .setPositiveButton("Crop") { _, _ -> startCrop(uri) }
+            .setNegativeButton("Skip") { _, _ -> onCropped(uri) }
+            .create()
+
+        dialog.setOnShowListener {
+            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+        }
+
+        dialog.show()
+    }
+
+
+    private fun startCrop(src: Uri) {
+        val dest = File(requireContext().cacheDir, "CROP_${System.currentTimeMillis()}.jpg")
+        val destUri = Uri.fromFile(dest)
+
+        val u = UCrop.of(src, destUri)
+            .withAspectRatio(1f, 1f)
             .withMaxResultSize(1024, 1024)
 
-        val intent = uCrop.getIntent(requireContext())
-        uCropLauncher.launch(intent)
+        uCropLauncher.launch(u.getIntent(requireContext()))
     }
 
-    private fun onCropped(resultUri: Uri) {
-        lastCroppedUri = resultUri
-        // Show cropped preview
+    private fun onCropped(uri: Uri) {
+        lastCroppedUri = uri
         croppedCard.visibility = View.VISIBLE
-        ivCropped.setImageURI(resultUri)
+        ivCropped.setImageURI(uri)
 
-        // Reveal classification card and save button
-        cardClassification.visibility = View.VISIBLE
+        classifyImage(uri)
+
         btnSaveHistory.isEnabled = true
-
-        // Dummy classification: random between Benign / Suspicious to show flow
-        val rand = (0..1).random()
-        val label = if (rand == 0) "Benign" else "Suspicious"
-        tvClassResult.text = label
-
-        // Smooth animation (scale in)
-        croppedCard.scaleX = 0.7f
-        croppedCard.scaleY = 0.7f
-        croppedCard.alpha = 0f
-        croppedCard.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(300).start()
-
-        // Scroll bottom container into view if needed (if using scroll)
     }
+
+    // ---------------- CLASSIFICATION --------------------
+
+    private fun classifyImage(uri: Uri) {
+        val bitmap = requireContext().contentResolver.openInputStream(uri).use {
+            BitmapFactory.decodeStream(it)
+        } ?: return
+
+        val result = tflite.classify(bitmap)
+        lastClassificationLabel = result.label
+        lastClassificationScore = result.score
+
+        cardClassification.visibility = View.VISIBLE
+        tvClassResult.text =
+            "${result.label} (${String.format("%.2f", result.score)})"
+    }
+
+    // ---------------- SAVE TO HISTORY --------------------
+
+    private fun promptSaveNewOrExisting(uri: Uri) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Save Scan")
+            .setMessage("Save this image to a new scan or existing scan?")
+            .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
+            .setNeutralButton("Existing") { _, _ -> chooseExistingScan(uri) }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun saveNewScan(uri: Uri) {
+        val id = System.currentTimeMillis()
+        val folder = File(requireContext().filesDir, "scans/$id/images")
+        folder.mkdirs()
+
+        val dest = File(folder, "image_${System.currentTimeMillis()}.jpg")
+        requireContext().contentResolver.openInputStream(uri).use { inp ->
+            dest.outputStream().use { out -> inp?.copyTo(out) }
+        }
+
+        val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+
+        val mainImage = ScanImage(
+            path = dest.absolutePath,
+            timestamp = timestamp,
+            label = lastClassificationLabel,
+            score = lastClassificationScore
+        )
+
+        val record = ScanHistory(
+            id = id,
+            mainImage = mainImage,
+            dateIso = timestamp,
+            notes = "",
+            images = listOf(mainImage)
+        )
+
+        sharedViewModel.addScan(record)
+        Snackbar.make(requireView(), "Saved to new scan", Snackbar.LENGTH_LONG).show()
+    }
+
+
+// ---------------- SAVE TO HISTORY --------------------
+
+    private fun btnSaveHistoryClicked(uri: Uri) {
+        val scans = sharedViewModel.history.value ?: emptyList()
+
+        if (scans.isEmpty()) {
+            // No existing scans → directly create a new one
+            saveNewScan(uri)
+            return
+        }
+
+        // Show dialog with options
+        AlertDialog.Builder(requireContext())
+            .setTitle("Save Scan")
+            .setMessage("Do you want to create a new scan history or add to an existing one?")
+            .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
+            .setNeutralButton("Existing") { _, _ -> chooseExistingScan(uri) }
+            .setNegativeButton("Cancel", null)
+            .create()
+            .apply {
+                setOnShowListener {
+                    val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+                    getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+                    getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(color)
+                    getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+                }
+                show()
+            }
+    }
+
+// ---------------- CHOOSE EXISTING SCAN --------------------
+
+    private fun chooseExistingScan(uri: Uri) {
+        val scans = sharedViewModel.history.value ?: emptyList()
+        if (scans.isEmpty()) {
+            saveNewScan(uri)
+            return
+        }
+
+        val listNames = scans.map { s ->
+            val label = s.mainImage?.label ?: "No Label"
+            "${s.dateIso} — $label"
+        }.toTypedArray()
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Existing Scan")
+            .setItems(listNames) { _, idx ->
+                val scan = scans[idx]
+                addImageToExistingScan(uri, scan)
+            }
+            .show()
+    }
+//    private fun saveScan(uri: Uri) {
+//        val scans = sharedViewModel.history.value ?: emptyList()
+//
+//        if (scans.isEmpty()) {
+//            saveNewScan(uri)
+//            return
+//        }
+//
+//        val names = scans.map { s -> "${s.dateIso} — ${s.mainImage?.label ?: "No Label"}" }.toTypedArray()
+//
+//        AlertDialog.Builder(requireContext())
+//            .setTitle("Save Scan")
+//            .setMessage("Choose to save as a new scan or add to existing scan")
+//            .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
+//            .setNeutralButton("Existing") { _, _ ->
+//                AlertDialog.Builder(requireContext())
+//                    .setTitle("Select Existing Scan")
+//                    .setItems(names) { _, idx ->
+//                        val scan = scans[idx]
+//                        addImageToExistingScan(uri, scan)
+//                    }
+//                    .show()
+//            }
+//            .setNegativeButton("Cancel", null)
+//            .show()
+//    }
+
+    private fun addImageToExistingScan(uri: Uri, scan: ScanHistory) {
+        val folder = File(requireContext().filesDir, "scans/${scan.id}/images")
+        folder.mkdirs()
+        val dest = File(folder, "image_${System.currentTimeMillis()}.jpg")
+        requireContext().contentResolver.openInputStream(uri).use { inp ->
+            dest.outputStream().use { out -> inp?.copyTo(out) }
+        }
+
+        val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+        val newImage = ScanImage(
+            path = dest.absolutePath,
+            timestamp = timestamp,
+            label = lastClassificationLabel,
+            score = lastClassificationScore
+        )
+
+        val updatedScan = scan.copy(
+            mainImage = newImage, // latest image preview
+            images = scan.images + newImage
+        )
+
+        val newList = sharedViewModel.history.value?.toMutableList() ?: mutableListOf()
+        val idx = newList.indexOfFirst { it.id == scan.id }
+        if (idx != -1) {
+            newList[idx] = updatedScan
+            sharedViewModel.updateScanList(newList)
+        }
+
+        Snackbar.make(requireView(), "Added image to existing scan", Snackbar.LENGTH_LONG).show()
+    }
+
 }

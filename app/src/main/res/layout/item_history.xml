@@ -107,14 +107,26 @@
                 android:textColor="@color/deep_dark_blue"
                 android:layout_marginBottom="8dp"/>
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/ivCropped"
+<!--            <com.google.android.material.imageview.ShapeableImageView-->
+<!--                android:id="@+id/ivCropped"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="200dp"-->
+<!--                android:scaleType="centerCrop"-->
+<!--                app:srcCompat="@drawable/dummy_melanoma"-->
+<!--                android:contentDescription="@string/cropped_scan_result"-->
+<!--                android:layout_marginBottom="12dp"/>-->
+
+            <!-- MULTIPLE IMAGES LIST -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvImages"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:scaleType="centerCrop"
-                app:srcCompat="@drawable/dummy_melanoma"
-                android:contentDescription="@string/cropped_scan_result"
+                android:layout_height="120dp"
+                android:orientation="horizontal"
+                android:clipToPadding="false"
+                android:paddingBottom="8dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 android:layout_marginBottom="12dp"/>
+
 
             <!-- Confidence -->
             <TextView

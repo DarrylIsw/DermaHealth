@@ -8,36 +8,61 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.dermahealth.R
 import com.example.dermahealth.data.Routine
+import com.example.dermahealth.data.RoutineType
+import java.text.SimpleDateFormat
+import java.util.*
 
 class RoutineAdapter(
-    private val items: MutableList<Routine>,          // Mutable list to allow dynamic updates
-    private val onEdit: (Routine) -> Unit,            // Callback when edit button is clicked
-    private val onDelete: (Routine) -> Unit           // Optional callback for delete (can be used with swipe)
+    private val items: MutableList<Routine>,
+    private val onEdit: (Routine) -> Unit,
+    private val onDelete: (Routine) -> Unit
 ) : RecyclerView.Adapter<RoutineAdapter.VH>() {
 
-    // ViewHolder holds references to item views
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvTitle: TextView = view.findViewById(R.id.tv_routine_title) // Routine title
-        val tvTime: TextView = view.findViewById(R.id.tv_routine_time)   // Routine time
-        val tvComment: TextView = view.findViewById(R.id.et_additional_comment) // Routine comment
-        val btnEdit: ImageButton = view.findViewById(R.id.btn_edit)      // Edit button
+        val tvTitle: TextView = view.findViewById(R.id.tv_routine_title)
+        val tvTime: TextView = view.findViewById(R.id.tv_routine_time)
+        val tvComment: TextView = view.findViewById(R.id.et_additional_comment)
+        val btnEdit: ImageButton = view.findViewById(R.id.btn_edit)
     }
 
-    // Called when RecyclerView needs a new ViewHolder
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val v = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_routine, parent, false) // Inflate item layout
+            .inflate(R.layout.item_routine, parent, false)
         return VH(v)
     }
 
-    // Bind data to each item
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
 
         holder.tvTitle.text = item.title
-        holder.tvTime.text = item.time
 
-        // Show/hide comment dynamically
+        holder.tvTime.text = when (item.type) {
+            RoutineType.HOURLY -> "Every hour"
+
+            RoutineType.EVERY_X_HOURS ->
+                "Every ${item.intervalHours ?: 1} hours"
+
+            RoutineType.DAILY -> {
+                val h = item.hour ?: 0
+                val m = item.minute ?: 0
+                String.format("%02d:%02d", h, m)
+            }
+
+            RoutineType.EVERY_X_DAYS -> {
+                val d = item.intervalDays ?: 1
+                val h = item.hour ?: 0
+                val m = item.minute ?: 0
+                "Every $d day(s) at %02d:%02d".format(h, m)
+            }
+
+            RoutineType.SPECIFIC_DATE -> {
+                item.specificDate?.let {
+                    val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
+                    sdf.format(Date(it))
+                } ?: "No date set"
+            }
+        }
+
         if (item.note.isNullOrBlank()) {
             holder.tvComment.visibility = View.GONE
         } else {
@@ -47,7 +72,13 @@ class RoutineAdapter(
 
         holder.btnEdit.setOnClickListener { onEdit(item) }
 
-        // Animation
+        // Optional: attach a long-press delete (you already have swipe)
+        holder.itemView.setOnLongClickListener {
+            onDelete(item)
+            true
+        }
+
+        // Simple entrance animation (keeps your previous behaviour)
         holder.itemView.alpha = 0f
         holder.itemView.translationY = 50f
         holder.itemView.animate()
@@ -58,24 +89,18 @@ class RoutineAdapter(
             .start()
     }
 
-
-    // Return total number of items
     override fun getItemCount(): Int = items.size
 
-    // --- Helper functions ---
-
-    // Remove item at a specific position (e.g., for swipe-to-delete)
     fun removeAt(position: Int) {
         if (position in items.indices) {
             items.removeAt(position)
-            notifyItemRemoved(position)       // Notify adapter to update RecyclerView
+            notifyItemRemoved(position)
         }
     }
 
-    // Update the whole data set dynamically
     fun updateData(newList: List<Routine>) {
         items.clear()
         items.addAll(newList)
-        notifyDataSetChanged()               // Refresh entire RecyclerView
+        notifyDataSetChanged()
     }
 }

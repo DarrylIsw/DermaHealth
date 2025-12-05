@@ -1,6 +1,5 @@
 package com.example.dermahealth
 
-import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,6 @@ import com.example.dermahealth.fragments.HistoryFragment
 import com.example.dermahealth.fragments.ProfileFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.activity.OnBackPressedCallback
-import com.example.dermahealth.R
 import com.example.dermahealth.fragments.*
 class MainActivity : AppCompatActivity() {
 
