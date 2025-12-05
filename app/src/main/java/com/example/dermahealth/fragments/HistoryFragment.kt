@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.example.dermahealth.R
 import com.example.dermahealth.adapter.HistoryAdapter
@@ -19,6 +20,7 @@ import com.example.dermahealth.helper.BackHandler
 import com.example.dermahealth.ui.SwipeActionsCallback
 import com.example.dermahealth.viewmodel.SharedViewModel
 import com.google.android.material.snackbar.Snackbar
+import java.io.File
 
 class HistoryFragment : Fragment(), BackHandler {
 
@@ -77,20 +79,37 @@ class HistoryFragment : Fragment(), BackHandler {
     }
 
     private fun removeWithUndo(scan: ScanHistory) {
-        val current = adapter.currentList.toMutableList()
-        val idx = current.indexOfFirst { it.id == scan.id }
+        val currentList = adapter.currentList.toMutableList()
+        val idx = currentList.indexOfFirst { it.id == scan.id }
         if (idx == -1) return
 
-        current.removeAt(idx)
-        adapter.submitList(current)
+        // 1️⃣ Remove from adapter immediately
+        currentList.removeAt(idx)
+        adapter.submitList(currentList)
         updateEmptyState()
 
+        // 2️⃣ Delete files from disk immediately
+        scan.images.forEach { img ->
+            try { File(img.path).delete() } catch (e: Exception) { e.printStackTrace() }
+        }
+
+        // 3️⃣ Remove from persistent storage
+        sharedViewModel.deleteScan(scan)
+
+        // 4️⃣ Show Snackbar with undo
         Snackbar.make(b.root, getString(R.string.scan_deleted), Snackbar.LENGTH_LONG)
             .setAction(R.string.undo) {
+                // Restore in adapter
                 val restored = adapter.currentList.toMutableList()
                 restored.add(idx.coerceIn(0, restored.size), scan)
                 adapter.submitList(restored)
                 updateEmptyState()
+
+                // Restore in persistent storage
+                sharedViewModel.addScan(scan)
+
+                // Optionally restore files if you want (optional)
+                // copy files back from backup location if implemented
             }
             .show()
     }
@@ -113,79 +132,6 @@ class HistoryFragment : Fragment(), BackHandler {
         b.rvHistory.post {
             b.rvHistory.updatePadding(bottom = b.rvHistory.paddingBottom + extra)
         }
-
-        // Swipe actions
-        val swipe = SwipeActionsCallback(
-            context = requireContext(),
-            onRequestLeft = { pos, done ->
-                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
-
-                if (!swipeDialogShown) {
-                    swipeDialogShown = true
-                    val dialog = AlertDialog.Builder(requireContext())
-                        .setTitle(R.string.delete_scan_title)
-                        .setMessage(R.string.delete_scan_msg)
-                        .setPositiveButton(R.string.yes) { _, _ ->
-                            removeWithUndo(scan)
-                            swipeDialogShown = false
-                            done()
-                        }
-                        .setNegativeButton(R.string.no) { _, _ ->
-                            swipeDialogShown = false
-                            done()
-                        }
-                        .setOnCancelListener {
-                            swipeDialogShown = false
-                            done()
-                        }
-                        .create()
-
-                    dialog.setOnShowListener {
-                        val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
-                    }
-
-                    dialog.show()
-                } else {
-                    done()
-                }
-            },
-
-            onRequestRight = { pos, done ->
-                val scan = adapter.currentList.getOrNull(pos) ?: return@SwipeActionsCallback done()
-
-                if (!swipeDialogShown) {
-                    swipeDialogShown = true
-
-                    val dialog = AlertDialog.Builder(requireContext())
-                        .setTitle(getString(R.string.edit_notes))
-                        .setMessage("Edit notes for: ${scan.mainImage?.label ?: "Unknown"}\n\n${scan.notes}")
-                        .setPositiveButton(android.R.string.ok) { _, _ ->
-                            swipeDialogShown = false
-                            done()
-                        }
-                        .setOnCancelListener {
-                            swipeDialogShown = false
-                            done()
-                        }
-                        .create()
-
-                    dialog.setOnShowListener {
-                        val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
-                        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
-                    }
-
-                    dialog.show()
-                } else {
-                    done()
-                }
-            },
-
-            swipeThreshold = 0.35f
-        )
-
-        ItemTouchHelper(swipe).attachToRecyclerView(b.rvHistory)
 
         // Observe ViewModel — replaces seed list
         sharedViewModel.history.observe(viewLifecycleOwner) { list ->

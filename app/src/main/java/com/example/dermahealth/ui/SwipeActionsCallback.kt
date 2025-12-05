@@ -59,6 +59,13 @@ class SwipeActionsCallback(
         isCurrentlyActive: Boolean
     ) {
         val item = vh.itemView
+        // Check if inner RecyclerView is scrolling
+        val innerRv = item.findViewById<RecyclerView>(R.id.rvImages)
+        if (innerRv != null && innerRv.isDragging()) {
+            // if inner RV is being dragged, cancel parent swipe
+            super.onChildDraw(c, rv, vh, 0f, dY, actionState, isCurrentlyActive)
+            return
+        }
         val w = max(item.width, 1)
         val lockRatio = 0.50f      // max reveal distance (30% of row width)
         val triggerRatio = swipeThreshold   // trigger threshold (15% of row width)
@@ -101,28 +108,24 @@ class SwipeActionsCallback(
 
         // finger up → decide once; if already handling, bail
         if (!isCurrentlyActive && !isHandling) {
-            val crossed = abs(dX) >= (w * triggerRatio)
+            val crossed = abs(dX) >= (item.width * swipeThreshold)
             if (crossed) {
                 isHandling = true
                 val pos = vh.bindingAdapterPosition
-                // snap back FIRST, then show prompt; unlock on done()
                 item.animate()
                     .translationX(0f)
-                    .alpha(1f)
                     .setDuration(120L)
                     .withEndAction {
                         rv.post { rv.adapter?.notifyItemChanged(pos) }
                         val done: () -> Unit = {
-                            // unlock after dialog/sheet closes
                             isHandling = false
-                            // ensure view is reset
                             rv.post { rv.adapter?.notifyItemChanged(pos) }
                         }
-                        if (dX > 0) onRequestRight(pos, done) else onRequestLeft(pos, done)
+                        if (dX > 0) onRequestRight(pos, done)
+                        else onRequestLeft(pos, done)  // <-- LEFT = DELETE
                     }
                     .start()
             } else {
-                // not enough → just snap back
                 item.animate().translationX(0f).setDuration(120L).start()
             }
         }
@@ -132,6 +135,9 @@ class SwipeActionsCallback(
         val b = android.graphics.Rect()
         paintText.getTextBounds(text, 0, text.length, b)
         return b.height() / 2f - 3f
+    }
+    fun RecyclerView.isDragging(): Boolean {
+        return this.scrollState == RecyclerView.SCROLL_STATE_DRAGGING
     }
 
     private fun dp(ctx: Context, v: Float) = v * ctx.resources.displayMetrics.density

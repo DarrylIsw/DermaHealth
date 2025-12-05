@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
@@ -137,21 +138,26 @@ class HistoryAdapter(
         b.tvDate.text = prettyDate(item.dateIso)
         b.tvNotes.text = item.notes.ifBlank { "No notes provided." }
 
-        // CONFIDENCE
-        b.tvConfidence.text =
-            if (score != null) "Confidence: ${String.format("%.2f", score)}"
-            else "Confidence: N/A"
+        // ---------- SCORE ----------
+        val avgScore = if (item.images.isNotEmpty()) {
+            item.images.mapNotNull { it.score }.average()
+        } else 0.0
+        val avgPct = (avgScore * 100).toInt()
+        b.tvAverageScore.text = "Score: $avgPct%"
 
-        // CONCLUSION UI
+        // ---------- CONCLUSION UI ----------
         val ui = getConclusionUI(label, score)
         b.conclusionBox.setBackgroundResource(ui.background)
         b.ivStatusIcon.setImageResource(ui.icon)
         b.tvConclusion.text = ui.text
 
-        // IMAGE LIST
+        // ---------- IMAGE LIST WITH INDIVIDUAL SCORES ----------
+        b.rvImages.layoutManager =
+            LinearLayoutManager(b.root.context, LinearLayoutManager.HORIZONTAL, false)
         b.rvImages.adapter = HistoryImagesAdapter(item.images)
+        b.rvImages.isNestedScrollingEnabled = false
 
-        // EXPAND/COLLAPSE
+        // ---------- EXPAND / COLLAPSE ----------
         b.expandable.isVisible = item.isExpanded
         b.btnExpand.rotation = if (item.isExpanded) 180f else 0f
 

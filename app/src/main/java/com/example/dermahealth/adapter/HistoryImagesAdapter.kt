@@ -1,7 +1,10 @@
 package com.example.dermahealth.adapter
 
+import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.RoundedCornersTransformation
@@ -13,18 +16,15 @@ class HistoryImagesAdapter(
     private val images: List<ScanImage>
 ) : RecyclerView.Adapter<HistoryImagesAdapter.ImgVH>() {
 
-    inner class ImgVH(val img: ImageView) : RecyclerView.ViewHolder(img)
+    inner class ImgVH(view: View) : RecyclerView.ViewHolder(view) {
+        val ivImage: ImageView = view.findViewById(R.id.ivImage)
+        val tvScore: TextView = view.findViewById(R.id.tvScore)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImgVH {
-        val context = parent.context
-
-        val iv = ImageView(context).apply {
-            layoutParams = ViewGroup.LayoutParams(180, 180)  // Horizontal thumbnails
-            scaleType = ImageView.ScaleType.CENTER_CROP
-            setPadding(8, 8, 8, 8)
-            clipToOutline = true
-        }
-        return ImgVH(iv)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_scan_image, parent, false)
+        return ImgVH(view)
     }
 
     override fun getItemCount() = images.size
@@ -32,11 +32,17 @@ class HistoryImagesAdapter(
     override fun onBindViewHolder(holder: ImgVH, position: Int) {
         val item = images[position]
 
-        holder.img.load(File(item.path)) {
+        // Load image with Coil
+        holder.ivImage.load(File(item.path)) {
             crossfade(true)
             placeholder(R.drawable.bg_image_placeholder)
             error(R.drawable.bg_image_placeholder)
             transformations(RoundedCornersTransformation(12f))
         }
+
+        // Show score as percentage
+        val scorePct = ((item.score ?: 0f) * 100).toInt()
+        holder.tvScore.text = "$scorePct%"
     }
+
 }

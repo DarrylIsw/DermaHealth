@@ -42,6 +42,18 @@ class SharedViewModel(app: Application) : AndroidViewModel(app) {
     fun getTotalScans(): Int =
         _history.value?.size ?: 0
 
+    fun deleteScan(scan: ScanHistory) {
+        // 1. Remove from current list
+        val current = _history.value?.toMutableList() ?: mutableListOf()
+        current.removeAll { it.id == scan.id }
+
+        // 2. Update LiveData
+        _history.value = current
+
+        // 3. Save updated list to persistent storage
+        persist()
+    }
+
     // -------------------- ANALYTICS / INFO --------------------
 
     fun getAverageScore(): Float {

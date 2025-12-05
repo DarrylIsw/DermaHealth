@@ -120,24 +120,30 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvImages"
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
+                android:layout_height="140dp"
                 android:orientation="horizontal"
                 android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:paddingBottom="8dp"
+                android:scrollbars="horizontal"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 android:layout_marginBottom="12dp"/>
 
 
+
             <!-- Confidence -->
+            <!-- Replace tvConfidence with average Score -->
             <TextView
-                android:id="@+id/tvConfidence"
+                android:id="@+id/tvAverageScore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/detection_confidence_92"
+                android:text="Score: 0.92"
                 android:fontFamily="@font/inter_medium"
                 android:textColor="@color/deep_dark_blue"
                 android:textSize="15sp"
                 android:layout_marginBottom="6dp"/>
+
 
             <!-- Short Analysis -->
             <TextView

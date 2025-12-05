@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
@@ -46,6 +47,10 @@ class ScanFragment : Fragment() {
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
+
+    private lateinit var btnInfoDropdown: MaterialCardView
+    private lateinit var ivDropdownArrow: ImageView
+    private lateinit var infoContentContainer: LinearLayout
 
     // temp values
     private var lastCroppedUri: Uri? = null
@@ -97,6 +102,10 @@ class ScanFragment : Fragment() {
         btnSaveHistory = view.findViewById(R.id.btn_save_history)
         ivCropped = view.findViewById(R.id.iv_cropped)
         croppedCard = view.findViewById(R.id.card_cropped_preview)
+        btnInfoDropdown = view.findViewById(R.id.btn_info_dropdown)
+        ivDropdownArrow = view.findViewById(R.id.iv_dropdown_arrow)
+        infoContentContainer = view.findViewById(R.id.info_content_container)
+
 
         // ---- GALLERY PICKER ----
         pickGalleryLauncher = registerForActivityResult(
@@ -118,7 +127,9 @@ class ScanFragment : Fragment() {
             }
         }
 
-        btnTake.setOnClickListener { captureImage() }
+        btnTake.setOnClickListener {
+            captureImage()
+        }
 
         btnGallery.setOnClickListener {
             if (!hasReadPermission()) requestReadPermissionThenGallery() else pickGalleryLauncher.launch("image/*")
@@ -129,6 +140,20 @@ class ScanFragment : Fragment() {
                 btnSaveHistoryClicked(uri)
             }
         }
+        btnInfoDropdown.setOnClickListener {
+            if (infoContentContainer.visibility == View.VISIBLE) {
+                // Hide dropdown
+                infoContentContainer.visibility = View.GONE
+                // Rotate arrow back
+                ivDropdownArrow.animate().rotation(0f).start()
+            } else {
+                // Show dropdown
+                infoContentContainer.visibility = View.VISIBLE
+                // Rotate arrow downwards
+                ivDropdownArrow.animate().rotation(180f).start()
+            }
+        }
+
 
         if (!hasCameraPermission()) {
             requestPermissions(arrayOf(Manifest.permission.CAMERA), 101)
@@ -252,6 +277,8 @@ class ScanFragment : Fragment() {
         classifyImage(uri)
 
         btnSaveHistory.isEnabled = true
+        // Hide the dropdown button
+        view?.findViewById<MaterialCardView>(R.id.btn_info_dropdown)?.visibility = View.GONE
     }
 
     // ---------------- CLASSIFICATION --------------------
@@ -366,32 +393,6 @@ class ScanFragment : Fragment() {
             }
             .show()
     }
-//    private fun saveScan(uri: Uri) {
-//        val scans = sharedViewModel.history.value ?: emptyList()
-//
-//        if (scans.isEmpty()) {
-//            saveNewScan(uri)
-//            return
-//        }
-//
-//        val names = scans.map { s -> "${s.dateIso} — ${s.mainImage?.label ?: "No Label"}" }.toTypedArray()
-//
-//        AlertDialog.Builder(requireContext())
-//            .setTitle("Save Scan")
-//            .setMessage("Choose to save as a new scan or add to existing scan")
-//            .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
-//            .setNeutralButton("Existing") { _, _ ->
-//                AlertDialog.Builder(requireContext())
-//                    .setTitle("Select Existing Scan")
-//                    .setItems(names) { _, idx ->
-//                        val scan = scans[idx]
-//                        addImageToExistingScan(uri, scan)
-//                    }
-//                    .show()
-//            }
-//            .setNegativeButton("Cancel", null)
-//            .show()
-//    }
 
     private fun addImageToExistingScan(uri: Uri, scan: ScanHistory) {
         val folder = File(requireContext().filesDir, "scans/${scan.id}/images")
