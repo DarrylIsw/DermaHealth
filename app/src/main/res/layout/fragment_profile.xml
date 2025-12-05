@@ -291,33 +291,37 @@
                         android:layout_marginTop="6dp">
 
                         <TextView
+                            android:id="@+id/tv_benign_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/benign_62"
+                            android:text="Benign: 0"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
 
                         <TextView
+                            android:id="@+id/tv_neutral_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/neutral_38"
+                            android:text="Neutral: 0"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
 
                         <TextView
+                            android:id="@+id/tv_suspicious_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/suspicious_19"
+                            android:text="Suspicious: 0"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
 
                         <TextView
+                            android:id="@+id/tv_malignant_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/malignant_9"
+                            android:text="Malignant: 0"
                             android:fontFamily="@font/inter_medium"
                             android:textColor="@color/text_primary"
                             android:textSize="14sp" />
