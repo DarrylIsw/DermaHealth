@@ -24,6 +24,7 @@ import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,16 +32,28 @@ import com.example.dermahealth.R
 import com.example.dermahealth.adapter.RoutineAdapter
 import com.example.dermahealth.data.Routine
 import com.example.dermahealth.data.RoutineType
+import com.example.dermahealth.data.ScanHistory
 import com.example.dermahealth.databinding.FragmentHomeBinding
 import com.example.dermahealth.helper.BackHandler
 import com.example.dermahealth.helper.SwipeToDeleteCallback
+import com.example.dermahealth.viewmodel.SharedViewModel
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.Job
+import okhttp3.*
+import org.json.JSONObject
+import java.io.IOException
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.getValue
 import kotlin.math.roundToInt
+
 
 class HomeFragment : Fragment(), BackHandler {
 
@@ -77,6 +90,10 @@ class HomeFragment : Fragment(), BackHandler {
     private lateinit var pbUv: ProgressBar
     private lateinit var pbHumidity: ProgressBar
     private lateinit var pbPollution: ProgressBar
+    private lateinit var tvUv: TextView
+    private lateinit var tvHumidity: TextView
+    private lateinit var tvPollution: TextView
+
 
     // routine list & adapter
     private val routineList = mutableListOf<Routine>()
@@ -109,6 +126,16 @@ class HomeFragment : Fragment(), BackHandler {
     // lifecycle helpers
     private var refreshJob: Job? = null
     private var isActive = true
+
+    // --- Stats TextViews ---
+    private lateinit var tvTotalScans: TextView
+    private lateinit var tvBenign: TextView
+    private lateinit var tvNeutral: TextView
+    private lateinit var tvSuspicious: TextView
+    private lateinit var tvMalignant: TextView
+
+
+    private val sharedViewModel: SharedViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
@@ -186,16 +213,15 @@ class HomeFragment : Fragment(), BackHandler {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         // --- Progress Bars (Right-side) ---
         pbUv = view.findViewById(R.id.pb_uv)
         pbHumidity = view.findViewById(R.id.pb_humidity)
         pbPollution = view.findViewById(R.id.pb_pollution)
 
-        // Dummy values (replace with API results)
-        val uvValue = 6       // range 0–11+
-        val humidityValue = 72 // percentage
-        val pollutionValue = 130 // AQI
+        tvUv = view.findViewById(R.id.tv_uv_index)
+        tvHumidity = view.findViewById(R.id.tv_humidity)
+        tvPollution = view.findViewById(R.id.tv_pollution)
+
 
         // --- Core Views ---
         rvRoutines = view.findViewById(R.id.rv_routines)
@@ -206,8 +232,18 @@ class HomeFragment : Fragment(), BackHandler {
         // Skin views
         cpSkin = view.findViewById(R.id.cp_skin)
         tvScore = view.findViewById(R.id.tv_skin_score)
-        val skinScoreValue = 75 // Place holder
-        animateSkinScore(skinScoreValue)
+
+        // Total scans & detected categories
+        tvTotalScans = view.findViewById(R.id.tv_total_scans)
+
+        // --- Fetch environment data (updates ProgressBars and TextViews) ---
+        val latitude = -6.200000  // Replace with actual user location
+        val longitude = 106.816666
+        fetchEnvironmentData(latitude, longitude)
+
+        sharedViewModel.history.observe(viewLifecycleOwner) { historyList ->
+            updateOverallSkinScore(historyList)
+        }
 
         // Tip of the Day
         tvTip = view.findViewById(R.id.tv_tip)
@@ -362,17 +398,6 @@ class HomeFragment : Fragment(), BackHandler {
             routineList.add(Routine(3, "Drink more water", RoutineType.HOURLY, note = "At least 8 glasses"))
         }
 
-        // --- Animate progress bars (dashboard) ---
-        animateProgressBar(pbUv, uvValue)
-        animateProgressBar(pbHumidity, humidityValue)
-        animateProgressBar(pbPollution, pollutionValue)
-
-        // UV text animation
-        val tvUv = view.findViewById<TextView>(R.id.tv_uv_index)
-        tvUv.alpha = 0f
-        tvUv.text = "UV: $uvValue (High)"
-        tvUv.animate().alpha(1f).setDuration(800).setStartDelay(400).start()
-
         // --- RecyclerView Adapter for edit/delete ---
         adapter = RoutineAdapter(
             routineList,
@@ -415,6 +440,115 @@ class HomeFragment : Fragment(), BackHandler {
     // UI helpers & logic
     // ---------------------------
 
+
+    private fun updateOverallSkinScore(historyList: List<ScanHistory>) {
+        if (historyList.isEmpty()) {
+            animateSkinScore(0)
+            return
+        }
+
+        val perCardAverages = historyList.map { scan ->
+            val scores = scan.images.mapNotNull { it.score }
+            if (scores.isNotEmpty()) {
+                val avg = scores.sum() / scores.size
+                if (avg <= 1f) avg * 100f else avg
+            } else 0f
+        }
+
+        val overallScore = perCardAverages.sum() / perCardAverages.size
+        animateSkinScore(overallScore.toInt())
+    }
+
+    private fun animateProgressBarValue(progressBar: ProgressBar, target: Int) {
+        val animator = ValueAnimator.ofInt(progressBar.progress, target)
+        animator.duration = 800
+        animator.addUpdateListener { valueAnimator ->
+            progressBar.progress = valueAnimator.animatedValue as Int
+        }
+        animator.start()
+    }
+
+    // ---------------------------
+    // Fetch environment data
+    // ---------------------------
+
+    private fun fetchEnvironmentData(lat: Double, lon: Double) {
+        val weatherApiKey = getString(R.string.openweather_api_key)
+        val uvApiKey = getString(R.string.openuv_api_key)
+
+        val client = OkHttpClient()
+
+        // --- OpenWeatherMap Weather (humidity) ---
+        val weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$weatherApiKey&units=metric"
+        client.newCall(Request.Builder().url(weatherUrl).build()).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
+            override fun onResponse(call: Call, response: Response) {
+                response.body?.string()?.let { body ->
+                    val humidity = JSONObject(body).getJSONObject("main").getInt("humidity")
+                    requireActivity().runOnUiThread {
+                        animateProgressBarValue(pbHumidity, humidity)
+                        tvHumidity.text = "Humidity: $humidity%"
+                    }
+                }
+            }
+        })
+
+        // --- OpenWeatherMap Air Pollution (AQI) ---
+        val aqiUrl = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$weatherApiKey"
+        client.newCall(Request.Builder().url(aqiUrl).build()).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
+            override fun onResponse(call: Call, response: Response) {
+                response.body?.string()?.let { body ->
+                    val aqiValue = JSONObject(body)
+                        .getJSONArray("list")
+                        .getJSONObject(0)
+                        .getJSONObject("main")
+                        .getInt("aqi") // 1-5
+                    val scaledAqi = (aqiValue / 5.0 * 500).toInt() // scale to 0-500
+                    requireActivity().runOnUiThread {
+                        animateProgressBarValue(pbPollution, scaledAqi)
+                        tvPollution.text = "AQI: $scaledAqi"
+                    }
+                }
+            }
+        })
+
+        // --- OpenUV (UV index) ---
+        val uvUrl = "https://api.openuv.io/api/v1/uv?lat=$lat&lng=$lon"
+        val uvRequest = Request.Builder()
+            .url(uvUrl)
+            .addHeader("x-access-token", uvApiKey)
+            .build()
+        client.newCall(uvRequest).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
+            override fun onResponse(call: Call, response: Response) {
+                response.body?.string()?.let { body ->
+                    val uvIndex = JSONObject(body).getJSONObject("result").getDouble("uv")
+                    requireActivity().runOnUiThread {
+                        animateProgressBarValue(pbUv, uvIndex.toInt())
+                        tvUv.text = "UV: $uvIndex"
+                    }
+                }
+            }
+        })
+    }
+
+    private fun animateSkinScore(target: Int) {
+        val animator = ValueAnimator.ofInt(0, target)
+        animator.duration = 800
+        animator.addUpdateListener { valueAnimator ->
+            val value = valueAnimator.animatedValue as Int
+            tvScore.text = "$value%"
+            try {
+                cpSkin.setProgressCompat(value, true)
+            } catch (t: Throwable) {
+                try { cpSkin.progress = value } catch (_: Throwable) { }
+            }
+        }
+        animator.start()
+    }
+
+
     private fun enterAddMode() {
         isEditing = false
         editingRoutineId = null
@@ -425,6 +559,7 @@ class HomeFragment : Fragment(), BackHandler {
         updateDynamicInputsVisibility()
         showAddRoutineCard()
     }
+
 
     private fun enterEditMode(routine: Routine) {
         isEditing = true
@@ -601,713 +736,112 @@ class HomeFragment : Fragment(), BackHandler {
     fun isOverlayVisible(): Boolean {
         return overlay.visibility == View.VISIBLE
     }
-    // Skin score animation helper
-    private fun animateSkinScore(target: Int) {
-        val animator = ValueAnimator.ofInt(0, target)
-        animator.duration = 800
-        animator.addUpdateListener { valueAnimator ->
-            val value = valueAnimator.animatedValue as Int
-            tvScore.text = value.toString()
-            try {
-                cpSkin.setProgressCompat(value, true)
-            } catch (t: Throwable) {
-                try {
-                    cpSkin.progress = value
-                } catch (_: Throwable) { }
-            }
-        }
-        animator.start()
-    }
 }
 
-//import kotlinx.coroutines.*
-//import androidx.lifecycle.lifecycleScope
-//import android.animation.ValueAnimator
-//import android.app.AlertDialog
-//import android.os.Bundle
-//import android.os.Handler
-//import android.os.Looper
-//import com.example.dermahealth.helper.BackHandler
-//import androidx.core.view.isVisible
-//import android.view.animation.AlphaAnimation
-//import android.view.animation.Animation
-//import android.widget.ImageButton
-//import android.widget.ImageView
-//import android.widget.TextView
-//import android.widget.Toast
-//import androidx.fragment.app.Fragment
-//import androidx.recyclerview.widget.LinearLayoutManager
-//import androidx.recyclerview.widget.RecyclerView
-//import com.google.android.material.progressindicator.CircularProgressIndicator
-//import android.graphics.Rect
-//import android.util.DisplayMetrics
-//import android.view.LayoutInflater
-//import android.view.View
-//import android.view.ViewGroup
-//import android.view.animation.AnimationUtils
-//import android.view.animation.DecelerateInterpolator
-//import androidx.core.view.children
-//import androidx.core.widget.NestedScrollView
-//import com.google.android.material.floatingactionbutton.FloatingActionButton
-//import kotlin.math.roundToInt
-//import android.animation.ObjectAnimator
-//import android.app.TimePickerDialog
-//import android.graphics.RenderEffect
-//import android.graphics.Shader
-//import android.os.Build
-//import android.util.Log
-//import android.widget.Button
-//import android.widget.EditText
-//import android.widget.FrameLayout
-//import android.widget.ProgressBar
-//import android.widget.Spinner
-//import com.example.dermahealth.adapter.ProductAdapter
-//import com.example.dermahealth.adapter.RoutineAdapter
-//import com.example.dermahealth.data.Routine
-//import com.example.dermahealth.databinding.FragmentHomeBinding
-//import androidx.recyclerview.widget.ItemTouchHelper
-//import com.example.dermahealth.data.RoutineType
-//import com.example.dermahealth.helper.SwipeToDeleteCallback
-//import com.google.android.material.card.MaterialCardView
-//import kotlinx.coroutines.Job
-//import java.util.Calendar
+//    private fun updateOverallSkinScore(historyList: List<ScanHistory>) {
+//        if (historyList.isEmpty()) {
+//            animateSkinScore(0)
+//            return
+//        }
 //
-//class HomeFragment : Fragment(), BackHandler {
+//        // Compute average score per card
+//        val perCardAverages = historyList.map { scan ->
+//            val scores = scan.images.mapNotNull { it.score }
+//            if (scores.isNotEmpty()) {
+//                val avg = scores.sum() / scores.size
+//                if (avg <= 1f) avg * 100f else avg // convert 0..1 to 0..100
+//            } else 0f
+//        }
 //
-//    private lateinit var cpSkin: CircularProgressIndicator
-//    private lateinit var tvScore: TextView
-//    private lateinit var rvRoutines: RecyclerView
-//    private lateinit var btnAddRoutine: ImageButton
-//    private lateinit var tvTip: TextView
-//    private lateinit var ivTipIcon: ImageView
-//    private val routineList = mutableListOf<Routine>()
-//    private lateinit var adapter: RoutineAdapter
-//    private lateinit var nestedScroll: androidx.core.widget.NestedScrollView
-//    private var fabScrollDown: FloatingActionButton? = null
-//    private var _binding: FragmentHomeBinding? = null
-//    private val binding get() = _binding!!
-//    private var refreshJob: Job? = null
-//    private var isActive = true
-//    private lateinit var overlay: FrameLayout
-//    private lateinit var blurBackground: View
-//    private lateinit var card: MaterialCardView
-//    // Class-level lateinit properties at the top of HomeFragment
-//    private lateinit var etName: EditText
-//    private lateinit var etTime: EditText
-//    private lateinit var etComment: EditText
-//    private lateinit var btnSave: Button
-//    private lateinit var tvTitle: TextView
-//    private lateinit var btnCancel: Button
-//    // Routine Type Selector
-//    private lateinit var spinnerRoutineType: Spinner
-//    private var selectedRoutineType: RoutineType = RoutineType.DAILY
+//        // Overall skin score = sum of per-card averages / number of cards
+//        val overallScore = perCardAverages.sum() / perCardAverages.size
 //
-//    // Time selection
-//    private var selectedHour: Int = 8
-//    private var selectedMinute: Int = 0
-//
-//    // Interval inputs
-//    private var intervalHoursInput: Int = 1
-//    private var selectedIntervalDays: Int = 1
-//
-//    // Specific date
-//    private var selectedDateTimestamp: Long? = null
-//
-//
-//    // --- Tip of the Day rotation ---
-//    private val tips = listOf(
-//        "90% of skin aging is caused by sun exposure — wear sunscreen daily.",
-//        "Drink at least 8 glasses of water a day to keep your skin hydrated.",
-//        "A balanced diet rich in antioxidants helps your skin glow naturally.",
-//        "Cleanse your face gently, avoid over-scrubbing.",
-//        "Sleep is your skin’s best friend — aim for 7–8 hours."
-//    )
-//    private var tipIndex = 0
-//    private val handler = Handler(Looper.getMainLooper())
-//    private val tipInterval = 5000L // 5 seconds
-//
-//    override fun onCreateView(
-//        inflater: LayoutInflater,
-//        container: ViewGroup?,
-//        savedInstanceState: Bundle?
-//    ): View {
-//        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-//        val root = binding.root
-//
-//        // keep your existing findViewById code (if views aren’t yet migrated to binding)
-//        nestedScroll = root.findViewById(R.id.nested_scroll)
-//        rvRoutines = root.findViewById(R.id.rv_routines)
-//
-//        setupScrollAnimations(root)
-//        return root
+//        // Animate circular progress bar and score TextView
+//        animateSkinScore(overallScore.toInt())
 //    }
 //
-//    override fun onDestroyView() {
-//        super.onDestroyView()
-//        handler.removeCallbacksAndMessages(null) // stop tip rotation
-//        isActive = false
-//        refreshJob?.cancel()
-//        fabScrollDown?.hide()
-//        _binding = null // ✅ safely clear binding
-//    }
-//
-//    private fun dpToPx(dp: Int): Int {
-//        val density = resources.displayMetrics.density
-//        return (dp * density).roundToInt()
-//    }
-//
-//    private fun animateProgressBar(progressBar: ProgressBar, target: Int, duration: Long = 1200L) {
-//        ObjectAnimator.ofInt(progressBar, "progress", 0, target).apply {
-//            interpolator = DecelerateInterpolator()
-//            this.duration = duration
-//            start()
-//        }
-//    }
-//    private fun setupScrollAnimations(root: View) {
-//        val fadeUp = AnimationUtils.loadAnimation(requireContext(), R.anim.fade_up)
-//        val nested = root.findViewById<NestedScrollView>(R.id.nested_scroll) ?: return
-//
-//        nested.setOnScrollChangeListener { _, _, _, _, _ ->
-//            // animate direct children of the LinearLayout inside NestedScrollView
-//            val mainLinear = nested.getChildAt(0) as? ViewGroup ?: return@setOnScrollChangeListener
-//            for (child in mainLinear.children) {
-//                if (child.visibility == View.VISIBLE && child.tag != "animated" && isViewVisibleOnScreen(child)) {
-//                    child.startAnimation(fadeUp)
-//                    child.tag = "animated"
-//                }
-//            }
-//
-//            // animate visible children in RecyclerView
-//            if (::rvRoutines.isInitialized) {
-//                val lm = rvRoutines.layoutManager as? LinearLayoutManager ?: return@setOnScrollChangeListener
-//                val first = lm.findFirstVisibleItemPosition()
-//                val last = lm.findLastVisibleItemPosition()
-//                if (first >= 0 && last >= first) {
-//                    for (i in first..last) {
-//                        val child = rvRoutines.findViewHolderForAdapterPosition(i)?.itemView
-//                        if (child != null && child.tag != "animated" && isViewVisibleOnScreen(child)) {
-//                            child.startAnimation(fadeUp)
-//                            child.tag = "animated"
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        // initial trigger
-//        nested.post {
-//            nested.scrollTo(0, 0)
-//            nested.scrollBy(0, 1)
-//        }
-//    }
-//
-//    private fun isViewVisibleOnScreen(view: View): Boolean {
-//        val visible = Rect()
-//        val isVisible = view.getGlobalVisibleRect(visible)
-//        // require at least half of the view to be visible
-//        val heightVisible = visible.height()
-//        return isVisible && (heightVisible >= view.height / 2)
-//    }
-//
-//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-//        super.onViewCreated(view, savedInstanceState)
-//
-//        // --- Progress Bars (Right-side) ---
-//        val pbUv = view.findViewById<ProgressBar>(R.id.pb_uv)
-//        val pbHumidity = view.findViewById<ProgressBar>(R.id.pb_humidity)
-//        val pbPollution = view.findViewById<ProgressBar>(R.id.pb_pollution)
-//
-//        // Dummy values (replace with API results)
-//        val uvValue = 6       // range 0–11+
-//        val humidityValue = 72 // percentage
-//        val pollutionValue = 130 // AQI
-//
-//        // --- Core Views ---
-//        rvRoutines = view.findViewById(R.id.rv_routines)
-//        btnAddRoutine = view.findViewById(R.id.btn_add_routine)
-//        nestedScroll = view.findViewById(R.id.nested_scroll)
-//        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
-//
-//        // Skin views
-//        cpSkin = view.findViewById(R.id.cp_skin)
-//        tvScore = view.findViewById(R.id.tv_skin_score)
-//
-//        // Tip of the Day
-//        tvTip = view.findViewById(R.id.tv_tip)
-//        ivTipIcon = view.findViewById(R.id.iv_tip_icon)
-//
-//        // --- Overlay + Card (already in XML) ---
-//        overlay = view.findViewById(R.id.addRoutineOverlay)
-//        blurBackground = overlay.findViewById(R.id.blurBackground)
-//        card = overlay.findViewById(R.id.card_add_routine)
-//
-//        // --- EditTexts and Buttons inside the card ---
-//        etName = overlay.findViewById(R.id.et_routine_name)
-//        etTime = overlay.findViewById(R.id.et_routine_time)
-//        etComment = overlay.findViewById(R.id.et_routine_comment)
-//        btnSave = overlay.findViewById(R.id.btn_save_add)
-//        tvTitle = overlay.findViewById(R.id.tv_add_routine_title)
-//        btnCancel = overlay.findViewById(R.id.btn_cancel_add)
-//
-//        // --- Add Routine FAB ---
-//        btnAddRoutine.setOnClickListener {
-//            tvTitle.text = "Add Routine"       // Reset title
-//            etName.text.clear()
-//            etTime.text.clear()
-//            etComment.text.clear()
-//            showAddRoutineCard()
-//
-//            // btnSave for adding
-//            btnSave.setOnClickListener {
-//                val title = etName.text.toString().trim()
-//                val note = etComment.text.toString().trim()
-//                val type = selectedRoutineType  // you get this from dropdown
-//
-//                if (title.isEmpty()) {
-//                    Toast.makeText(requireContext(), "Title required", Toast.LENGTH_SHORT).show()
-//                    return@setOnClickListener
-//                }
-//
-//                val newRoutine = when (type) {
-//                    RoutineType.HOURLY -> Routine(
-//                        id = generateId(),
-//                        title = title,
-//                        type = RoutineType.HOURLY,
-//                        note = note
-//                    )
-//
-//                    RoutineType.EVERY_X_HOURS -> Routine(
-//                        id = generateId(),
-//                        title = title,
-//                        type = RoutineType.EVERY_X_HOURS,
-//                        intervalHours = intervalHoursInput,
-//                        note = note
-//                    )
-//
-//                    RoutineType.DAILY -> Routine(
-//                        id = generateId(),
-//                        title = title,
-//                        type = RoutineType.DAILY,
-//                        hour = selectedHour,
-//                        minute = selectedMinute,
-//                        note = note
-//                    )
-//
-//                    RoutineType.EVERY_X_DAYS -> Routine(
-//                        id = generateId(),
-//                        title = title,
-//                        type = RoutineType.EVERY_X_DAYS,
-//                        hour = selectedHour,
-//                        minute = selectedMinute,
-//                        intervalDays = selectedIntervalDays,
-//                        note = note
-//                    )
-//
-//                    RoutineType.SPECIFIC_DATE -> Routine(
-//                        id = generateId(),
-//                        title = title,
-//                        type = RoutineType.SPECIFIC_DATE,
-//                        specificDate = selectedDateTimestamp,
-//                        note = note
-//                    )
-//                }
-//
-//                routineList.add(newRoutine)
-//                sortRoutines()
-//                hideAddRoutineCard()
-//            }
-//
-//        }
-//
-//        // --- Cancel button ---
-//        btnCancel.setOnClickListener {
-//            hideAddRoutineCard()
-//        }
-//
-//        // --- Save button ---
-//        btnSave.setOnClickListener {
-//            val title = etName.text.toString().trim()
-//            val time = etTime.text.toString().trim()
-//            val comment = etComment.text.toString().trim() // <-- additional comment
-//
-//            if (title.isEmpty() || time.isEmpty()) {
-//                Toast.makeText(requireContext(), "Please fill in title and time", Toast.LENGTH_SHORT).show()
-//                return@setOnClickListener
-//            }
-//
-//            val id = (routineList.maxOfOrNull { it.id } ?: 0) + 1
-//            val newRoutine = Routine(id, title, time, note = if (comment.isBlank()) null else comment)
-//            routineList.add(0, newRoutine)
-//            adapter.notifyItemInserted(0)
-//            rvRoutines.scrollToPosition(0)
-//
-//            Toast.makeText(requireContext(), "Routine added", Toast.LENGTH_SHORT).show()
-//            hideAddRoutineCard()
-//
-//            // Clear inputs
-//            etName.text.clear()
-//            etTime.text.clear()
-//            etComment.text.clear()
-//        }
-//
-//
-//        Log.d("DEBUG_OVERLAY", "overlay: $overlay")
-//        Log.d("DEBUG_OVERLAY", "card: $card")
-//        Log.d("DEBUG_OVERLAY", "etName: $etName, etTime: $etTime, etComment: $etComment")
-//        Log.d("DEBUG_OVERLAY", "btnCancel: $btnCancel, btnSave: $btnSave")
-//
-//        // --- Dummy routines (only once) ---
-//        if (routineList.isEmpty()) {
-//            routineList.add(Routine(1, "Apply sunscreen", "08:00 AM", "Use SPF 50"))
-//            routineList.add(Routine(2, "Moisturize before bed", "10:00 PM", "Use night cream"))
-//            routineList.add(Routine(3, "Drink more water", "Throughout the day", "At least 8 glasses"))
-//        }
-//
-//        // --- TimePicker listener (use same etTime) ---
-//        etTime.setOnClickListener {
-//            val cal = Calendar.getInstance()
-//            val hour = cal.get(Calendar.HOUR_OF_DAY)
-//            val minute = cal.get(Calendar.MINUTE)
-//
-//            // Use TimePickerDialog from Material 2
-//            val timePicker = TimePickerDialog(
-//                requireContext(),
-//                R.style.CustomTimePickerDialog,
-//                { _, selectedHour, selectedMinute ->
-//                    val formatted = String.format("%02d.%02d", selectedHour, selectedMinute)
-//                    etTime.setText(formatted)
-//                },
-//                hour,
-//                minute,
-//                true
-//            )
-//            timePicker.show()
-//        }
-//
-//
-//        // Animate progress bars
-//        animateProgressBar(pbUv, uvValue)
-//        animateProgressBar(pbHumidity, humidityValue)
-//        animateProgressBar(pbPollution, pollutionValue)
-//
-//        // UV text animation
-//        val tvUv = view.findViewById<TextView>(R.id.tv_uv_index)
-//        tvUv.alpha = 0f
-//        tvUv.text = "UV: $uvValue (High)"
-//        tvUv.animate().alpha(1f).setDuration(800).setStartDelay(400).start()
-//
-//        // --- Scroll & FAB setup ---
-//        nestedScroll.setOnScrollChangeListener { v: NestedScrollView, _, _, _, _ ->
-//            val atBottom = !v.canScrollVertically(1)
-//            if (atBottom) fabScrollDown?.hide() else fabScrollDown?.show()
-//        }
-//
-//        fabScrollDown?.setOnClickListener {
-//            nestedScroll.post {
-//                nestedScroll.smoothScrollTo(0, nestedScroll.getChildAt(0).bottom)
-//            }
-//        }
-//
-//        // --- Tip of the Day ---
-//        tvTip.text = tips[tipIndex]
-//        startTipRotation()
-//
-//        // --- RecyclerView Adapter for edit/delete ---
-//        adapter = RoutineAdapter(
-//            routineList,
-//            onEdit = { routine ->
-//                // Populate overlay fields
-//                tvTitle.text = "Edit Routine"
-//                etName.setText(routine.title)
-//                etTime.setText(routine.time)
-//                etComment.setText(routine.note ?: "")
-//
-//                showAddRoutineCard()
-//
-//                spinnerRoutineType = overlay.findViewById(R.id.spinner_routine_type)
-//
-//                val types = listOf(
-//                    "Hourly",
-//                    "Every X hours",
-//                    "Daily",
-//                    "Every X days",
-//                    "Specific date"
-//                )
-//
-//                spinnerRoutineType.adapter = ArrayAdapter(
-//                    requireContext(),
-//                    android.R.layout.simple_spinner_dropdown_item,
-//                    types
-//                )
-//
-//// Listen for selection
-//                spinnerRoutineType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-//                    override fun onItemSelected(
-//                        parent: AdapterView<*>,
-//                        view: View?,
-//                        position: Int,
-//                        id: Long
-//                    ) {
-//                        selectedRoutineType = when (position) {
-//                            0 -> RoutineType.HOURLY
-//                            1 -> RoutineType.EVERY_X_HOURS
-//                            2 -> RoutineType.DAILY
-//                            3 -> RoutineType.EVERY_X_DAYS
-//                            4 -> RoutineType.SPECIFIC_DATE
-//                            else -> RoutineType.DAILY
-//                        }
-//                    }
-//
-//                    override fun onNothingSelected(parent: AdapterView<*>) {}
-//                }
-//
-//                etTime.setOnClickListener {
-//                    val cal = Calendar.getInstance()
-//                    TimePickerDialog(requireContext(), { _, hour, minute ->
-//                        selectedHour = hour
-//                        selectedMinute = minute
-//                        etTime.setText(String.format("%02d:%02d", hour, minute))
-//                    }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
-//                }
-//
-//                // btnSave for editing
-//                btnSave.setOnClickListener {
-//                    val title = etName.text.toString().trim()
-//                    val note = etComment.text.toString().trim()
-//
-//                    if (title.isEmpty()) {
-//                        Toast.makeText(requireContext(), "Title required", Toast.LENGTH_SHORT).show()
-//                        return@setOnClickListener
-//                    }
-//
-//                    val newRoutine = when (selectedRoutineType) {
-//                        RoutineType.HOURLY -> Routine(
-//                            id = generateId(),
-//                            title = title,
-//                            type = RoutineType.HOURLY,
-//                            note = note
-//                        )
-//
-//                        RoutineType.EVERY_X_HOURS -> Routine(
-//                            id = generateId(),
-//                            title = title,
-//                            type = RoutineType.EVERY_X_HOURS,
-//                            intervalHours = intervalHoursInput,
-//                            note = note
-//                        )
-//
-//                        RoutineType.DAILY -> Routine(
-//                            id = generateId(),
-//                            title = title,
-//                            type = RoutineType.DAILY,
-//                            hour = selectedHour,
-//                            minute = selectedMinute,
-//                            note = note
-//                        )
-//
-//                        RoutineType.EVERY_X_DAYS -> Routine(
-//                            id = generateId(),
-//                            title = title,
-//                            type = RoutineType.EVERY_X_DAYS,
-//                            hour = selectedHour,
-//                            minute = selectedMinute,
-//                            intervalDays = selectedIntervalDays,
-//                            note = note
-//                        )
-//
-//                        RoutineType.SPECIFIC_DATE -> Routine(
-//                            id = generateId(),
-//                            title = title,
-//                            type = RoutineType.SPECIFIC_DATE,
-//                            specificDate = selectedDateTimestamp,
-//                            note = note
-//                        )
-//                    }
-//
-//                    routineList.add(newRoutine)
-//                    sortRoutines()
-//                    adapter.notifyDataSetChanged()
-//                    hideAddRoutineCard()
-//                }
-//
-//            },
-//            onDelete = { routine ->
-//                showDeleteConfirm(routine, adapter)
-//            }
-//        )
-//
-//        // --- RecyclerView setup ---
-//        rvRoutines.layoutManager = LinearLayoutManager(requireContext())
-//        rvRoutines.adapter = adapter
-//
-//        // --- RecyclerView swipe to delete ---
-//        val swipeToDeleteCallback = SwipeToDeleteCallback(requireContext(), adapter) { position ->
-//            val routine = routineList[position]
-//            adapter.removeAt(position)
-//            Toast.makeText(requireContext(), "Deleted: ${routine.title}", Toast.LENGTH_SHORT).show()
-//        }
-//        ItemTouchHelper(swipeToDeleteCallback).attachToRecyclerView(rvRoutines)
-//
-//        // --- Animate skin score ---
-//        animateSkinScore(85)
-//    }
-//
-//    override fun onBackPressed(): Boolean {
-//        return if (overlay.isVisible) {
-//            hideAddRoutineCard() // close overlay
-//            true
-//        } else {
-//            false
-//        }
-//    }
-//
-//    // --- Tip rotation with fade animation ---
-//    private fun startTipRotation() {
-//        handler.postDelayed(object : Runnable {
-//            override fun run() {
-//                tipIndex = (tipIndex + 1) % tips.size
-//
-//                val fadeOut = AlphaAnimation(1f, 0f).apply { duration = 500 }
-//                val fadeIn = AlphaAnimation(0f, 1f).apply { duration = 500 }
-//
-//                tvTip.startAnimation(fadeOut)
-//                fadeOut.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
-//                    override fun onAnimationStart(animation: android.view.animation.Animation?) {}
-//                    override fun onAnimationEnd(animation: android.view.animation.Animation?) {
-//                        tvTip.text = tips[tipIndex]
-//                        tvTip.startAnimation(fadeIn)
-//                    }
-//                    override fun onAnimationRepeat(animation: android.view.animation.Animation?) {}
-//                })
-//
-//                handler.postDelayed(this, tipInterval)
-//            }
-//        }, tipInterval)
-//    }
-//    private fun showDeleteConfirm(routine: Routine, adapter: RoutineAdapter) {
-//        AlertDialog.Builder(requireContext())
-//            .setMessage(getString(R.string.delete_confirm))
-//            .setPositiveButton(getString(R.string.delete)) { _, _ ->
-//                val index = routineList.indexOfFirst { it.id == routine.id }
-//                if (index >= 0) {
-//                    routineList.removeAt(index)
-//                    adapter.notifyItemRemoved(index)
-//                    Toast.makeText(requireContext(), "Deleted", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//            .setNegativeButton(getString(R.string.cancel), null)
-//            .show()
-//    }
-//
-//    private fun animateSkinScore(target: Int) {
+//    private fun animateProgressBarValue(progressBar: ProgressBar, target: Int) {
 //        val animator = ValueAnimator.ofInt(0, target)
 //        animator.duration = 800
 //        animator.addUpdateListener { valueAnimator ->
-//            val value = valueAnimator.animatedValue as Int
-//            tvScore.text = value.toString()
-//            try {
-//                cpSkin.setProgressCompat(value, true)
-//            } catch (t: Throwable) {
-//                try {
-//                    cpSkin.progress = value
-//                } catch (_: Throwable) { }
-//            }
+//            progressBar.progress = valueAnimator.animatedValue as Int
 //        }
 //        animator.start()
 //    }
 //
-//    // ---- Add these functions at fragment level ----
-//    private fun showAddRoutineCard() {
-//        overlay.visibility = View.VISIBLE
-//        card.visibility = View.VISIBLE
-//        overlay.bringToFront()
+//    private fun fetchEnvironmentData(lat: Double, lon: Double) {
+//        val weatherApiKey = getString(R.string.openweather_api_key)
+//        val uvApiKey = getString(R.string.openuv_api_key)
 //
-//        overlay.alpha = 0f
-//        overlay.animate().alpha(1f).setDuration(250).start()
+//        // --- OpenWeatherMap Weather (humidity) ---
+//        val weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$weatherApiKey&units=metric"
 //
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//            val blurRadius = 20f
-//            val renderEffect = RenderEffect.createBlurEffect(blurRadius, blurRadius, Shader.TileMode.CLAMP)
-//            blurBackground.setRenderEffect(renderEffect)
-//            blurBackground.alpha = 1f
-//        } else {
-//            blurBackground.alpha = 1f
-//        }
+//        // --- OpenWeatherMap Air Pollution (AQI) ---
+//        val aqiUrl = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$weatherApiKey"
 //
-//        card.translationY = 300f
-//        card.alpha = 0f
-//        card.animate()
-//            .translationY(0f)
-//            .alpha(1f)
-//            .setDuration(300)
-//            .setInterpolator(DecelerateInterpolator())
-//            .start()
-//    }
+//        // --- OpenUV (UV index) ---
+//        val uvUrl = "https://api.openuv.io/api/v1/uv?lat=$lat&lng=$lon"
 //
-//    private fun generateId(): Int {
-//        return (routineList.maxOfOrNull { it.id } ?: 0) + 1
-//    }
+//        val client = OkHttpClient()
 //
-//    fun hideAddRoutineCard() {
-//        card.animate()
-//            .translationY(300f)
-//            .alpha(0f)
-//            .setDuration(200)
-//            .withEndAction {
-//                overlay.animate().alpha(0f).setDuration(200).withEndAction {
-//                    overlay.visibility = View.GONE
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//                        blurBackground.setRenderEffect(null)
-//                    }
-//                }.start()
+//        // Fetch Humidity
+//        val weatherRequest = Request.Builder().url(weatherUrl).build()
+//        client.newCall(weatherRequest).enqueue(object : Callback {
+//            override fun onFailure(call: Call, e: IOException) {
+//                e.printStackTrace()
 //            }
-//            .start()
-//    }
-//
-//
-//    // Add this function to HomeFragment
-//    fun closeOverlayIfVisible(): Boolean {
-//        return if (overlay.visibility == View.VISIBLE) {
-//            hideAddRoutineCard()
-//            true
-//        } else false
-//    }
-//
-//    private fun showTimePicker(view: View) {
-//        val cal = Calendar.getInstance()
-//        val hour = cal.get(Calendar.HOUR_OF_DAY)
-//        val minute = cal.get(Calendar.MINUTE)
-//
-//        TimePickerDialog(view.context, { _, h, m ->
-//            val formatted = String.format("%02d.%02d", h, m)
-//            (view as EditText).setText(formatted)
-//        }, hour, minute, true).show()
-//    }
-//
-//    private fun sortRoutines() {
-//        routineList.sortWith(compareBy<Routine> {
-//            it.type.priority
-//        }.thenBy {
-//            // Secondary sort: time (if applicable)
-//            when {
-//                it.hour != null && it.minute != null ->
-//                    it.hour!! * 60 + it.minute!!
-//                else -> Int.MAX_VALUE
+//            override fun onResponse(call: Call, response: Response) {
+//                response.body?.string()?.let { body ->
+//                    val json = JSONObject(body)
+//                    val humidity = json.getJSONObject("main").getInt("humidity") // 0-100
+//                    requireActivity().runOnUiThread {
+//                        animateProgressBar(pbHumidity, humidity)
+//                        tvHumidity.text = "Humidity: $humidity%"
+//                    }
+//                }
 //            }
 //        })
 //
-//        adapter.notifyDataSetChanged()
+//        // Fetch AQI
+//        val aqiRequest = Request.Builder().url(aqiUrl).build()
+//        client.newCall(aqiRequest).enqueue(object : Callback {
+//            override fun onFailure(call: Call, e: IOException) {
+//                e.printStackTrace()
+//            }
+//            override fun onResponse(call: Call, response: Response) {
+//                response.body?.string()?.let { body ->
+//                    val json = JSONObject(body)
+//                    val aqiValue = json.getJSONArray("list")
+//                        .getJSONObject(0)
+//                        .getJSONObject("main")
+//                        .getInt("aqi") // 1-5
+//                    val scaledAqi = (aqiValue / 5.0 * 500).toInt() // scale to 0-500
+//                    requireActivity().runOnUiThread {
+//                        animateProgressBar(pbPollution, scaledAqi)
+//                        tvPollution.text = "AQI: $scaledAqi"
+//                    }
+//                }
+//            }
+//        })
+//
+//        // Fetch UV index
+//        val uvRequest = Request.Builder()
+//            .url(uvUrl)
+//            .addHeader("x-access-token", uvApiKey)
+//            .build()
+//        client.newCall(uvRequest).enqueue(object : Callback {
+//            override fun onFailure(call: Call, e: IOException) {
+//                e.printStackTrace()
+//            }
+//            override fun onResponse(call: Call, response: Response) {
+//                response.body?.string()?.let { body ->
+//                    val json = JSONObject(body)
+//                    val uvIndex = json.getJSONObject("result").getDouble("uv") // 0-11+
+//                    requireActivity().runOnUiThread {
+//                        animateProgressBar(pbUv, uvIndex.toInt())
+//                        tvUv.text = "UV: $uvIndex"
+//                    }
+//                }
+//            }
+//        })
 //    }
-//
-//
-//
-//
-//    override fun onResume() {
-//        super.onResume() // start auto-scroll
-//    }
-//
-//    override fun onPause() {
-//        super.onPause()
-//        refreshJob?.cancel()
-//    }
-//}
