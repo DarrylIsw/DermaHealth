@@ -1,7 +1,6 @@
 package com.example.dermahealth.fragments
 
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -12,19 +11,20 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import com.example.dermahealth.LoginRegisterActivity
 import com.example.dermahealth.R
-import com.example.dermahealth.data.ScanHistory
 import com.example.dermahealth.helper.BackHandler
-import com.example.dermahealth.viewmodel.SharedViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import de.hdodenhof.circleimageview.CircleImageView
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ProfileFragment : Fragment(), BackHandler {
 
-    // --- Views ---
+    // Views
     private lateinit var imgAvatar: CircleImageView
-    private lateinit var btnEditAvatar: View
     private lateinit var tvName: TextView
     private lateinit var tvEmail: TextView
     private lateinit var tvMobile: TextView
@@ -41,7 +41,8 @@ class ProfileFragment : Fragment(), BackHandler {
     private lateinit var btnDeleteAccount: Button
     private lateinit var skinScoreProgress: ProgressBar
 
-    private val sharedViewModel: SharedViewModel by activityViewModels()
+    // New Badge
+    private lateinit var tvHealthBadge: TextView
 
     override fun onBackPressed(): Boolean = false
 
@@ -49,11 +50,11 @@ class ProfileFragment : Fragment(), BackHandler {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
 
-        // --- Bind views ---
+        // Bind views
         imgAvatar = view.findViewById(R.id.img_avatar_main)
-        btnEditAvatar = view.findViewById(R.id.btn_edit_avatar_main)
         tvName = view.findViewById(R.id.tv_name)
         tvEmail = view.findViewById(R.id.tv_email)
         tvMobile = view.findViewById(R.id.tv_mobile)
@@ -68,83 +69,73 @@ class ProfileFragment : Fragment(), BackHandler {
         btnEditProfile = view.findViewById(R.id.btn_edit_profile)
         btnLogout = view.findViewById(R.id.btn_logout)
         btnDeleteAccount = view.findViewById(R.id.btn_delete_account)
-        tvOverallSkin = view.findViewById(R.id.tv_overall_skin_score)
         skinScoreProgress = view.findViewById(R.id.skin_score_progress)
 
-        // Observe scan history
-        sharedViewModel.history.observe(viewLifecycleOwner) { historyList ->
-            updateOverallSkinScore(historyList)
-        }
+        // NEW: Health Level Badge
+        tvHealthBadge = view.findViewById(R.id.tv_health_badge)
 
-        loadUserData()
+        loadUserProfile()
         setupListeners()
-        observeSharedData()
 
         return view
     }
 
-    private fun observeSharedData() {
-        sharedViewModel.history.observe(viewLifecycleOwner) { list ->
-            updateTotalScans(list)
-            updateDetectedCategories(list)
-            updateOverallSkinScore(list)
+    private fun loadUserProfile() {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        val uid = currentUser.uid
+        val db = FirebaseFirestore.getInstance()
+
+        // --- MEMBER SINCE ---
+        val createdAt = currentUser.metadata?.creationTimestamp ?: 0L
+        if (createdAt > 0) {
+            val date = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                .format(Date(createdAt))
+            tvMemberSince.text = date
         }
-    }
 
-    private fun updateTotalScans(list: List<com.example.dermahealth.data.ScanHistory>) {
-        val totalImages = list.sumOf { it.images.size }
-        tvTotalScans.text = totalImages.toString()
-    }
+        // --- Statistics Listener ---
+        db.collection("statistics").document(uid)
+            .addSnapshotListener { doc, error ->
+                if (error != null) return@addSnapshotListener
+                if (doc != null && doc.exists()) {
 
-    private fun updateDetectedCategories(list: List<com.example.dermahealth.data.ScanHistory>) {
-        var benign = 0
-        var neutral = 0
-        var suspicious = 0
-        var malignant = 0
+                    tvTotalScans.text = (doc.getLong("totalScans") ?: 0).toString()
+                    tvBenign.text = "Benign: ${doc.getLong("benignCount") ?: 0}"
+                    tvNeutral.text = "Neutral: ${doc.getLong("neutralCount") ?: 0}"
+                    tvSuspicious.text = "Suspicious: ${doc.getLong("suspiciousCount") ?: 0}"
+                    tvMalignant.text = "Malignant: ${doc.getLong("malignantCount") ?: 0}"
 
-        list.forEach { card ->
-            card.images.forEach { img ->
-                when (img.label?.lowercase()) {
-                    "benign" -> benign++
-                    "neutral" -> neutral++
-                    "suspicious" -> suspicious++
-                    "malignant" -> malignant++
+                    val overallScore = (doc.getDouble("overallSkinScore") ?: 0.0).toInt()
+                    tvOverallSkin.text = "$overallScore%"
+                    skinScoreProgress.progress = overallScore.coerceIn(0, 100)
+
+                    // --- NEW: Update Badge ---
+                    val level = getHealthLevel(overallScore)
+                    tvHealthBadge.text = level
+                    tvHealthBadge.setTextColor(getHealthColor(level))
                 }
             }
-        }
-
-        tvBenign.text = "Benign: $benign"
-        tvNeutral.text = "Neutral: $neutral"
-        tvSuspicious.text = "Suspicious: $suspicious"
-        tvMalignant.text = "Malignant: $malignant"
     }
 
-    private fun updateOverallSkinScore(historyList: List<ScanHistory>) {
-        if (historyList.isEmpty()) {
-            tvOverallSkin.text = "0%"
-            skinScoreProgress.progress = 0
-            return
+    // LEVEL LOGIC
+    private fun getHealthLevel(score: Int): String {
+        return when {
+            score >= 85 -> "Healthy"
+            score >= 60 -> "Average"
+            score >= 40 -> "At Risk"
+            else -> "High Risk"
         }
-
-        // Compute average score per card
-        val perCardAverages = historyList.map { scan ->
-            val scores = scan.images.mapNotNull { it.score }
-            if (scores.isNotEmpty()) {
-                // Convert to percentage if your score is 0..1, otherwise keep as is
-                val sum = scores.sum()
-                val avg = sum / scores.size
-                if (avg <= 1f) avg * 100f else avg
-            } else 0f
-        }
-
-        // Overall skin score = sum of per-card averages / number of cards
-        val overallScore = perCardAverages.sum() / perCardAverages.size
-
-        // Update TextView and ProgressBar
-        tvOverallSkin.text = String.format("%.0f%%", overallScore)
-        skinScoreProgress.progress = overallScore.toInt().coerceIn(0, 100)
     }
 
+    // OPTIONAL COLOR LOGIC
+    private fun getHealthColor(level: String): Int {
+        return when (level) {
+            "Healthy" -> resources.getColor(R.color.green, null)
+            "Average" -> resources.getColor(R.color.yellow, null)
+            "At Risk" -> resources.getColor(R.color.orange, null)
+            else -> resources.getColor(R.color.red, null)
+        }
+    }
 
     private fun setupListeners() {
         btnEditProfile.setOnClickListener {
@@ -156,7 +147,7 @@ class ProfileFragment : Fragment(), BackHandler {
 
         btnLogout.setOnClickListener {
             showConfirmationDialog("Logout", "Are you sure you want to log out?") {
-                clearUserData()
+                FirebaseAuth.getInstance().signOut()
                 startActivity(Intent(requireActivity(), LoginRegisterActivity::class.java))
                 requireActivity().finish()
             }
@@ -164,17 +155,10 @@ class ProfileFragment : Fragment(), BackHandler {
 
         btnDeleteAccount.setOnClickListener {
             showConfirmationDialog("Delete Account", "This action cannot be undone. Continue?") {
-                clearUserData()
+                FirebaseAuth.getInstance().currentUser?.delete()
                 startActivity(Intent(requireActivity(), LoginRegisterActivity::class.java))
                 requireActivity().finish()
             }
-        }
-
-        btnEditAvatar.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, ChangeAvatarFragment())
-                .addToBackStack(null)
-                .commit()
         }
     }
 
@@ -195,30 +179,8 @@ class ProfileFragment : Fragment(), BackHandler {
         dialog.show()
     }
 
-    private fun clearUserData() {
-        val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
-        sharedPref.edit().clear().apply()
-        loadUserData()
-        imgAvatar.setImageResource(R.drawable.ic_person_grey)
-    }
-
-    private fun loadUserData() {
-        val sharedPref = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
-        tvName.text = sharedPref.getString("name", "John Doe")
-        tvEmail.text = sharedPref.getString("email", "john.doe@email.com")
-        tvMobile.text = sharedPref.getString("phone", "+62 812-3456-7890")
-        tvAgeValue.text = sharedPref.getString("age", "24")
-
-        val avatarUri = sharedPref.getString("avatarUri", null)
-        if (avatarUri != null) {
-            imgAvatar.setImageURI(Uri.parse(avatarUri))
-        } else {
-            imgAvatar.setImageResource(R.drawable.ic_person_grey)
-        }
-    }
-
     override fun onResume() {
         super.onResume()
-        loadUserData()
+        loadUserProfile()
     }
 }

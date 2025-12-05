@@ -61,6 +61,18 @@ class RoutineAdapter(
                     sdf.format(Date(it))
                 } ?: "No date set"
             }
+
+            RoutineType.HOURLY_SPECIFIC_TIME -> {
+                val h = item.hour ?: 0
+                val m = item.minute ?: 0
+                "Every hour at %02d:%02d".format(h, m)
+            }
+
+            RoutineType.SPECIFIC_TIME_ONLY -> {
+                val h = item.hour ?: 0
+                val m = item.minute ?: 0
+                "At %02d:%02d".format(h, m)
+            }
         }
 
         if (item.note.isNullOrBlank()) {

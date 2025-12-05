@@ -20,6 +20,9 @@ import com.example.dermahealth.helper.BackHandler
 import com.example.dermahealth.ui.SwipeActionsCallback
 import com.example.dermahealth.viewmodel.SharedViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
 
 class HistoryFragment : Fragment(), BackHandler {
@@ -30,9 +33,6 @@ class HistoryFragment : Fragment(), BackHandler {
     private val b get() = _b!!
 
     private val sharedViewModel: SharedViewModel by activityViewModels()
-
-    // Prevent double-dialog spam on swipe
-    private var swipeDialogShown = false
 
     private val adapter by lazy {
         HistoryAdapter(
@@ -114,6 +114,52 @@ class HistoryFragment : Fragment(), BackHandler {
             .show()
     }
 
+    private fun updateStatisticsInFirebase(scans: List<ScanHistory>) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        val uid = currentUser.uid
+        val db = FirebaseFirestore.getInstance()
+
+        val totalScans = scans.size
+        var benign = 0
+        var neutral = 0
+        var suspicious = 0
+        var malignant = 0
+
+        // For overall skin score
+        var totalScore = 0f
+
+        scans.forEach { scan ->
+            val label = scan.mainImage?.label?.lowercase() ?: "neutral"
+
+            when (label) {
+                "benign" -> benign++
+                "neutral" -> neutral++
+                "suspicious" -> suspicious++
+                "malignant" -> malignant++
+            }
+
+            totalScore += scan.mainImage?.score ?: 0f
+        }
+
+        val overallSkinScore = if (totalScans > 0) {
+            ((totalScore / totalScans).coerceIn(0f, 1f) * 100f)
+        } else 0f
+
+        val statsData = hashMapOf(
+            "userId" to uid,
+            "totalScans" to totalScans,
+            "benignCount" to benign,
+            "neutralCount" to neutral,
+            "suspiciousCount" to suspicious,
+            "malignantCount" to malignant,
+            "overallSkinScore" to overallSkinScore.toInt(),
+            "lastUpdated" to FieldValue.serverTimestamp()
+        )
+
+        db.collection("statistics").document(uid)
+            .set(statsData)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _b = FragmentHistoryBinding.inflate(inflater, container, false)
         return b.root
@@ -137,6 +183,7 @@ class HistoryFragment : Fragment(), BackHandler {
         sharedViewModel.history.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
             updateEmptyState()
+            updateStatisticsInFirebase(list)
         }
     }
 

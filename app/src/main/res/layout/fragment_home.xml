@@ -383,30 +383,35 @@
                     android:background="@drawable/input_field_bg"/>
 
                 <!-- Routine Type Spinner -->
-                <Spinner
-                    android:id="@+id/spinner_routine_type"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_routine_type"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@android:drawable/btn_dropdown"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:layout_marginBottom="12dp"/>
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
+                    android:hint="Routine Type"
+                    app:endIconMode="dropdown_menu"
+                    app:boxBackgroundMode="filled"
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxStrokeColor="@color/medium_sky_blue"
+                    app:boxStrokeWidth="2dp"
+                    app:hintTextColor="@color/deep_dark_blue"
+                    app:boxBackgroundColor="@color/white">
 
-                <!-- Time -->
-<!--                <EditText-->
-<!--                    android:id="@+id/et_routine_time"-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="48dp"-->
-<!--                    android:hint="@string/set_time_home"-->
-<!--                    android:inputType="none"-->
-<!--                    android:focusable="false"-->
-<!--                    android:fontFamily="@font/poppins"-->
-<!--                    android:layout_marginBottom="16dp"-->
-<!--                    android:paddingStart="12dp"-->
-<!--                    android:paddingEnd="12dp"-->
-<!--                    android:background="@drawable/input_field_bg"/>-->
-                <!-- BEGIN: routine dynamic inputs (place under spinner) -->
-                <!-- Spinner (already add spinner somewhere above this block) -->
+                    <AutoCompleteTextView
+                        android:id="@+id/spinner_routine_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:padding="14dp"
+                        android:textSize="16sp"
+                        android:textColor="@color/deep_dark_blue"
+                        android:background="@android:color/transparent"
+                        android:drawablePadding="8dp"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
                 <!-- Time picker field -->
                 <EditText
                     android:id="@+id/et_time_picker"

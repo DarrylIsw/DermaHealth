@@ -7,6 +7,8 @@ import android.app.TimePickerDialog
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.pm.PackageManager
+import android.content.Context
+import com.google.gson.reflect.TypeToken
 import android.graphics.Rect
 import android.graphics.RenderEffect
 import android.graphics.Shader
@@ -47,6 +49,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.gson.Gson
 import kotlinx.coroutines.Job
 import okhttp3.*
 import org.json.JSONObject
@@ -83,7 +89,7 @@ class HomeFragment : Fragment(), BackHandler {
 
     // overlay inputs
     private lateinit var etName: EditText
-    private lateinit var spinnerRoutineType: Spinner
+    lateinit var spinnerRoutineType: MaterialAutoCompleteTextView
     private lateinit var etTimePicker: EditText
     private lateinit var etIntervalHours: EditText
     private lateinit var etIntervalDays: EditText
@@ -117,6 +123,10 @@ class HomeFragment : Fragment(), BackHandler {
     // edit mode
     private var isEditing = false
     private var editingRoutineId: Int? = null
+
+    // database fetch
+    private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
 
     // tip rotation
     private val tips = listOf(
@@ -224,6 +234,9 @@ class HomeFragment : Fragment(), BackHandler {
             //requestLocationPermission()
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+
+        loadRoutineList()
+
         // --- Progress Bars (Right-side) ---
         pbUv = view.findViewById(R.id.pb_uv)
         pbHumidity = view.findViewById(R.id.pb_humidity)
@@ -247,8 +260,22 @@ class HomeFragment : Fragment(), BackHandler {
         tvTotalScans = view.findViewById(R.id.tv_total_scans)
 
         sharedViewModel.history.observe(viewLifecycleOwner) { historyList ->
-            updateOverallSkinScore(historyList)
+            if (historyList.isNotEmpty()) {
+
+                val newScore = updateOverallSkinScore(historyList)
+
+                // Save to Firestore so all fragments always have latest score
+                db.collection("statistics")
+                    .document(auth.currentUser!!.uid)
+                    .update("overallSkinScore", newScore)
+
+                // You may optionally animate local UI too:
+                animateSkinScore(newScore)
+            }
         }
+
+        // Fetch and display score from Firestore
+        fetchOverallSkinScore()
 
         // Tip of the Day
         tvTip = view.findViewById(R.id.tv_tip)
@@ -261,7 +288,6 @@ class HomeFragment : Fragment(), BackHandler {
 
         // --- Overlay EditTexts and Buttons inside the card ---
         etName = overlay.findViewById(R.id.et_routine_name)
-        spinnerRoutineType = overlay.findViewById(R.id.spinner_routine_type)
         etTimePicker = overlay.findViewById(R.id.et_time_picker)
         etIntervalHours = overlay.findViewById(R.id.et_interval_hours)
         etIntervalDays = overlay.findViewById(R.id.et_interval_days)
@@ -271,22 +297,34 @@ class HomeFragment : Fragment(), BackHandler {
         tvTitle = overlay.findViewById(R.id.tv_add_routine_title)
         btnCancel = overlay.findViewById(R.id.btn_cancel_add)
 
-        // --- Spinner setup ---
-        val types = listOf("Hourly", "Every X hours", "Daily", "Every X days", "Specific date")
-        spinnerRoutineType.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, types)
-        spinnerRoutineType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                selectedRoutineType = when (position) {
-                    0 -> RoutineType.HOURLY
-                    1 -> RoutineType.EVERY_X_HOURS
-                    2 -> RoutineType.DAILY
-                    3 -> RoutineType.EVERY_X_DAYS
-                    4 -> RoutineType.SPECIFIC_DATE
-                    else -> RoutineType.DAILY
-                }
-                updateDynamicInputsVisibility()
+        spinnerRoutineType = overlay.findViewById<MaterialAutoCompleteTextView>(R.id.spinner_routine_type)
+
+        val types = listOf(
+            "Hourly",
+            "Hourly (Specific Time)",
+            "Every X Hours",
+            "Every X Hours (Specific Time)",
+            "Daily",
+            "Every X Days",
+            "Specific Date"
+        )
+
+        val adapterTypes = ArrayAdapter(requireContext(), R.layout.dropdown_item, types)
+        spinnerRoutineType.setAdapter(adapterTypes)
+
+        spinnerRoutineType.setOnItemClickListener { _, _, position, _ ->
+            selectedRoutineType = when (position) {
+                0 -> RoutineType.HOURLY
+                1 -> RoutineType.HOURLY_SPECIFIC_TIME
+                2 -> RoutineType.EVERY_X_HOURS
+                3 -> RoutineType.SPECIFIC_TIME_ONLY
+                4 -> RoutineType.DAILY
+                5 -> RoutineType.EVERY_X_DAYS
+                6 -> RoutineType.SPECIFIC_DATE
+                else -> RoutineType.DAILY
             }
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+
+            updateDynamicInputsVisibility()
         }
 
         // --- Time picker for daily & every-x-days ---
@@ -324,76 +362,18 @@ class HomeFragment : Fragment(), BackHandler {
         // --- Cancel button inside overlay ---
         btnCancel.setOnClickListener { hideAddRoutineCard() }
 
+        // CLICK LISTENER FOR ADD ROUTINE
+        btnAddRoutine.setOnClickListener {
+            showAddRoutineOverlay()
+        }
+
         // --- Save button (handles add & edit) ---
         btnSave.setOnClickListener {
-            val title = etName.text.toString().trim()
-            val note = etComment.text.toString().trim()
-
-            if (title.isEmpty()) {
-                Toast.makeText(requireContext(), "Title required", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            intervalHoursInput = etIntervalHours.text.toString().toIntOrNull() ?: 1
-            selectedIntervalDays = etIntervalDays.text.toString().toIntOrNull() ?: 1
-
-            val routine = when (selectedRoutineType) {
-                RoutineType.HOURLY -> Routine(
-                    id = if (isEditing) editingRoutineId ?: generateId() else generateId(),
-                    title = title,
-                    type = RoutineType.HOURLY,
-                    note = if (note.isBlank()) null else note
-                )
-                RoutineType.EVERY_X_HOURS -> Routine(
-                    id = if (isEditing) editingRoutineId ?: generateId() else generateId(),
-                    title = title,
-                    type = RoutineType.EVERY_X_HOURS,
-                    intervalHours = intervalHoursInput,
-                    note = if (note.isBlank()) null else note
-                )
-                RoutineType.DAILY -> Routine(
-                    id = if (isEditing) editingRoutineId ?: generateId() else generateId(),
-                    title = title,
-                    type = RoutineType.DAILY,
-                    hour = selectedHour,
-                    minute = selectedMinute,
-                    note = if (note.isBlank()) null else note
-                )
-                RoutineType.EVERY_X_DAYS -> Routine(
-                    id = if (isEditing) editingRoutineId ?: generateId() else generateId(),
-                    title = title,
-                    type = RoutineType.EVERY_X_DAYS,
-                    hour = selectedHour,
-                    minute = selectedMinute,
-                    intervalDays = selectedIntervalDays,
-                    note = if (note.isBlank()) null else note
-                )
-                RoutineType.SPECIFIC_DATE -> Routine(
-                    id = if (isEditing) editingRoutineId ?: generateId() else generateId(),
-                    title = title,
-                    type = RoutineType.SPECIFIC_DATE,
-                    specificDate = selectedDateTimestamp,
-                    note = if (note.isBlank()) null else note
-                )
-            }
-
             if (isEditing) {
-                val idx = routineList.indexOfFirst { it.id == routine.id }
-                if (idx >= 0) {
-                    routineList[idx] = routine
-                    adapter.notifyItemChanged(idx)
-                } else {
-                    routineList.add(0, routine)
-                    adapter.notifyItemInserted(0)
-                }
+                updateRoutine()
             } else {
-                routineList.add(routine)
+                saveRoutine()
             }
-
-            sortRoutines()
-            adapter.notifyDataSetChanged()
-            hideAddRoutineCard()
-            clearOverlayFields()
         }
 
         // --- Dummy routines (only once) ---
@@ -453,6 +433,7 @@ class HomeFragment : Fragment(), BackHandler {
         )
     }
 
+
     private val locationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
@@ -507,10 +488,10 @@ class HomeFragment : Fragment(), BackHandler {
     // ---------------------------
     // UI helpers & logic
     // ---------------------------
-    private fun updateOverallSkinScore(historyList: List<ScanHistory>) {
+    private fun updateOverallSkinScore(historyList: List<ScanHistory>): Int {
         if (historyList.isEmpty()) {
             animateSkinScore(0)
-            return
+            return 0
         }
 
         val perCardAverages = historyList.map { scan ->
@@ -522,8 +503,10 @@ class HomeFragment : Fragment(), BackHandler {
         }
 
         val overallScore = perCardAverages.sum() / perCardAverages.size
-        animateSkinScore(overallScore.toInt())
+
+        return overallScore.toInt()
     }
+
 
     private fun animateProgressBarValue(progressBar: ProgressBar, target: Int) {
         val animator = ValueAnimator.ofInt(progressBar.progress, target)
@@ -585,12 +568,20 @@ class HomeFragment : Fragment(), BackHandler {
             .url(uvUrl)
             .addHeader("x-access-token", uvApiKey)
             .build()
+
         client.newCall(uvRequest).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+            }
+
             override fun onResponse(call: Call, response: Response) {
                 response.body?.string()?.let { body ->
-                    val uvIndex = JSONObject(body).getJSONObject("result").getDouble("uv")
-                    requireActivity().runOnUiThread {
+                    val uvIndex = JSONObject(body)
+                        .getJSONObject("result")
+                        .getDouble("uv")
+
+                    // Safely update UI
+                    runIfSafe {
                         animateProgressBarValue(pbUv, uvIndex.toInt())
                         tvUv.text = "UV: $uvIndex"
                     }
@@ -599,8 +590,9 @@ class HomeFragment : Fragment(), BackHandler {
         })
     }
 
+
     private fun animateSkinScore(target: Int) {
-        val animator = ValueAnimator.ofInt(0, target)
+        val animator = ValueAnimator.ofInt(cpSkin.progress, target)
         animator.duration = 800
         animator.addUpdateListener { valueAnimator ->
             val value = valueAnimator.animatedValue as Int
@@ -614,13 +606,201 @@ class HomeFragment : Fragment(), BackHandler {
         animator.start()
     }
 
+    private fun showAddRoutineOverlay() {
+        overlay.visibility = View.VISIBLE
+        blurBackground.visibility = View.VISIBLE
+    }
+
+    private fun Fragment.runIfSafe(block: () -> Unit) {
+        if (!isAdded || activity == null) return
+        activity?.runOnUiThread {
+            if (isAdded) block()
+        }
+    }
+
+    private fun saveRoutine() {
+
+        val title = etName.text.toString().trim()
+
+        if (title.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter a title", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val comment = etComment.text.toString().trim()
+
+        val routine = Routine(
+            id = generateId(),
+            title = title,
+            type = selectedRoutineType,
+            note = comment
+        )
+
+        when (selectedRoutineType) {
+
+            RoutineType.HOURLY -> {
+                // nothing else needed
+            }
+
+            RoutineType.HOURLY_SPECIFIC_TIME -> {
+                routine.hour = selectedHour
+                routine.minute = selectedMinute
+            }
+
+            RoutineType.EVERY_X_HOURS -> {
+                val interval = etIntervalHours.text.toString().toIntOrNull() ?: 1
+                routine.intervalHours = interval
+            }
+
+            RoutineType.SPECIFIC_TIME_ONLY -> {
+                routine.hour = selectedHour
+                routine.minute = selectedMinute
+                routine.intervalHours = null
+            }
+
+
+            RoutineType.DAILY -> {
+                routine.hour = selectedHour
+                routine.minute = selectedMinute
+            }
+
+            RoutineType.EVERY_X_DAYS -> {
+                val days = etIntervalDays.text.toString().toIntOrNull() ?: 1
+                routine.intervalDays = days
+                routine.hour = selectedHour
+                routine.minute = selectedMinute
+            }
+
+            RoutineType.SPECIFIC_DATE -> {
+                if (selectedDateTimestamp == null) {
+                    Toast.makeText(requireContext(), "Please select a date/time", Toast.LENGTH_SHORT).show()
+                    return
+                }
+                routine.specificDate = selectedDateTimestamp
+            }
+        }
+
+        // add to list
+        routineList.add(routine)
+
+        // sort using your priority + custom logic
+        sortRoutines()
+
+        // refresh list
+        adapter.notifyDataSetChanged()
+
+        Toast.makeText(requireContext(), "Routine added!", Toast.LENGTH_SHORT).show()
+        saveRoutineList()
+        hideAddRoutineCard()
+    }
+
+    private fun updateRoutine() {
+        val index = routineList.indexOfFirst { it.id == editingRoutineId }
+        if (index == -1) return
+
+        val title = etName.text.toString().trim()
+        if (title.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter a title", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val comment = etComment.text.toString().trim()
+
+        val r = routineList[index]
+        r.title = title
+        r.note = comment
+        r.type = selectedRoutineType
+
+        when (selectedRoutineType) {
+
+            RoutineType.HOURLY -> {
+                r.hour = null
+                r.minute = null
+                r.intervalHours = null
+                r.intervalDays = null
+                r.specificDate = null
+            }
+
+            RoutineType.HOURLY_SPECIFIC_TIME -> {
+                r.hour = selectedHour
+                r.minute = selectedMinute
+                r.intervalHours = null
+                r.intervalDays = null
+                r.specificDate = null
+            }
+
+            RoutineType.EVERY_X_HOURS -> {
+                r.intervalHours = etIntervalHours.text.toString().toIntOrNull() ?: 1
+                r.hour = null
+                r.minute = null
+                r.intervalDays = null
+                r.specificDate = null
+            }
+
+            RoutineType.SPECIFIC_TIME_ONLY -> {
+                r.hour = selectedHour
+                r.minute = selectedMinute
+                r.intervalHours = null
+                r.intervalDays = null
+                r.specificDate = null
+            }
+
+
+            RoutineType.DAILY -> {
+                r.hour = selectedHour
+                r.minute = selectedMinute
+                r.intervalHours = null
+                r.intervalDays = null
+                r.specificDate = null
+            }
+
+            RoutineType.EVERY_X_DAYS -> {
+                r.intervalDays = etIntervalDays.text.toString().toIntOrNull() ?: 1
+                r.hour = selectedHour
+                r.minute = selectedMinute
+                r.intervalHours = null
+                r.specificDate = null
+            }
+
+            RoutineType.SPECIFIC_DATE -> {
+                r.specificDate = selectedDateTimestamp
+                r.hour = null
+                r.minute = null
+                r.intervalHours = null
+                r.intervalDays = null
+            }
+        }
+
+        sortRoutines()
+        adapter.notifyDataSetChanged()
+
+        Toast.makeText(requireContext(), "Routine updated!", Toast.LENGTH_SHORT).show()
+        saveRoutineList()
+        hideAddRoutineCard()
+    }
+
+
+    private fun fetchOverallSkinScore() {
+        val currentUser = auth.currentUser ?: return
+        val uid = currentUser.uid
+
+        db.collection("statistics").document(uid)
+            .addSnapshotListener { doc, error ->
+                if (error != null) return@addSnapshotListener
+                if (doc != null && doc.exists()) {
+                    val overallScore = (doc.getDouble("overallSkinScore") ?: 0.0).toInt()
+                    animateSkinScore(overallScore)
+                }
+            }
+    }
+
     private fun enterAddMode() {
         isEditing = false
         editingRoutineId = null
         tvTitle.text = "Add Routine"
         clearOverlayFields()
         selectedRoutineType = RoutineType.DAILY
-        spinnerRoutineType.setSelection(2) // daily
+        spinnerRoutineType.setText("Daily", false) // <-- safe pre-selection
         updateDynamicInputsVisibility()
         showAddRoutineCard()
     }
@@ -636,19 +816,40 @@ class HomeFragment : Fragment(), BackHandler {
         spinnerRoutineType.setSelection(selectedRoutineType.ordinal)
 
         when (routine.type) {
-            RoutineType.HOURLY -> { /* nothing extra */ }
-            RoutineType.EVERY_X_HOURS -> etIntervalHours.setText((routine.intervalHours ?: 1).toString())
+            RoutineType.HOURLY -> {
+                // nothing extra
+            }
+
+            RoutineType.HOURLY_SPECIFIC_TIME -> {
+                selectedHour = routine.hour ?: 8
+                selectedMinute = routine.minute ?: 0
+                etTimePicker.setText(String.format("%02d:%02d", selectedHour, selectedMinute))
+            }
+
+            RoutineType.EVERY_X_HOURS -> {
+                etIntervalHours.setText((routine.intervalHours ?: 1).toString())
+            }
+
+            RoutineType.SPECIFIC_TIME_ONLY -> {
+                selectedHour = routine.hour ?: 8
+                selectedMinute = routine.minute ?: 0
+                etTimePicker.setText(String.format("%02d:%02d", selectedHour, selectedMinute))
+            }
+
+
             RoutineType.DAILY -> {
                 selectedHour = routine.hour ?: 8
                 selectedMinute = routine.minute ?: 0
                 etTimePicker.setText(String.format("%02d:%02d", selectedHour, selectedMinute))
             }
+
             RoutineType.EVERY_X_DAYS -> {
                 etIntervalDays.setText((routine.intervalDays ?: 1).toString())
                 selectedHour = routine.hour ?: 8
                 selectedMinute = routine.minute ?: 0
                 etTimePicker.setText(String.format("%02d:%02d", selectedHour, selectedMinute))
             }
+
             RoutineType.SPECIFIC_DATE -> {
                 routine.specificDate?.let {
                     selectedDateTimestamp = it
@@ -669,15 +870,57 @@ class HomeFragment : Fragment(), BackHandler {
         etSpecificDate.visibility = View.GONE
 
         when (selectedRoutineType) {
-            RoutineType.HOURLY -> {}
-            RoutineType.EVERY_X_HOURS -> etIntervalHours.visibility = View.VISIBLE
-            RoutineType.DAILY -> etTimePicker.visibility = View.VISIBLE
-            RoutineType.EVERY_X_DAYS -> {
-                etIntervalDays.visibility = View.VISIBLE
-                etTimePicker.visibility = View.VISIBLE
+
+            RoutineType.HOURLY -> {
+                etTimePicker.visibility = View.GONE
+                etIntervalHours.visibility = View.GONE
+                etIntervalDays.visibility = View.GONE
+                etSpecificDate.visibility = View.GONE
             }
-            RoutineType.SPECIFIC_DATE -> etSpecificDate.visibility = View.VISIBLE
+
+            RoutineType.HOURLY_SPECIFIC_TIME -> {
+                etTimePicker.visibility = View.VISIBLE
+                etIntervalHours.visibility = View.GONE
+                etIntervalDays.visibility = View.GONE
+                etSpecificDate.visibility = View.GONE
+            }
+
+            RoutineType.EVERY_X_HOURS -> {
+                etIntervalHours.visibility = View.VISIBLE
+                etTimePicker.visibility = View.GONE
+                etIntervalDays.visibility = View.GONE
+                etSpecificDate.visibility = View.GONE
+            }
+
+            RoutineType.SPECIFIC_TIME_ONLY -> {
+                etIntervalHours.visibility = View.GONE
+                etTimePicker.visibility = View.VISIBLE
+                etIntervalDays.visibility = View.GONE
+                etSpecificDate.visibility = View.GONE
+            }
+
+            RoutineType.DAILY -> {
+                etTimePicker.visibility = View.VISIBLE
+                etIntervalHours.visibility = View.GONE
+                etIntervalDays.visibility = View.GONE
+                etSpecificDate.visibility = View.GONE
+            }
+
+            RoutineType.EVERY_X_DAYS -> {
+                etTimePicker.visibility = View.VISIBLE
+                etIntervalHours.visibility = View.GONE
+                etIntervalDays.visibility = View.VISIBLE
+                etSpecificDate.visibility = View.GONE
+            }
+
+            RoutineType.SPECIFIC_DATE -> {
+                etSpecificDate.visibility = View.VISIBLE
+                etTimePicker.visibility = View.GONE
+                etIntervalHours.visibility = View.GONE
+                etIntervalDays.visibility = View.GONE
+            }
         }
+
     }
 
     private fun clearOverlayFields() {
@@ -751,6 +994,27 @@ class HomeFragment : Fragment(), BackHandler {
         })
     }
 
+    private fun saveRoutineList() {
+        val prefs = requireContext().getSharedPreferences("routine_prefs", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        val json = Gson().toJson(routineList)
+        editor.putString("routine_list", json)
+        editor.apply()
+    }
+
+    private fun loadRoutineList() {
+        val prefs = requireContext().getSharedPreferences("routine_prefs", Context.MODE_PRIVATE)
+        val json = prefs.getString("routine_list", null)
+
+        if (json != null) {
+            val type = object : TypeToken<MutableList<Routine>>() {}.type
+            val loadedList: MutableList<Routine> = Gson().fromJson(json, type)
+
+            routineList.clear()
+            routineList.addAll(loadedList)
+        }
+    }
+
     private fun showDeleteConfirm(routine: Routine) {
         AlertDialog.Builder(requireContext())
             .setMessage(getString(R.string.delete_confirm))
@@ -800,8 +1064,5 @@ class HomeFragment : Fragment(), BackHandler {
     fun isOverlayVisible(): Boolean {
         return overlay.visibility == View.VISIBLE
     }
-
-    // Location
-
 
 }

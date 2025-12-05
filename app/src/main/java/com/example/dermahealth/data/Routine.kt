@@ -1,12 +1,28 @@
 package com.example.dermahealth.data
 
 enum class RoutineType(val priority: Int) {
+
+    // HOURLY TYPES
     HOURLY(1),
-    EVERY_X_HOURS(2),
-    DAILY(3),
-    EVERY_X_DAYS(4),
-    SPECIFIC_DATE(5)
+    HOURLY_SPECIFIC_TIME(2),
+
+    // EVERY X HOURS
+    EVERY_X_HOURS(3),
+
+    // FIXED TIME ONLY (new meaning)
+    SPECIFIC_TIME_ONLY(4),
+
+    // DAILY TYPES
+    DAILY(5),
+
+    // EVERY X DAYS
+    EVERY_X_DAYS(6),
+
+    // ONE-TIME DATE & TIME
+    SPECIFIC_DATE(7);
 }
+
+
 
 /**
  * Universal routine model:

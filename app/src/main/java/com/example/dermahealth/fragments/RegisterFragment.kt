@@ -1,4 +1,4 @@
-package com.example.dermahealth
+package com.example.dermahealth.fragments
 
 import android.os.Bundle
 import android.util.Patterns
@@ -9,6 +9,9 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.databinding.FragmentRegisterBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterFragment : Fragment() {
 
@@ -16,8 +19,7 @@ class RegisterFragment : Fragment() {
     private val binding get() = _binding!!
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentRegisterBinding.inflate(inflater, container, false)
@@ -50,10 +52,10 @@ class RegisterFragment : Fragment() {
 
     private fun handleRegister() {
         val fullName = binding.inputFullName.text.toString().trim()
-        val username = binding.inputUsername.text.toString().trim()
         val email = binding.inputEmail.text.toString().trim()
         val password = binding.inputPassword.text.toString().trim()
         val confirm = binding.inputConfirmPassword.text.toString().trim()
+        val ageStr = binding.inputAge.text.toString().trim()
 
         // --- Full Name Validation ---
         if (fullName.isEmpty()) {
@@ -65,25 +67,6 @@ class RegisterFragment : Fragment() {
         if (!fullName.contains(" ")) {
             binding.inputFullName.error = "Please enter full name (first & last)"
             binding.inputFullName.requestFocus()
-            return
-        }
-
-        // --- Username Validation ---
-        if (username.isEmpty()) {
-            binding.inputUsername.error = "Username is required"
-            binding.inputUsername.requestFocus()
-            return
-        }
-
-        if (username.length < 4) {
-            binding.inputUsername.error = "Username must be at least 4 characters"
-            binding.inputUsername.requestFocus()
-            return
-        }
-
-        if (username.contains(" ")) {
-            binding.inputUsername.error = "Username cannot contain spaces"
-            binding.inputUsername.requestFocus()
             return
         }
 
@@ -138,11 +121,64 @@ class RegisterFragment : Fragment() {
             return
         }
 
-        // --- Success ---
-        Toast.makeText(requireContext(), "Account created successfully!", Toast.LENGTH_SHORT).show()
+        // --- Age Validation ---
+        if (ageStr.isEmpty()) {
+            binding.inputAge.error = "Age is required"
+            binding.inputAge.requestFocus()
+            return
+        }
 
-        // Navigate back to login
-        requireActivity().supportFragmentManager.popBackStack()
+        val age = ageStr.toIntOrNull()
+        if (age == null || age <= 0) {
+            binding.inputAge.error = "Enter a valid age"
+            binding.inputAge.requestFocus()
+            return
+        }
+
+        // --- Firebase Auth Registration ---
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener { authResult ->
+                val uid = authResult.user!!.uid
+                val db = FirebaseFirestore.getInstance()
+
+                // --- Add user document with age ---
+                val userData = hashMapOf(
+                    "fullName" to fullName,
+                    "email" to email,
+                    "createdAt" to FieldValue.serverTimestamp(),
+                    "age" to age.toString(), // saving as string to match ProfileFragment
+                    "avatarUri" to ""
+                )
+
+                db.collection("users").document(uid)
+                    .set(userData)
+                    .addOnSuccessListener {
+                        // --- Initialize statistics for this user ---
+                        val statsData = hashMapOf(
+                            "userId" to uid,
+                            "totalScans" to 0,
+                            "benignCount" to 0,
+                            "neutralCount" to 0,
+                            "suspiciousCount" to 0,
+                            "malignantCount" to 0,
+                            "overallSkinScore" to 0,
+                            "lastUpdated" to FieldValue.serverTimestamp()
+                        )
+
+                        db.collection("statistics").document(uid)
+                            .set(statsData)
+                            .addOnSuccessListener {
+                                Toast.makeText(requireContext(), "Account created successfully!", Toast.LENGTH_SHORT).show()
+                                requireActivity().supportFragmentManager.popBackStack()
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(requireContext(), "Failed to save user: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Registration failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     override fun onDestroyView() {

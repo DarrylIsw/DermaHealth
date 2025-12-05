@@ -242,6 +242,7 @@
 
                         <!-- Left icon or badge for prediction -->
                         <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/card_initial_circle"
                             android:layout_width="56dp"
                             android:layout_height="56dp"
                             app:cardCornerRadius="28dp"

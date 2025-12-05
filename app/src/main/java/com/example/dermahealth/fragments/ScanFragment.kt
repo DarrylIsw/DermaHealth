@@ -1,14 +1,14 @@
-package com.example.dermahealth
+package com.example.dermahealth.fragments
 
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.view.*
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
@@ -20,6 +20,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.example.dermahealth.R
 import com.example.dermahealth.data.ScanHistory
 import com.example.dermahealth.data.ScanImage
 import com.example.dermahealth.helper.TFLiteClassifier
@@ -29,10 +30,12 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.snackbar.Snackbar
 import com.yalantis.ucrop.UCrop
 import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
+
 
 class ScanFragment : Fragment() {
 
@@ -41,6 +44,9 @@ class ScanFragment : Fragment() {
     private lateinit var btnGallery: MaterialCardView
     private lateinit var cardClassification: MaterialCardView
     private lateinit var tvClassResult: TextView
+    private lateinit var tvClassInitial: TextView
+    private lateinit var cardInitialCircle: MaterialCardView
+    private lateinit var tvClassNote: TextView
     private lateinit var btnSaveHistory: MaterialButton
     private lateinit var ivCropped: ImageView
     private lateinit var croppedCard: MaterialCardView
@@ -62,6 +68,9 @@ class ScanFragment : Fragment() {
 
     private val sharedViewModel: SharedViewModel by activityViewModels()
     private lateinit var tflite: TFLiteClassifier
+
+    private val db = FirebaseFirestore.getInstance()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,12 +108,16 @@ class ScanFragment : Fragment() {
         btnGallery = view.findViewById(R.id.btn_pick_gallery)
         cardClassification = view.findViewById(R.id.card_classification)
         tvClassResult = view.findViewById(R.id.tv_class_result)
+        tvClassNote = view.findViewById(R.id.tv_class_note)
         btnSaveHistory = view.findViewById(R.id.btn_save_history)
         ivCropped = view.findViewById(R.id.iv_cropped)
         croppedCard = view.findViewById(R.id.card_cropped_preview)
         btnInfoDropdown = view.findViewById(R.id.btn_info_dropdown)
         ivDropdownArrow = view.findViewById(R.id.iv_dropdown_arrow)
         infoContentContainer = view.findViewById(R.id.info_content_container)
+        tvClassInitial = view.findViewById(R.id.tv_class_initial)
+        cardInitialCircle = view.findViewById(R.id.card_initial_circle)
+        tvClassNote = view.findViewById(R.id.tv_class_note)
 
 
         // ---- GALLERY PICKER ----
@@ -184,6 +197,15 @@ class ScanFragment : Fragment() {
         launcher.launch(permission)
     }
 
+    private fun resolveSeverity(label: String?, score: Float?): String {
+        if (label == null || score == null) return "neutral"
+
+        return when (label.lowercase()) {
+            "benign" -> if (score >= 0.85f) "benign" else "neutral"
+            "malignant" -> if (score >= 0.85f) "malignant" else "suspicious"
+            else -> "neutral"
+        }
+    }
 
     // ---------------- CAMERA SETUP --------------------
 
@@ -292,24 +314,45 @@ class ScanFragment : Fragment() {
         lastClassificationLabel = result.label
         lastClassificationScore = result.score
 
+        val severity = resolveSeverity(result.label, result.score)
+
+        // Show card
         cardClassification.visibility = View.VISIBLE
-        tvClassResult.text =
-            "${result.label} (${String.format("%.2f", result.score)})"
+
+        // Update main text (Severity: Benign / Suspicious / Malignant)
+        tvClassResult.text = severity.replaceFirstChar { it.uppercase() }
+
+        // Update small note
+        tvClassNote.text = "Confidence: ${(result.score * 100).toInt()}%"
+
+        // Update initial circle letter
+        tvClassInitial.text = getSeverityInitial(severity)
+
+        // Update circle background color
+        val bgColor = ContextCompat.getColor(requireContext(), getSeverityColor(severity))
+        cardInitialCircle.setCardBackgroundColor(bgColor)
     }
+
+    private fun getSeverityInitial(severity: String): String {
+        return severity.first().uppercase()
+    }
+
+    private fun getSeverityColor(severity: String): Int {
+        return when (severity) {
+            "benign" -> R.color.chip_benign
+            "malignant" -> R.color.chip_malignant
+            "suspicious" -> R.color.chip_suspicious
+            else -> R.color.chip_neutral
+        }
+    }
+
 
     // ---------------- SAVE TO HISTORY --------------------
 
-    private fun promptSaveNewOrExisting(uri: Uri) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Save Scan")
-            .setMessage("Save this image to a new scan or existing scan?")
-            .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
-            .setNeutralButton("Existing") { _, _ -> chooseExistingScan(uri) }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
     private fun saveNewScan(uri: Uri) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        val uid = currentUser.uid
+
         val id = System.currentTimeMillis()
         val folder = File(requireContext().filesDir, "scans/$id/images")
         folder.mkdirs()
@@ -319,11 +362,12 @@ class ScanFragment : Fragment() {
             dest.outputStream().use { out -> inp?.copyTo(out) }
         }
 
-        val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+        val timestamp = Date()
+        val isoString = DateFormat.format("yyyy-MM-dd'T'HH:mm:ss'Z'", timestamp).toString()
 
         val mainImage = ScanImage(
             path = dest.absolutePath,
-            timestamp = timestamp,
+            timestamp = isoString, // instead of timestamp.toInstant().toString()
             label = lastClassificationLabel,
             score = lastClassificationScore
         )
@@ -331,13 +375,33 @@ class ScanFragment : Fragment() {
         val record = ScanHistory(
             id = id,
             mainImage = mainImage,
-            dateIso = timestamp,
+            dateIso = isoString,
             notes = "",
             images = listOf(mainImage)
         )
 
+
+        // --- Add to ViewModel ---
         sharedViewModel.addScan(record)
-        Snackbar.make(requireView(), "Saved to new scan", Snackbar.LENGTH_LONG).show()
+
+        // --- Upload to Firestore ---
+        val scanData = hashMapOf(
+            "userId" to uid,
+            "imagePath" to dest.absolutePath,
+            "diagnosis" to (lastClassificationLabel ?: "Unknown"),
+            "score" to lastClassificationScore,   // ← ADD THIS
+            "createdAt" to timestamp
+        )
+
+
+        db.collection("scans").document(id.toString())
+            .set(scanData)
+            .addOnSuccessListener {
+                Snackbar.make(requireView(), "Saved to new scan and uploaded to Firestore", Snackbar.LENGTH_LONG).show()
+            }
+            .addOnFailureListener { e ->
+                Snackbar.make(requireView(), "Failed to upload: ${e.message}", Snackbar.LENGTH_LONG).show()
+            }
     }
 
 
@@ -402,17 +466,20 @@ class ScanFragment : Fragment() {
             dest.outputStream().use { out -> inp?.copyTo(out) }
         }
 
-        val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
-        val newImage = ScanImage(
+        val timestamp = Date()
+        val isoString = DateFormat.format("yyyy-MM-dd'T'HH:mm:ss'Z'", timestamp).toString()
+
+        val mainImage1 = ScanImage(
             path = dest.absolutePath,
-            timestamp = timestamp,
+            timestamp = isoString, // instead of timestamp.toInstant().toString()
             label = lastClassificationLabel,
             score = lastClassificationScore
         )
 
+
         val updatedScan = scan.copy(
-            mainImage = newImage, // latest image preview
-            images = scan.images + newImage
+            mainImage = mainImage1,
+            images = scan.images + mainImage1
         )
 
         val newList = sharedViewModel.history.value?.toMutableList() ?: mutableListOf()
@@ -422,7 +489,26 @@ class ScanFragment : Fragment() {
             sharedViewModel.updateScanList(newList)
         }
 
-        Snackbar.make(requireView(), "Added image to existing scan", Snackbar.LENGTH_LONG).show()
+        // --- Upload new image to Firestore ---
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        val uid = currentUser.uid
+        val scanData = hashMapOf(
+            "userId" to uid,
+            "imagePath" to dest.absolutePath,
+            "diagnosis" to (lastClassificationLabel ?: "Unknown"),
+            "score" to lastClassificationScore,   // ← ADD THIS
+            "createdAt" to timestamp
+        )
+
+
+        db.collection("scans").document("${scan.id}_${mainImage1.timestamp.hashCode()}")
+            .set(scanData)
+            .addOnSuccessListener {
+                Snackbar.make(requireView(), "Added image and uploaded to Firestore", Snackbar.LENGTH_LONG).show()
+            }
+            .addOnFailureListener { e ->
+                Snackbar.make(requireView(), "Failed to upload: ${e.message}", Snackbar.LENGTH_LONG).show()
+            }
     }
 
 }

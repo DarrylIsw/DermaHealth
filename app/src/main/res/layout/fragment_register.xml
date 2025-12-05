@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/medium_sky_blue"
-    tools:context=".RegisterFragment"
+    tools:context=".fragments.RegisterFragment"
     android:fillViewport="true">
 
     <LinearLayout
@@ -57,17 +57,6 @@
                 android:textColor="#000" />
 
             <EditText
-                android:id="@+id/inputUsername"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/username_register"
-                android:background="@drawable/edittext_bg"
-                android:padding="12dp"
-                android:layout_marginTop="12dp"
-                android:textColorHint="#888"
-                android:textColor="#000" />
-
-            <EditText
                 android:id="@+id/inputEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -78,6 +67,19 @@
                 android:layout_marginTop="12dp"
                 android:textColorHint="#888"
                 android:textColor="#000" />
+
+            <EditText
+                android:id="@+id/inputAge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/age"
+                android:inputType="number"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp"
+                android:layout_marginTop="12dp"
+                android:textColorHint="#888"
+                android:textColor="#000" />
+
 
             <EditText
                 android:id="@+id/inputPassword"

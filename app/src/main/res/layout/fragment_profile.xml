@@ -169,7 +169,6 @@
                     android:layout_marginHorizontal="12dp"
                     android:background="@android:color/white" />
 
-                <!-- ==== Score Column ==== -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -180,19 +179,20 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/score_title"
+                        android:text="Skin Health"
                         android:fontFamily="@font/poppins_medium"
                         android:textSize="12sp"
                         android:textColor="#B3FFFFFF" />
 
                     <TextView
-                        android:id="@+id/tv_score"
+                        android:id="@+id/tv_health_badge"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/dummy_score"
+                        android:text="Healthy"
                         android:fontFamily="@font/inter_bold"
                         android:textColor="@android:color/white"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        android:gravity="center" />
                 </LinearLayout>
             </LinearLayout>
 

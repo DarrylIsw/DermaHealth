@@ -3,6 +3,7 @@ package com.example.dermahealth
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.dermahealth.databinding.ActivityLoginRegisterBinding
+import com.example.dermahealth.fragments.LoginFragment
 
 class LoginRegisterActivity : AppCompatActivity() {
 
