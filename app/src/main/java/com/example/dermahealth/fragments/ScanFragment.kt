@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.text.format.DateFormat
 import android.view.*
 import android.widget.*
@@ -349,7 +350,7 @@ class ScanFragment : Fragment() {
 
     // ---------------- SAVE TO HISTORY --------------------
 
-    private fun saveNewScan(uri: Uri) {
+    private fun saveNewScan(uri: Uri, imgName: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val uid = currentUser.uid
 
@@ -376,6 +377,7 @@ class ScanFragment : Fragment() {
             id = id,
             mainImage = mainImage,
             dateIso = isoString,
+            imgName = imgName,
             notes = "",
             images = listOf(mainImage)
         )
@@ -390,6 +392,7 @@ class ScanFragment : Fragment() {
             "imagePath" to dest.absolutePath,
             "diagnosis" to (lastClassificationLabel ?: "Unknown"),
             "score" to lastClassificationScore,   // ← ADD THIS
+            "imgName" to imgName,
             "createdAt" to timestamp
         )
 
@@ -404,6 +407,41 @@ class ScanFragment : Fragment() {
             }
     }
 
+    // prompt imgName
+    private fun promptForNewScanName(uri: Uri) {
+        val input = EditText(requireContext()).apply {
+            hint = "Enter image name"
+            // optional: kapitalisasi tiap kata
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("New Scan Name")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val rawName = input.text.toString().trim()
+                // fallback kalau user kosongin nama
+                val finalName = rawName.ifBlank {
+                    // contoh default: pakai tanggal
+                    val now = Date()
+                    DateFormat.format("yyyy-MM-dd HH:mm", now).toString()
+                }
+                saveNewScan(uri, finalName)
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+            .apply {
+                setOnShowListener {
+                    val color = resources.getColor(
+                        R.color.medium_sky_blue,
+                        requireContext().theme
+                    )
+                    getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+                    getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+                }
+                show()
+            }
+    }
 
 // ---------------- SAVE TO HISTORY --------------------
 
@@ -412,7 +450,7 @@ class ScanFragment : Fragment() {
 
         if (scans.isEmpty()) {
             // No existing scans → directly create a new one
-            saveNewScan(uri)
+            promptForNewScanName(uri)
             return
         }
 
@@ -420,7 +458,7 @@ class ScanFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle("Save Scan")
             .setMessage("Do you want to create a new scan history or add to an existing one?")
-            .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
+            .setPositiveButton("New") { _, _ -> promptForNewScanName(uri) }
             .setNeutralButton("Existing") { _, _ -> chooseExistingScan(uri) }
             .setNegativeButton("Cancel", null)
             .create()
@@ -440,20 +478,26 @@ class ScanFragment : Fragment() {
     private fun chooseExistingScan(uri: Uri) {
         val scans = sharedViewModel.history.value ?: emptyList()
         if (scans.isEmpty()) {
-            saveNewScan(uri)
+            promptForNewScanName(uri)
             return
         }
 
         val listNames = scans.map { s ->
+            val imgName = s.imgName
+                ?.takeIf { it.isNotBlank() }
+                ?: "Untitled scan"
+
             val label = s.mainImage?.label ?: "No Label"
-            "${s.dateIso} — $label"
+            "$imgName — $label"
         }.toTypedArray()
 
         AlertDialog.Builder(requireContext())
             .setTitle("Select Existing Scan")
             .setItems(listNames) { _, idx ->
-                val scan = scans[idx]
-                addImageToExistingScan(uri, scan)
+                if (idx in scans.indices) {
+                    val scan = scans[idx]
+                    addImageToExistingScan(uri, scan)
+                }
             }
             .show()
     }
@@ -461,6 +505,7 @@ class ScanFragment : Fragment() {
     private fun addImageToExistingScan(uri: Uri, scan: ScanHistory) {
         val folder = File(requireContext().filesDir, "scans/${scan.id}/images")
         folder.mkdirs()
+
         val dest = File(folder, "image_${System.currentTimeMillis()}.jpg")
         requireContext().contentResolver.openInputStream(uri).use { inp ->
             dest.outputStream().use { out -> inp?.copyTo(out) }
@@ -471,15 +516,15 @@ class ScanFragment : Fragment() {
 
         val mainImage1 = ScanImage(
             path = dest.absolutePath,
-            timestamp = isoString, // instead of timestamp.toInstant().toString()
+            timestamp = isoString,
             label = lastClassificationLabel,
             score = lastClassificationScore
         )
 
-
         val updatedScan = scan.copy(
             mainImage = mainImage1,
             images = scan.images + mainImage1
+            // imgName tetap sama
         )
 
         val newList = sharedViewModel.history.value?.toMutableList() ?: mutableListOf()
@@ -492,22 +537,35 @@ class ScanFragment : Fragment() {
         // --- Upload new image to Firestore ---
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val uid = currentUser.uid
+
+        val safeImgName = scan.imgName
+            ?.takeIf { it.isNotBlank() }
+            ?: "Untitled scan"
+
         val scanData = hashMapOf(
             "userId" to uid,
             "imagePath" to dest.absolutePath,
             "diagnosis" to (lastClassificationLabel ?: "Unknown"),
-            "score" to lastClassificationScore,   // ← ADD THIS
+            "score" to lastClassificationScore,
+            "imgName" to safeImgName,
             "createdAt" to timestamp
         )
-
 
         db.collection("scans").document("${scan.id}_${mainImage1.timestamp.hashCode()}")
             .set(scanData)
             .addOnSuccessListener {
-                Snackbar.make(requireView(), "Added image and uploaded to Firestore", Snackbar.LENGTH_LONG).show()
+                Snackbar.make(
+                    requireView(),
+                    "Added image to \"$safeImgName\" and uploaded to Firestore",
+                    Snackbar.LENGTH_LONG
+                ).show()
             }
             .addOnFailureListener { e ->
-                Snackbar.make(requireView(), "Failed to upload: ${e.message}", Snackbar.LENGTH_LONG).show()
+                Snackbar.make(
+                    requireView(),
+                    "Failed to upload: ${e.message}",
+                    Snackbar.LENGTH_LONG
+                ).show()
             }
     }
 

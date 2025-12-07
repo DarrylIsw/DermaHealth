@@ -134,6 +134,13 @@ class HistoryAdapter(
         b.chipResult.text = label
         b.chipResult.setChipBackgroundColorResource(chipColor)
 
+        // ---------- IMAGE NAME (imgName) ----------
+        val imgName = item.imgName
+            ?.takeIf { it.isNotBlank() }
+            ?: "Untitled scan"
+
+        b.tvImgName.text = imgName
+
         // DATE + NOTES
         b.tvDate.text = prettyDate(item.dateIso)
         b.tvNotes.text = item.notes.ifBlank { "No notes provided." }
