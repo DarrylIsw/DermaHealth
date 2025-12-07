@@ -1,6 +1,5 @@
 package com.example.dermahealth
 
-import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,6 @@ import com.example.dermahealth.fragments.HistoryFragment
 import com.example.dermahealth.fragments.ProfileFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.activity.OnBackPressedCallback
-import com.example.dermahealth.helper.BackHandler
 import com.example.dermahealth.fragments.*
 class MainActivity : AppCompatActivity() {
 
@@ -129,19 +127,17 @@ class MainActivity : AppCompatActivity() {
         val menu = bottomNav.menu
         for (i in 0 until menu.size()) {
             val menuItem = menu.getItem(i)
-            if (menuItem.itemId == selectedItemId) {
-                menuItem.icon?.setColorFilter(
-                    ContextCompat.getColor(this, android.R.color.white),
-                    PorterDuff.Mode.SRC_IN
-                )
-            } else {
-                menuItem.icon?.setColorFilter(
-                    ContextCompat.getColor(this, R.color.medium_sky_blue),
-                    PorterDuff.Mode.SRC_IN
-                )
-            }
+            val color = if (menuItem.itemId == selectedItemId)
+                ContextCompat.getColor(this, android.R.color.white)
+            else
+                ContextCompat.getColor(this, R.color.medium_sky_blue)
+
+            menuItem.icon?.setTint(color) // safer than setColorFilter
+            menuItem.title?.let { } // title color is handled by itemTextColor
         }
     }
+
+
 
     /** Get BottomNavigationView item view safely */
     private fun getNavItemView(itemId: Int): View? {

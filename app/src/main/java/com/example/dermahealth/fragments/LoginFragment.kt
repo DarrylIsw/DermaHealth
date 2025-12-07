@@ -1,4 +1,4 @@
-package com.example.dermahealth
+package com.example.dermahealth.fragments
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,90 +6,97 @@ import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.example.dermahealth.MainActivity
+import com.example.dermahealth.R
+import com.example.dermahealth.databinding.FragmentLoginBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginFragment : Fragment() {
 
-    private lateinit var inputUsername: EditText
-    private lateinit var inputPassword: EditText
-    private lateinit var btnLogin: Button
-    private lateinit var btnRegister: Button
-    private lateinit var tvRegisterLink: TextView
+    private var _binding: FragmentLoginBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_login, container, false)
+    ): View {
+        _binding = FragmentLoginBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        inputUsername = view.findViewById(R.id.inputUsername)
-        inputPassword = view.findViewById(R.id.inputPassword)
-        btnLogin = view.findViewById(R.id.btnLogin)
-        btnRegister = view.findViewById(R.id.btnRegister)
-        tvRegisterLink = view.findViewById(R.id.tvRegisterLink)
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
-        btnLogin.setOnClickListener {
-            val username = inputUsername.text.toString().trim()
-            val password = inputPassword.text.toString().trim()
+        binding.btnLogin.setOnClickListener {
+            handleLogin()
+        }
 
-            // Validate Username
-            if (username.isEmpty()) {
-                inputUsername.error = "Username is required"
-                inputUsername.requestFocus()
-                return@setOnClickListener
-            }
+        val goToRegister = {
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, RegisterFragment())
+                .addToBackStack(null)
+                .commit()
+        }
 
-            if (username.contains(" ")) {
-                inputUsername.error = "Username cannot contain spaces"
-                inputUsername.requestFocus()
-                return@setOnClickListener
-            }
+        binding.btnRegister.setOnClickListener { goToRegister() }
+        binding.tvRegisterLink.setOnClickListener { goToRegister() }
+    }
 
-            // Validate Password
-            if (password.isEmpty()) {
-                inputPassword.error = "Password is required"
-                inputPassword.requestFocus()
-                return@setOnClickListener
-            }
+    private fun handleLogin() {
+        val email = binding.inputEmail.text.toString().trim()
+        val password = binding.inputPassword.text.toString().trim()
 
-            if (password.length < 6) {
-                inputPassword.error = "Password must be at least 6 characters"
-                inputPassword.requestFocus()
-                return@setOnClickListener
-            }
+        // --- Email Validation ---
+        if (email.isEmpty()) {
+            binding.inputEmail.error = "Email is required"
+            binding.inputEmail.requestFocus()
+            return
+        }
 
-            // Dummy check (replace with Firebase/Auth later)
-            if (username == "user" && password == "123456") {
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.inputEmail.error = "Enter a valid email address"
+            binding.inputEmail.requestFocus()
+            return
+        }
+
+        // --- Password Validation ---
+        if (password.isEmpty()) {
+            binding.inputPassword.error = "Password is required"
+            binding.inputPassword.requestFocus()
+            return
+        }
+
+        if (password.length < 6) {
+            binding.inputPassword.error = "Password must be at least 6 characters"
+            binding.inputPassword.requestFocus()
+            return
+        }
+
+        // --- Sign in directly with Firebase Auth ---
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
                 Toast.makeText(requireContext(), "Login successful!", Toast.LENGTH_SHORT).show()
+                // Navigate to MainActivity
                 val intent = Intent(requireActivity(), MainActivity::class.java)
                 startActivity(intent)
                 requireActivity().finish()
-            } else {
-                Toast.makeText(requireContext(), "Invalid username or password", Toast.LENGTH_SHORT).show()
             }
-        }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Authentication failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
 
-        // Go to RegisterFragment
-        btnRegister.setOnClickListener {
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, RegisterFragment())
-                .addToBackStack(null)
-                .commit()
-        }
-
-        tvRegisterLink.setOnClickListener {
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, RegisterFragment())
-                .addToBackStack(null)
-                .commit()
-        }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

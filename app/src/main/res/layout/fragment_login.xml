@@ -40,12 +40,14 @@
         android:clipToOutline="true">
 
         <EditText
-            android:id="@+id/inputUsername"
+            android:id="@+id/inputEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/username"
+            android:hint="@string/email"
             android:background="@drawable/edittext_bg"
             android:padding="12dp"
+            android:inputType="text"
+            android:singleLine="true"
             android:textColorHint="#888"
             android:textColor="#000"/>
 
@@ -55,6 +57,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/password"
             android:inputType="textPassword"
+            android:singleLine="true"
             android:background="@drawable/edittext_bg"
             android:padding="12dp"
             android:layout_marginTop="12dp"

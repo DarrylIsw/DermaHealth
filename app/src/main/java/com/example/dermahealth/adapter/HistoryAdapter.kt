@@ -5,16 +5,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.RequiresApi
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.RoundedCornersTransformation
 import com.example.dermahealth.R
 import com.example.dermahealth.data.ScanHistory
+import com.example.dermahealth.data.ScanImage
 import com.example.dermahealth.databinding.ItemHistoryBinding
+import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -34,17 +36,73 @@ class HistoryAdapter(
         private val IN_FMT = DateTimeFormatter.ISO_LOCAL_DATE
         @RequiresApi(Build.VERSION_CODES.O)
         private val OUT_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
+
         @RequiresApi(Build.VERSION_CODES.O)
-        fun prettyDate(iso: String): String = runCatching {
-            LocalDate.parse(iso, IN_FMT).format(OUT_FMT)
-        }.getOrElse { iso }
+        fun prettyDate(iso: String?): String = runCatching {
+            if (iso.isNullOrBlank()) "Unknown"
+            else LocalDate.parse(iso, IN_FMT).format(OUT_FMT)
+        }.getOrElse { iso ?: "Unknown" }
     }
 
     inner class VH(val b: ItemHistoryBinding) : RecyclerView.ViewHolder(b.root)
 
+    // -------------------------------------------------
+    // 🎨 Conclusion UI styling
+    // -------------------------------------------------
+    data class ConclusionStyle(
+        val icon: Int,
+        val background: Int,
+        val text: String
+    )
+
+    private fun resolveSeverity(label: String?, score: Float?): String {
+        if (label == null || score == null) return "neutral"
+
+        return when (label.lowercase()) {
+            "benign" -> if (score >= 0.85f) "benign" else "neutral"
+            "malignant" -> if (score >= 0.85f) "malignant" else "suspicious"
+            else -> "neutral"
+        }
+    }
+
+    private fun getConclusionUI(label: String?, score: Float?): ConclusionStyle {
+        val s = resolveSeverity(label, score)
+
+        return when (s) {
+            "benign" -> ConclusionStyle(
+                icon = R.drawable.ic_check_circle,
+                background = R.drawable.bg_conclusion_safe,
+                text = "Benign (Low Risk)"
+            )
+
+            "malignant" -> ConclusionStyle(
+                icon = R.drawable.ic_error,
+                background = R.drawable.bg_conclusion_danger,
+                text = "Malignant — Seek Medical Attention"
+            )
+
+            "suspicious" -> ConclusionStyle(
+                icon = R.drawable.ic_warning,
+                background = R.drawable.bg_conclusion_warning,
+                text = "Suspicious — Monitor Carefully"
+            )
+
+            else -> ConclusionStyle(
+                icon = R.drawable.ic_info,
+                background = R.drawable.bg_conclusion_neutral,
+                text = "Neutral / Low Confidence"
+            )
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val b = ItemHistoryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return VH(b)
+        return VH(
+            ItemHistoryBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+        )
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -52,51 +110,67 @@ class HistoryAdapter(
         val item = getItem(position)
         val b = holder.b
 
-        // images
-        b.ivScan.load(item.imageUrl ?: R.drawable.ic_launcher_foreground) {
-            crossfade(true)
-            transformations(RoundedCornersTransformation(12f))
-            error(R.drawable.bg_image_placeholder)
-            placeholder(R.drawable.bg_image_placeholder)
-        }
-        b.ivCropped.load(item.croppedUrl ?: R.drawable.ic_launcher_background) {
-            crossfade(true)
-            error(R.drawable.bg_image_placeholder)
-            placeholder(R.drawable.bg_image_placeholder)
-        }
+        val main = item.mainImage
 
-        // text
-        b.tvNotes.text = item.notes
-        b.tvDate.text = prettyDate(item.dateIso)
-
-        // result chip styling
-        b.chipResult.text = item.result
-        when (item.result.lowercase()) {
-            "benign" -> b.chipResult.setChipBackgroundColorResource(R.color.chip_benign)
-            "suspicious" -> b.chipResult.setChipBackgroundColorResource(R.color.chip_suspicious)
-            "malignant" -> b.chipResult.setChipBackgroundColorResource(R.color.chip_malignant)
-            else -> b.chipResult.setChipBackgroundColorResource(R.color.chip_neutral)
-        }
-
-        // expand state
-        b.expandable.isVisible = item.isExpanded
-        b.btnExpand.rotation = if (item.isExpanded) 180f else 0f
-
-        // expand/collapse with smooth layout change
-        b.btnExpand.setOnClickListener {
-            val idx = holder.bindingAdapterPosition.takeIf { it != RecyclerView.NO_POSITION } ?: return@setOnClickListener
-            val newList = currentList.toMutableList()
-            val cur = newList[idx]
-            val next = cur.copy(isExpanded = !cur.isExpanded)
-            newList[idx] = next
-
-            submitList(newList) {
-                // notify fragment AFTER RV has applied the diff & layout pass
-                onToggleExpand(idx, next.isExpanded)
+        // MAIN IMAGE
+        if (main != null) {
+            b.ivScan.load(File(main.path)) {
+                crossfade(true)
+                transformations(RoundedCornersTransformation(14f))
             }
         }
 
-        // actions
+        val label = main?.label ?: "Unknown"
+        val score = main?.score
+
+        // CHIP COLOR
+        val severity = resolveSeverity(label, score)
+        val chipColor = when (severity) {
+            "benign" -> R.color.chip_benign
+            "malignant" -> R.color.chip_malignant
+            "suspicious" -> R.color.chip_suspicious
+            else -> R.color.chip_neutral
+        }
+        b.chipResult.text = label
+        b.chipResult.setChipBackgroundColorResource(chipColor)
+
+        // DATE + NOTES
+        b.tvDate.text = prettyDate(item.dateIso)
+        b.tvNotes.text = item.notes.ifBlank { "No notes provided." }
+
+        // ---------- SCORE ----------
+        val avgScore = if (item.images.isNotEmpty()) {
+            item.images.mapNotNull { it.score }.average()
+        } else 0.0
+        val avgPct = (avgScore * 100).toInt()
+        b.tvAverageScore.text = "Score: $avgPct%"
+
+        // ---------- CONCLUSION UI ----------
+        val ui = getConclusionUI(label, score)
+        b.conclusionBox.setBackgroundResource(ui.background)
+        b.ivStatusIcon.setImageResource(ui.icon)
+        b.tvConclusion.text = ui.text
+
+        // ---------- IMAGE LIST WITH INDIVIDUAL SCORES ----------
+        b.rvImages.layoutManager =
+            LinearLayoutManager(b.root.context, LinearLayoutManager.HORIZONTAL, false)
+        b.rvImages.adapter = HistoryImagesAdapter(item.images)
+        b.rvImages.isNestedScrollingEnabled = false
+
+        // ---------- EXPAND / COLLAPSE ----------
+        b.expandable.isVisible = item.isExpanded
+        b.btnExpand.rotation = if (item.isExpanded) 180f else 0f
+
+        b.btnExpand.setOnClickListener {
+            val idx = holder.bindingAdapterPosition
+            if (idx == RecyclerView.NO_POSITION) return@setOnClickListener
+
+            val updated = item.copy(isExpanded = !item.isExpanded)
+            val newList = currentList.toMutableList()
+            newList[idx] = updated
+            submitList(newList) { onToggleExpand(idx, updated.isExpanded) }
+        }
+
         b.btnEdit.setOnClickListener { onEdit(item) }
         b.btnDelete.setOnClickListener { onDelete(item) }
     }

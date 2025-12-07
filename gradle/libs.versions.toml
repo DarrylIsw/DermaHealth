@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.0"
+agp = "8.13.1"
 kotlin = "2.0.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -12,9 +12,10 @@ constraintlayout = "2.2.1"
 ucrop = "2.2.8"
 
 coil = "2.6.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
-androidx-appcompat-v170 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
+androidx-appcompat-v170 = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -27,6 +28,7 @@ ucrop = { module = "com.github.yalantis:ucrop", version = "2.2.8" }
 
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-transformations = { group = "io.coil-kt", name = "coil-transformations", version.ref = "coil" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

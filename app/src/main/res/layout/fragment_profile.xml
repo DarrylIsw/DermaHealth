@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/soft_background"
-    android:padding="8dp">
+    android:background="@color/background_light"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,39 +15,52 @@
         <!-- ================= HEADER ================= -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="350dp"
+            android:layout_height="400dp"
             android:background="@drawable/bg_flat_header"
             android:gravity="center_horizontal"
             android:paddingBottom="24dp">
 
+            <!-- TITLE PROFILE -->
+            <TextView
+                android:id="@+id/tv_profile_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="@string/profile_title"
+                android:textColor="@android:color/white"
+                android:textSize="22sp"
+                android:fontFamily="@font/poppins_semibold"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="24dp" />
+
             <!-- Avatar -->
             <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/img_avatar"
+                android:id="@+id/img_avatar_main"
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="70dp"
-                android:src="@drawable/ic_person"
+                android:src="@drawable/ic_person_grey"
                 app:civ_border_width="3dp"
                 app:civ_border_color="@android:color/white"
                 android:scaleType="centerCrop"
-                android:contentDescription="Profile Avatar" />
+                android:contentDescription="@string/profile_avatar_title" />
 
             <!-- Tombol Edit Avatar -->
             <ImageButton
-                android:id="@+id/btn_edit_avatar"
+                android:id="@+id/btn_edit_avatar_main"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_alignEnd="@id/img_avatar"
-                android:layout_alignBottom="@id/img_avatar"
+                android:layout_alignEnd="@id/img_avatar_main"
+                android:layout_alignBottom="@id/img_avatar_main"
                 android:layout_marginEnd="4dp"
                 android:layout_marginBottom="4dp"
                 android:background="@drawable/bg_circle_primary"
                 android:src="@drawable/camera"
                 android:scaleType="centerInside"
                 android:padding="6dp"
-                android:contentDescription="Edit Avatar"
-                android:tint="@null"
+                android:contentDescription="@string/edit_avatar"
+                app:tint="@null"
                 android:elevation="8dp" />
 
             <!-- Nama -->
@@ -55,11 +68,11 @@
                 android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/img_avatar"
+                android:layout_below="@id/img_avatar_main"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="14dp"
-                android:text="John Doe"
-                android:textStyle="bold"
+                android:text="@string/dummy_user"
+                android:fontFamily="@font/inter_bold"
                 android:textSize="20sp"
                 android:textColor="@android:color/white" />
 
@@ -68,56 +81,140 @@
                 android:id="@+id/tv_mobile"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp">
+                android:layout_below="@id/tv_name"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="4dp"
+                android:text="@string/dummy_number"
+                android:fontFamily="@font/inter_medium"
+                android:textSize="14sp"
+                android:textColor="@android:color/white" />
 
-                <!-- Avatar dengan border -->
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/img_avatar"
-                    android:layout_width="90dp"
-                    android:layout_height="90dp"
-                    android:src="@drawable/ic_person"
-                    android:contentDescription="Profile Avatar"
-                    android:scaleType="centerCrop"
-                    app:civ_border_width="3dp"
-                    app:civ_border_color="@color/white"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginBottom="4dp" />
+            <!-- ======= LABELS + VALUES (EMAIL | AGE | SCORE) ======= -->
+            <LinearLayout
+                android:id="@+id/info_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_mobile"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center">
 
-                <!-- Tombol Edit Avatar (kanan bawah avatar) -->
-                <ImageButton
-                    android:id="@+id/btn_edit_avatar"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_alignBottom="@id/img_avatar"
-                    android:layout_alignEnd="@id/img_avatar"
-                    android:layout_marginEnd="-12dp"
-                    android:layout_marginBottom="-6dp"
-                    android:background="@drawable/bg_circle_primary"
-                    android:src="@drawable/camera"
-                    android:scaleType="centerInside"
-                    android:padding="6dp"
-                    android:contentDescription="Edit Avatar"
-                    app:tint="@null" />
-
-                <!-- Tombol Edit Profile (lebih ke bawah) -->
-                <Button
-                    android:id="@+id/btn_edit_profile"
-                    android:layout_width="wrap_content"
+                <!-- ==== Email Column ==== -->
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Edit Profile"
-                    android:textColor="@android:color/black"
-                    android:textSize="13sp"
-                    android:backgroundTint="@color/white"
-                    android:layout_below="@id/img_avatar"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="16dp"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="4dp"
-                    style="@style/Widget.MaterialComponents.Button" />
-            </RelativeLayout>
-        </LinearLayout>
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
 
-        <!-- ================= BAGIAN BAWAH DENGAN ROUNDED BACKGROUND ================= -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/email_holder"
+                        android:fontFamily="@font/poppins_medium"
+                        android:textSize="12sp"
+                        android:textColor="#B3FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tv_email"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dummy_email"
+                        android:fontFamily="@font/inter_semibold"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:layout_marginStart="10dp"/>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="28dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@android:color/white" />
+
+                <!-- ==== Age Column ==== -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/age_title"
+                        android:fontFamily="@font/poppins_medium"
+                        android:textSize="12sp"
+                        android:textColor="#B3FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tv_age_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/dummy_age"
+                        android:fontFamily="@font/inter_bold"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="28dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@android:color/white" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Skin Health"
+                        android:fontFamily="@font/poppins_medium"
+                        android:textSize="12sp"
+                        android:textColor="#B3FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tv_health_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Healthy"
+                        android:fontFamily="@font/inter_bold"
+                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:gravity="center" />
+                </LinearLayout>
+            </LinearLayout>
+
+
+            <Button
+                android:id="@+id/btn_edit_profile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/info_row"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="16dp"
+                android:text="@string/edit_profile"
+                android:fontFamily="@font/poppins_semibold"
+                android:textColor="@color/black"
+                android:textSize="13sp"
+                android:backgroundTint="@android:color/white"
+                android:paddingHorizontal="24dp"
+                android:paddingVertical="8dp"
+                android:elevation="6dp" />
+        </RelativeLayout>
+
+        <!-- ================= LOWER SECTION ================= -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -127,7 +224,44 @@
             android:paddingHorizontal="20dp"
             android:layout_marginTop="-10dp">
 
-            <!-- CARD: Email -->
+            <!-- Total Scans -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="@android:color/white"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="3dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tv_total_scans"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/total_scan_dummy"
+                        android:fontFamily="@font/inter_bold"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/total_scans"
+                        android:fontFamily="@font/poppins_medium"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginStart="10dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Detected Categories -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -142,33 +276,60 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/agealt"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
-                        app:tint="@null" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/detected_categories"
+                        android:fontFamily="@font/poppins_medium"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="john.doe@email.com"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical"
+                        android:layout_marginTop="6dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Email"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="4dp" />
+                        <TextView
+                            android:id="@+id/tv_benign_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Benign: 0"
+                            android:fontFamily="@font/inter_medium"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_neutral_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Neutral: 0"
+                            android:fontFamily="@font/inter_medium"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_suspicious_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Suspicious: 0"
+                            android:fontFamily="@font/inter_medium"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tv_malignant_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Malignant: 0"
+                            android:fontFamily="@font/inter_medium"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- CARD: Age -->
+            <!-- Member Since -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -180,37 +341,30 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/qrscan"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
-                        app:tint="@null" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tv_age_value"
+                        android:id="@+id/tv_member_since_date"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="24"
+                        android:text="@string/dummy_date"
+                        android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:textSize="16sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Age"
+                        android:text="@string/member_since"
+                        android:fontFamily="@font/poppins_medium"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:layout_marginTop="4dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- CARD: Score -->
+            <!-- Overall Skin Score -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -222,53 +376,65 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:src="@drawable/score"
-                        android:layout_marginEnd="28dp"
-                        android:layout_marginStart="10dp"
-                        app:tint="@null" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tv_score_percentage"
+                        android:id="@+id/tv_overall_skin_score"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Score: 89/100"
+                        android:text="@string/dummy_overall"
+                        android:fontFamily="@font/inter_bold"
                         android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:textSize="18sp" />
 
                     <ProgressBar
-                        android:id="@+id/score_progress"
+                        android:id="@+id/skin_score_progress"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
                         android:layout_height="8dp"
                         android:layout_marginTop="10dp"
-                        android:progress="89"
+                        android:progress="92"
                         android:max="100"
                         android:progressTint="@color/medium_sky_blue"
                         android:backgroundTint="@color/progress_bg_light" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/overall_skin_score"
+                        android:fontFamily="@font/poppins_medium"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:layout_marginTop="6dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
-            <!-- ================= BOTTOM BUTTONS ================= -->
+        <!-- BOTTOM BUTTONS -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_rounded_top_white"
+            android:paddingTop="24dp"
+            android:paddingHorizontal="20dp"
+            android:layout_marginTop="-10dp">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:gravity="center_horizontal"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="30dp">
 
                 <Button
                     android:id="@+id/btn_logout"
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="Logout"
+                    android:text="@string/logout"
+                    android:fontFamily="@font/poppins_semibold"
                     android:textColor="@android:color/white"
                     android:backgroundTint="@color/medium_sky_blue"
                     style="@style/Widget.MaterialComponents.Button"
@@ -278,7 +444,8 @@
                     android:id="@+id/btn_delete_account"
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="Delete Account"
+                    android:text="@string/delete_account"
+                    android:fontFamily="@font/poppins_semibold"
                     android:textColor="@android:color/white"
                     android:backgroundTint="@color/danger_red"
                     style="@style/Widget.MaterialComponents.Button" />

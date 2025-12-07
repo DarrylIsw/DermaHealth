@@ -35,18 +35,7 @@
                     android:layout_marginBottom="10dp"
                     android:textSize="26sp"
                     android:textColor="@color/deep_dark_blue"
-                    android:fontFamily="@font/inter_bold"/>
-
-                <!-- CAROUSEL: ViewPager2 (1/3 of screen + a little more) -->
-                <androidx.viewpager2.widget.ViewPager2
-                    android:id="@+id/vp_carousel"
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:layout_marginBottom="16dp"
-                    android:clipToPadding="false"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"/>
-
+                    android:fontFamily="@font/poppins_semibold"/>
 
                 <!-- Skin Health Card -->
                 <com.google.android.material.card.MaterialCardView
@@ -329,45 +318,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:nestedScrollingEnabled="false"/>
-
-                <!-- Product Cards-->
-                <!-- Product Grid -->
-                <TextView
-                    android:id="@+id/tv_product_header"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/skincare_products"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/deep_dark_blue"
-                    android:fontFamily="@font/inter_bold"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"/>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_products"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"/>
-
-                <!-- Product Makeup Grid -->
-                <TextView
-                    android:id="@+id/tv_makeup_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/beauty_products"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/deep_dark_blue"
-                    android:fontFamily="@font/inter_bold"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"/>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvMakeup"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"/>
             </LinearLayout>
         </FrameLayout>
     </androidx.core.widget.NestedScrollView>
@@ -432,19 +382,87 @@
                     android:paddingEnd="12dp"
                     android:background="@drawable/input_field_bg"/>
 
-                <!-- Time -->
+                <!-- Routine Type Spinner -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_routine_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.Dense"
+                    android:hint="Routine Type"
+                    app:endIconMode="dropdown_menu"
+                    app:boxBackgroundMode="filled"
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:boxCornerRadiusTopEnd="16dp"
+                    app:boxCornerRadiusBottomStart="16dp"
+                    app:boxCornerRadiusBottomEnd="16dp"
+                    app:boxStrokeColor="@color/medium_sky_blue"
+                    app:boxStrokeWidth="2dp"
+                    app:hintTextColor="@color/deep_dark_blue"
+                    app:boxBackgroundColor="@color/white">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/spinner_routine_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:padding="14dp"
+                        android:textSize="16sp"
+                        android:textColor="@color/deep_dark_blue"
+                        android:background="@android:color/transparent"
+                        android:drawablePadding="8dp"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Time picker field -->
                 <EditText
-                    android:id="@+id/et_routine_time"
+                    android:id="@+id/et_time_picker"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:hint="@string/set_time_home"
-                    android:inputType="none"
+                    android:hint="Select time"
                     android:focusable="false"
-                    android:fontFamily="@font/poppins"
-                    android:layout_marginBottom="16dp"
+                    android:clickable="true"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
+                    android:layout_marginTop="8dp"
                     android:background="@drawable/input_field_bg"/>
+
+                <!-- Interval hours (for Every X hours) -->
+                <EditText
+                    android:id="@+id/et_interval_hours"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Interval hours (e.g. 6)"
+                    android:inputType="number"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/input_field_bg"/>
+
+                <!-- Interval days (for Every X days) -->
+                <EditText
+                    android:id="@+id/et_interval_days"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Interval days (e.g. 2)"
+                    android:inputType="number"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/input_field_bg"/>
+
+                <!-- Specific date (opens date picker) -->
+                <EditText
+                    android:id="@+id/et_specific_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Select date &amp; time"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/input_field_bg"/>
+                <!-- END: routine dynamic inputs -->
+
 
                 <!-- Comment -->
                 <EditText

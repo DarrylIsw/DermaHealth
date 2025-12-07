@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -52,6 +53,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     implementation(libs.coil)
+    implementation(libs.play.services.location)
 //    implementation(libs.coil.transformations)
 
     testImplementation(libs.junit)
@@ -75,8 +77,24 @@ dependencies {
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 
 // Glide for images
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
+
+    implementation("com.github.yalantis:ucrop:2.2.8")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    // Fragment KTX (needed for activityViewModels(), viewModels(), etc.)
+    implementation("androidx.fragment:fragment-ktx:1.8.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
+
+    // Firebase dependencies
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+    // Firebase libraries
+    implementation("com.google.firebase:firebase-analytics")  // optional
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
 }

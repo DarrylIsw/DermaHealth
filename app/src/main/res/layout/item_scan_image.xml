@@ -1,0 +1,27 @@
+<!-- item_scan_image.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginEnd="8dp"
+    android:gravity="center">
+
+    <ImageView
+        android:id="@+id/ivImage"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:scaleType="centerCrop"
+        android:clipToOutline="true"
+        android:background="@drawable/bg_image_placeholder"/>
+
+    <TextView
+        android:id="@+id/tvScore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0.92"
+        android:textSize="14sp"
+        android:textColor="@color/deep_dark_blue"
+        android:fontFamily="@font/inter_medium"
+        android:gravity="center"
+        android:layout_marginTop="4dp"/>
+</LinearLayout>

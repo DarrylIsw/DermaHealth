@@ -227,48 +227,78 @@
                     android:id="@+id/card_classification"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="6dp"
+                    android:layout_margin="16dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="8dp"
                     app:cardBackgroundColor="@color/white"
-                    android:visibility="gone"
-                    android:padding="16dp"
-                    android:layout_marginBottom="16dp">
+                    android:visibility="gone">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="horizontal"
+                        android:padding="16dp"
+                        android:gravity="center_vertical">
 
-                        <TextView
-                            android:id="@+id/tv_class_label"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/classification"
-                            android:textStyle="bold"
-                            android:textSize="14sp"
-                            android:textColor="@color/medium_sky_blue"
-                            android:fontFamily="@font/poppins_semibold" />
+                        <!-- Left icon or badge for prediction -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/card_initial_circle"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            app:cardCornerRadius="28dp"
+                            app:cardElevation="4dp"
+                            android:layout_marginEnd="16dp"
+                            app:cardBackgroundColor="@color/medium_sky_blue">
 
-                        <TextView
-                            android:id="@+id/tv_class_result"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/benign"
-                            android:textColor="@android:color/black"
-                            android:textSize="22sp"
-                            android:textStyle="bold"
-                            android:fontFamily="@font/poppins_bold"
-                            android:layout_marginTop="4dp" />
+                            <TextView
+                                android:id="@+id/tv_class_initial"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:text="B"
+                                android:textColor="@android:color/white"
+                                android:textSize="24sp"
+                                android:textStyle="bold"
+                                android:gravity="center"/>
+                        </com.google.android.material.card.MaterialCardView>
 
-                        <TextView
-                            android:id="@+id/tv_class_note"
-                            android:layout_width="match_parent"
+                        <!-- Textual info -->
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="@string/dummy_result"
-                            android:textColor="@color/light_grey_white5"
-                            android:textSize="12sp"
-                            android:layout_marginTop="8dp"
-                            android:fontFamily="@font/inter" />
+                            android:orientation="vertical"
+                            android:layout_weight="1">
+
+                            <TextView
+                                android:id="@+id/tv_class_label"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/classification"
+                                android:textSize="14sp"
+                                android:textColor="@color/medium_sky_blue"
+                                android:fontFamily="@font/poppins_semibold"/>
+
+                            <TextView
+                                android:id="@+id/tv_class_result"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/benign"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:layout_marginTop="4dp"
+                                android:textColor="@android:color/black"
+                                android:fontFamily="@font/poppins_bold"/>
+
+                            <TextView
+                                android:id="@+id/tv_class_note"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dummy_result"
+                                android:textSize="12sp"
+                                android:textColor="@color/light_grey_white5"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="@font/inter"/>
+                        </LinearLayout>
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

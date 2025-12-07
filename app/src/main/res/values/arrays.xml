@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="country_codes">
+        <item>+1 (US)</item>
+        <item>+44 (UK)</item>
+        <item>+61 (AU)</item>
+        <item>+62 (ID)</item>
+        <item>+81 (JP)</item>
+        <item>+91 (IN)</item>
+        <item>+82 (KR)</item>
+        <item>+49 (DE)</item>
+    </string-array>
+</resources>

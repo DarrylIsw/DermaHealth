@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:paddingHorizontal="16dp"
     android:paddingTop="20dp"
-    android:paddingBottom="56dp"
     android:background="@color/soft_background">
 
     <!-- 🩵 Section Header -->
@@ -27,7 +26,7 @@
             android:text="@string/history_title"
             android:textSize="26sp"
             android:textColor="@color/deep_dark_blue"
-            android:fontFamily="@font/inter_bold"
+            android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.02"
             android:layout_marginBottom="2dp" />
     </LinearLayout>
@@ -45,7 +44,6 @@
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="4dp"/>
 
-
     <!-- Divider -->
     <View
         android:id="@+id/header_divider"
@@ -54,6 +52,36 @@
         android:background="@color/medium_sky_blue"
         android:layout_marginVertical="8dp"
         app:layout_constraintTop_toBottomOf="@id/tv_subtitle"/>
+
+    <!-- ✅ Empty State (added for updateEmptyState function) -->
+    <LinearLayout
+        android:id="@+id/emptyState"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/header_divider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp"
+        android:padding="20dp">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            app:srcCompat="@drawable/edittext_background"
+            android:contentDescription="@string/no_history_yet" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/history_empty_message"
+            android:textSize="16sp"
+            android:textColor="@color/medium_gray"
+            android:fontFamily="@font/inter_medium"
+            android:layout_marginTop="12dp" />
+    </LinearLayout>
 
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
