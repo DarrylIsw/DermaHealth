@@ -71,7 +71,7 @@
     <string name="photo_tip">Tip: Keep 20–30 cm away. Avoid blur. Crop the lesion precisely after capture.</string>
     <string name="result_benign">Result: Benign</string>
     <string name="date_dummy">Date: Sep 24, 2025</string>
-    <string name="imgName_dummy">Name: Skin lesion</string>
+    <string name="imgName_dummy">Category: Skin lesion</string>
     <string name="notes_monitor_regularly">Notes: Monitor regularly</string>
     <string name="expand">Expand</string>
     <string name="result_details">Result Details</string>

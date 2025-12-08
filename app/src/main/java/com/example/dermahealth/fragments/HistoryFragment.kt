@@ -47,19 +47,50 @@ class HistoryFragment : Fragment(), BackHandler {
     }
 
     private fun showEditDialog(scan: ScanHistory) {
-        val dialog = AlertDialog.Builder(requireContext())
+        val context = requireContext()
+
+        // Buat EditText untuk edit catatan
+        val input = android.widget.EditText(context).apply {
+            setText(scan.notes)
+            setSelection(text.length)
+            hint = "Enter Notes"
+            minLines = 3
+            maxLines = 6
+            setPadding(40, 30, 40, 30)
+        }
+
+        val dialog = AlertDialog.Builder(context)
             .setTitle(getString(R.string.edit_notes))
-            .setMessage("Edit notes for: ${scan.mainImage?.label ?: "Unknown"}\n\n${scan.notes}")
-            .setPositiveButton(android.R.string.ok, null)
+            .setMessage("Edit notes for: ${scan.mainImage?.label ?: "Unknown"}")
+            .setView(input)
+            .setPositiveButton(R.string.save, null)
+            .setNegativeButton(android.R.string.cancel, null)
             .create()
 
         dialog.setOnShowListener {
             val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+                val newNotes = input.text.toString()
+
+                // Update list di ViewModel
+                val currentList = sharedViewModel.history.value?.toMutableList() ?: mutableListOf()
+                val idx = currentList.indexOfFirst { it.id == scan.id }
+                if (idx != -1) {
+                    val updatedScan = scan.copy(notes = newNotes)
+                    currentList[idx] = updatedScan
+                    sharedViewModel.updateScanList(currentList)
+                }
+
+                dialog.dismiss()
+            }
         }
 
         dialog.show()
     }
+
 
     private fun confirmDelete(scan: ScanHistory) {
         val dialog = AlertDialog.Builder(requireContext())
