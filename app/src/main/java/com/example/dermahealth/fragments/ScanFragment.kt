@@ -136,7 +136,9 @@ class ScanFragment : Fragment() {
         ) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val output = UCrop.getOutput(result.data!!)
-                output?.let { onCropped(it) }
+                output?.let { uri ->
+                    runIfSafe { onCropped(uri) }
+                }
             }
         }
 
@@ -246,7 +248,7 @@ class ScanFragment : Fragment() {
 
             override fun onImageSaved(result: ImageCapture.OutputFileResults) {
                 val uri = Uri.fromFile(file)
-                requireActivity().runOnUiThread {
+                runIfSafe {
                     showCropOrSkipDialog(uri)
                 }
             }
@@ -397,11 +399,21 @@ class ScanFragment : Fragment() {
         db.collection("scans").document(id.toString())
             .set(scanData)
             .addOnSuccessListener {
-                Snackbar.make(requireView(), "Saved to new scan and uploaded to Firestore", Snackbar.LENGTH_LONG).show()
+                runIfSafe {
+                    Snackbar.make(requireView(), "Saved to new scan and uploaded to Firestore", Snackbar.LENGTH_LONG).show()
+                }
             }
             .addOnFailureListener { e ->
-                Snackbar.make(requireView(), "Failed to upload: ${e.message}", Snackbar.LENGTH_LONG).show()
+                runIfSafe {
+                    Snackbar.make(requireView(), "Failed to upload: ${e.message}", Snackbar.LENGTH_LONG).show()
+                }
             }
+    }
+
+    private fun runIfSafe(block: () -> Unit) {
+        if (isAdded && view != null && context != null) {
+            block()
+        }
     }
 
 
@@ -417,22 +429,24 @@ class ScanFragment : Fragment() {
         }
 
         // Show dialog with options
-        AlertDialog.Builder(requireContext())
-            .setTitle("Save Scan")
-            .setMessage("Do you want to create a new scan history or add to an existing one?")
-            .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
-            .setNeutralButton("Existing") { _, _ -> chooseExistingScan(uri) }
-            .setNegativeButton("Cancel", null)
-            .create()
-            .apply {
-                setOnShowListener {
-                    val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
-                    getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
-                    getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(color)
-                    getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+        runIfSafe {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Save Scan")
+                .setMessage("Do you want to create a new scan history or add to an existing one?")
+                .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
+                .setNeutralButton("Existing") { _, _ -> chooseExistingScan(uri) }
+                .setNegativeButton("Cancel", null)
+                .create()
+                .apply {
+                    setOnShowListener {
+                        val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+                        getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+                        getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(color)
+                        getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+                    }
+                    show()
                 }
-                show()
-            }
+        }
     }
 
 // ---------------- CHOOSE EXISTING SCAN --------------------
@@ -449,13 +463,15 @@ class ScanFragment : Fragment() {
             "${s.dateIso} — $label"
         }.toTypedArray()
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Select Existing Scan")
-            .setItems(listNames) { _, idx ->
-                val scan = scans[idx]
-                addImageToExistingScan(uri, scan)
-            }
-            .show()
+        runIfSafe {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Select Existing Scan")
+                .setItems(listNames) { _, idx ->
+                    val scan = scans[idx]
+                    addImageToExistingScan(uri, scan)
+                }
+                .show()
+        }
     }
 
     private fun addImageToExistingScan(uri: Uri, scan: ScanHistory) {
@@ -504,11 +520,14 @@ class ScanFragment : Fragment() {
         db.collection("scans").document("${scan.id}_${mainImage1.timestamp.hashCode()}")
             .set(scanData)
             .addOnSuccessListener {
-                Snackbar.make(requireView(), "Added image and uploaded to Firestore", Snackbar.LENGTH_LONG).show()
+                runIfSafe {
+                    Snackbar.make(requireView(), "Added image and uploaded to Firestore", Snackbar.LENGTH_LONG).show()
+                }
             }
             .addOnFailureListener { e ->
-                Snackbar.make(requireView(), "Failed to upload: ${e.message}", Snackbar.LENGTH_LONG).show()
+                runIfSafe {
+                    Snackbar.make(requireView(), "Failed to upload: ${e.message}", Snackbar.LENGTH_LONG).show()
+                }
             }
     }
-
 }

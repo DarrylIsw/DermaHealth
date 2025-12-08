@@ -16,6 +16,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,6 +32,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -50,6 +53,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.gson.Gson
@@ -82,6 +86,7 @@ class HomeFragment : Fragment(), BackHandler {
     private lateinit var ivTipIcon: ImageView
     private lateinit var nestedScroll: NestedScrollView
     private var fabScrollDown: FloatingActionButton? = null
+    private lateinit var tvNoRoutines: TextView
 
     private lateinit var overlay: FrameLayout
     private lateinit var blurBackground: View
@@ -89,7 +94,6 @@ class HomeFragment : Fragment(), BackHandler {
 
     // overlay inputs
     private lateinit var etName: EditText
-    lateinit var spinnerRoutineType: MaterialAutoCompleteTextView
     private lateinit var etTimePicker: EditText
     private lateinit var etIntervalHours: EditText
     private lateinit var etIntervalDays: EditText
@@ -110,7 +114,9 @@ class HomeFragment : Fragment(), BackHandler {
 
     // routine list & adapter
     private val routineList = mutableListOf<Routine>()
-    private lateinit var adapter: RoutineAdapter
+    private lateinit var adapter: RoutineAdapter               // RecyclerView adapter
+    private lateinit var spinnerRoutineType: MaterialAutoCompleteTextView  // AutoCompleteTextView for routine type
+
 
     // temp state for inputs
     private var selectedRoutineType: RoutineType = RoutineType.DAILY
@@ -148,6 +154,7 @@ class HomeFragment : Fragment(), BackHandler {
     private lateinit var tvTotalScans: TextView
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    private lateinit var tvGreeting: TextView
     private val sharedViewModel: SharedViewModel by activityViewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -169,14 +176,6 @@ class HomeFragment : Fragment(), BackHandler {
         refreshJob?.cancel()
         fabScrollDown?.hide()
         _binding = null
-    }
-
-    private fun animateProgressBar(progressBar: ProgressBar, target: Int, duration: Long = 1200L) {
-        ObjectAnimator.ofInt(progressBar, "progress", 0, target).apply {
-            interpolator = DecelerateInterpolator()
-            this.duration = duration
-            start()
-        }
     }
 
     private fun setupScrollAnimations(root: View) {
@@ -235,6 +234,15 @@ class HomeFragment : Fragment(), BackHandler {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
 
+        // --- RecyclerView Adapter for edit/delete ---
+        // Adapter for RecyclerView
+        adapter = RoutineAdapter(
+            routineList,
+            onEdit = { r -> enterEditMode(r) },
+            onDelete = { r -> showDeleteConfirm(r) }
+        )
+
+        loadUserGreeting()
         loadRoutineList()
 
         // --- Progress Bars (Right-side) ---
@@ -258,6 +266,10 @@ class HomeFragment : Fragment(), BackHandler {
 
         // Total scans & detected categories
         tvTotalScans = view.findViewById(R.id.tv_total_scans)
+        tvGreeting = view.findViewById(R.id.tv_greeting)
+
+        tvNoRoutines = view.findViewById(R.id.tv_no_routines)
+
 
         sharedViewModel.history.observe(viewLifecycleOwner) { historyList ->
             if (historyList.isNotEmpty()) {
@@ -297,7 +309,10 @@ class HomeFragment : Fragment(), BackHandler {
         tvTitle = overlay.findViewById(R.id.tv_add_routine_title)
         btnCancel = overlay.findViewById(R.id.btn_cancel_add)
 
-        spinnerRoutineType = overlay.findViewById<MaterialAutoCompleteTextView>(R.id.spinner_routine_type)
+        // spinnerRoutineType = overlay.findViewById<MaterialAutoCompleteTextView>(R.id.spinner_routine_type)
+
+        val layoutRoutineType = overlay.findViewById<TextInputLayout>(R.id.layout_routine_type)
+        spinnerRoutineType = overlay.findViewById<MaterialAutoCompleteTextView>(R.id.actv_routine_type)  // <- correctly assigned
 
         val types = listOf(
             "Hourly",
@@ -309,25 +324,57 @@ class HomeFragment : Fragment(), BackHandler {
             "Specific Date"
         )
 
-        val adapterTypes = ArrayAdapter(requireContext(), R.layout.dropdown_item, types)
-        spinnerRoutineType.setAdapter(adapterTypes)
+        val routineTypeNames = RoutineType.values().map { routineType ->
+            when (routineType) {
+                RoutineType.HOURLY -> "Hourly"
+                RoutineType.HOURLY_SPECIFIC_TIME -> "Hourly (Specific Time)"
+                RoutineType.EVERY_X_HOURS -> "Every X Hours"
+                RoutineType.SPECIFIC_TIME_ONLY -> "Every X Hours (Specific Time)"
+                RoutineType.DAILY -> "Daily"
+                RoutineType.EVERY_X_DAYS -> "Every X Days"
+                RoutineType.SPECIFIC_DATE -> "Specific Date"
+            }
+        }
+
+        // Adapter for AutoCompleteTextView dropdown
+        val routineTypeAdapter = ArrayAdapter(requireContext(), R.layout.dropdown_item, routineTypeNames)
+        spinnerRoutineType.setAdapter(routineTypeAdapter)  // styled dropdown
+
+
+//        spinnerRoutineType.setOnItemClickListener { _, _, position, _ ->
+//            selectedRoutineType = when (position) {
+//                0 -> RoutineType.HOURLY
+//                1 -> RoutineType.HOURLY_SPECIFIC_TIME
+//                2 -> RoutineType.EVERY_X_HOURS
+//                3 -> RoutineType.SPECIFIC_TIME_ONLY
+//                4 -> RoutineType.DAILY
+//                5 -> RoutineType.EVERY_X_DAYS
+//                6 -> RoutineType.SPECIFIC_DATE
+//                else -> RoutineType.DAILY
+//            }
+//
+//            updateDynamicInputsVisibility()
+//        }
 
         spinnerRoutineType.setOnItemClickListener { _, _, position, _ ->
-            selectedRoutineType = when (position) {
-                0 -> RoutineType.HOURLY
-                1 -> RoutineType.HOURLY_SPECIFIC_TIME
-                2 -> RoutineType.EVERY_X_HOURS
-                3 -> RoutineType.SPECIFIC_TIME_ONLY
-                4 -> RoutineType.DAILY
-                5 -> RoutineType.EVERY_X_DAYS
-                6 -> RoutineType.SPECIFIC_DATE
-                else -> RoutineType.DAILY
-            }
-
+            layoutRoutineType.hint = "" // hide placeholder
+            selectedRoutineType = RoutineType.values()[position]
             updateDynamicInputsVisibility()
         }
 
-        // --- Time picker for daily & every-x-days ---
+        spinnerRoutineType.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (s.isNullOrEmpty()) {
+                    layoutRoutineType.hint = "Routine Type"
+                }
+            }
+        })
+
+
+
+// --- Time picker for Daily & Every-X-Days ---
         etTimePicker.setOnClickListener {
             val now = Calendar.getInstance()
             TimePickerDialog(requireContext(), { _, hourOfDay, minute ->
@@ -337,7 +384,7 @@ class HomeFragment : Fragment(), BackHandler {
             }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true).show()
         }
 
-        // --- Date picker for specific date (includes time) ---
+// --- Date picker for Specific Date ---
         etSpecificDate.setOnClickListener {
             val cal = Calendar.getInstance()
             DatePickerDialog(requireContext(), { _, y, m, d ->
@@ -356,10 +403,10 @@ class HomeFragment : Fragment(), BackHandler {
             }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
         }
 
-        // --- Add Routine FAB ---
+        // --- Add Routine Button ---
         btnAddRoutine.setOnClickListener { enterAddMode() }
 
-        // --- Cancel button inside overlay ---
+        // --- Cancel Overlay ---
         btnCancel.setOnClickListener { hideAddRoutineCard() }
 
         // CLICK LISTENER FOR ADD ROUTINE
@@ -371,34 +418,44 @@ class HomeFragment : Fragment(), BackHandler {
         btnSave.setOnClickListener {
             if (isEditing) {
                 updateRoutine()
+                updateRoutinePlaceholder()
             } else {
                 saveRoutine()
             }
         }
 
         // --- Dummy routines (only once) ---
-        if (routineList.isEmpty()) {
-            routineList.add(Routine(1, "Apply sunscreen", RoutineType.DAILY, hour = 8, minute = 0, note = "Use SPF 50"))
-            routineList.add(Routine(2, "Moisturize before bed", RoutineType.DAILY, hour = 22, minute = 0, note = "Use night cream"))
-            routineList.add(Routine(3, "Drink more water", RoutineType.HOURLY, note = "At least 8 glasses"))
-        }
-
-        // --- RecyclerView Adapter for edit/delete ---
-        adapter = RoutineAdapter(
-            routineList,
-            onEdit = { r -> enterEditMode(r) },
-            onDelete = { r -> showDeleteConfirm(r) }
-        )
+//        if (routineList.isEmpty()) {
+//            routineList.add(Routine(1, "Apply sunscreen", RoutineType.DAILY, hour = 8, minute = 0, note = "Use SPF 50"))
+//            routineList.add(Routine(2, "Moisturize before bed", RoutineType.DAILY, hour = 22, minute = 0, note = "Use night cream"))
+//            routineList.add(Routine(3, "Drink more water", RoutineType.HOURLY, note = "At least 8 glasses"))
+//        }
 
         rvRoutines.layoutManager = LinearLayoutManager(requireContext())
         rvRoutines.adapter = adapter
 
         // --- RecyclerView swipe to delete ---
-        ItemTouchHelper(SwipeToDeleteCallback(requireContext(), adapter) { position ->
-            val routine = routineList[position]
-            adapter.removeAt(position)
-            Toast.makeText(requireContext(), "Deleted: ${routine.title}", Toast.LENGTH_SHORT).show()
-        }).attachToRecyclerView(rvRoutines)
+// --- RecyclerView swipe to delete ---
+        ItemTouchHelper(
+            SwipeToDeleteCallback(requireContext(), adapter) { position ->
+                val routine = routineList[position]
+
+                // Remove from list
+                routineList.removeAt(position)
+
+                // Notify adapter
+                adapter.notifyItemRemoved(position)
+
+                updateRoutinePlaceholder()
+                // Save updated list to persist deletion
+                saveRoutineList()
+
+                // Optional: show Toast
+                Toast.makeText(requireContext(), "Deleted: ${routine.title}", Toast.LENGTH_SHORT).show()
+            }
+        ).attachToRecyclerView(rvRoutines)
+
+
 
         // --- FAB scroll behaviour ---
         nestedScroll.setOnScrollChangeListener { v: NestedScrollView, _, _, _, _ ->
@@ -485,6 +542,17 @@ class HomeFragment : Fragment(), BackHandler {
         }
     }
 
+    private fun updateRoutinePlaceholder() {
+        if (routineList.isEmpty()) {
+            rvRoutines.visibility = View.GONE
+            tvNoRoutines.visibility = View.VISIBLE
+        } else {
+            rvRoutines.visibility = View.VISIBLE
+            tvNoRoutines.visibility = View.GONE
+        }
+    }
+
+
     // ---------------------------
     // UI helpers & logic
     // ---------------------------
@@ -509,17 +577,27 @@ class HomeFragment : Fragment(), BackHandler {
 
 
     private fun animateProgressBarValue(progressBar: ProgressBar, target: Int) {
-        val animator = ValueAnimator.ofInt(progressBar.progress, target)
-        animator.duration = 800
-        animator.addUpdateListener { valueAnimator ->
-            progressBar.progress = valueAnimator.animatedValue as Int
+        progressBar.post {
+            val animator = ValueAnimator.ofInt(progressBar.progress, target)
+            animator.duration = 800
+            animator.addUpdateListener { valueAnimator ->
+                progressBar.progress = valueAnimator.animatedValue as Int
+            }
+            animator.start()
         }
-        animator.start()
     }
+
 
     // ---------------------------
     // Fetch environment data
     // ---------------------------
+    private fun initEnvironmentData() {
+        if (checkLocationPermission()) {
+            getUserLocation()
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
     private fun fetchEnvironmentData(lat: Double, lon: Double) {
         val weatherApiKey = getString(R.string.openweather_api_key)
@@ -531,16 +609,20 @@ class HomeFragment : Fragment(), BackHandler {
         val weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$weatherApiKey&units=metric"
         client.newCall(Request.Builder().url(weatherUrl).build()).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
+
             override fun onResponse(call: Call, response: Response) {
                 response.body?.string()?.let { body ->
                     val humidity = JSONObject(body).getJSONObject("main").getInt("humidity")
-                    requireActivity().runOnUiThread {
+
+                    // Ensure this runs on the UI thread
+                    pbHumidity.post {
                         animateProgressBarValue(pbHumidity, humidity)
                         tvHumidity.text = "Humidity: $humidity%"
                     }
                 }
             }
         })
+
 
         // --- OpenWeatherMap Air Pollution (AQI) ---
         val aqiUrl = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$weatherApiKey"
@@ -553,10 +635,21 @@ class HomeFragment : Fragment(), BackHandler {
                         .getJSONObject(0)
                         .getJSONObject("main")
                         .getInt("aqi") // 1-5
-                    val scaledAqi = (aqiValue / 5.0 * 500).toInt() // scale to 0-500
-                    requireActivity().runOnUiThread {
+
+                    val aqiLabel = when(aqiValue) {
+                        1 -> "Good"
+                        2 -> "Fair"
+                        3 -> "Moderate"
+                        4 -> "Poor"
+                        5 -> "Very Poor"
+                        else -> "Unknown"
+                    }
+                    // Optional: still animate a progress bar if you want (scaled)
+                    val scaledAqi = (aqiValue / 5.0 * 500).toInt()
+                    animateProgressBarValue(pbPollution, scaledAqi)
+                    pbPollution.post {
                         animateProgressBarValue(pbPollution, scaledAqi)
-                        tvPollution.text = "AQI: $scaledAqi"
+                        tvPollution.text = "AQI: $aqiLabel"
                     }
                 }
             }
@@ -580,14 +673,47 @@ class HomeFragment : Fragment(), BackHandler {
                         .getJSONObject("result")
                         .getDouble("uv")
 
-                    // Safely update UI
-                    runIfSafe {
-                        animateProgressBarValue(pbUv, uvIndex.toInt())
-                        tvUv.text = "UV: $uvIndex"
+                    // Scale UV to 0-100 for the progress bar (max UV ~11)
+                    val scaledUv = ((uvIndex / 11.0) * 100).toInt()
+
+// UV
+                    pbUv.post {
+                        animateProgressBarValue(pbUv, scaledUv)
+                        tvUv.text = "UV: %.1f".format(uvIndex)
                     }
                 }
             }
         })
+
+    }
+
+    private fun loadUserGreeting() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        db.collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { doc ->
+                val fullname = doc?.getString("fullName") ?: ""
+                val firstName = fullname.split(" ").firstOrNull() ?: ""
+
+                // Get current hour in device's timezone
+                val calendar = Calendar.getInstance()
+                val hour = calendar.get(Calendar.HOUR_OF_DAY)
+
+                val greeting = when (hour) {
+                    in 5..11 -> "Good morning"
+                    in 12..16 -> "Good afternoon"
+                    in 17..20 -> "Good evening"
+                    else -> "Good night"
+                }
+
+                tvGreeting.text = "$greeting, $firstName!"
+            }
+            .addOnFailureListener {
+                tvGreeting.text = "Hello!"
+            }
     }
 
 
@@ -612,9 +738,10 @@ class HomeFragment : Fragment(), BackHandler {
     }
 
     private fun Fragment.runIfSafe(block: () -> Unit) {
-        if (!isAdded || activity == null) return
-        activity?.runOnUiThread {
-            if (isAdded) block()
+        if (isAdded && view != null) {
+            activity?.runOnUiThread {
+                block()
+            }
         }
     }
 
@@ -775,6 +902,7 @@ class HomeFragment : Fragment(), BackHandler {
         adapter.notifyDataSetChanged()
 
         Toast.makeText(requireContext(), "Routine updated!", Toast.LENGTH_SHORT).show()
+        updateRoutinePlaceholder()
         saveRoutineList()
         hideAddRoutineCard()
     }
@@ -813,7 +941,8 @@ class HomeFragment : Fragment(), BackHandler {
         etComment.setText(routine.note ?: "")
 
         selectedRoutineType = routine.type
-        spinnerRoutineType.setSelection(selectedRoutineType.ordinal)
+        val spinnerRoutineType = overlay.findViewById<MaterialAutoCompleteTextView>(R.id.actv_routine_type)
+        spinnerRoutineType.setText(selectedRoutineType.displayName, false)
 
         when (routine.type) {
             RoutineType.HOURLY -> {

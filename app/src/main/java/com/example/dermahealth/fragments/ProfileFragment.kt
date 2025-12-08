@@ -93,33 +93,55 @@ class ProfileFragment : Fragment(), BackHandler {
             tvMemberSince.text = date
         }
 
+        // --- USER PROFILE LISTENER ---
+        db.collection("users").document(uid)
+            .addSnapshotListener { doc, error ->
+                if (error != null) return@addSnapshotListener
+                if (doc != null && doc.exists()) {
+                    runIfAttached {
+                        tvName.text = doc.getString("fullName") ?: "Unknown User"
+                        tvMobile.text = doc.getString("phone") ?: "No phone"
+                        tvAgeValue.text = (doc.getLong("age") ?: 0).toString()
+                        tvEmail.text = currentUser.email ?: "No email"
+                    }
+                }
+            }
+
         // --- Statistics Listener ---
         db.collection("statistics").document(uid)
             .addSnapshotListener { doc, error ->
                 if (error != null) return@addSnapshotListener
                 if (doc != null && doc.exists()) {
+                    runIfAttached {
+                        tvTotalScans.text = (doc.getLong("totalScans") ?: 0).toString()
+                        tvBenign.text = "Benign: ${doc.getLong("benignCount") ?: 0}"
+                        tvNeutral.text = "Neutral: ${doc.getLong("neutralCount") ?: 0}"
+                        tvSuspicious.text = "Suspicious: ${doc.getLong("suspiciousCount") ?: 0}"
+                        tvMalignant.text = "Malignant: ${doc.getLong("malignantCount") ?: 0}"
 
-                    tvTotalScans.text = (doc.getLong("totalScans") ?: 0).toString()
-                    tvBenign.text = "Benign: ${doc.getLong("benignCount") ?: 0}"
-                    tvNeutral.text = "Neutral: ${doc.getLong("neutralCount") ?: 0}"
-                    tvSuspicious.text = "Suspicious: ${doc.getLong("suspiciousCount") ?: 0}"
-                    tvMalignant.text = "Malignant: ${doc.getLong("malignantCount") ?: 0}"
+                        val overallScore = (doc.getDouble("overallSkinScore") ?: 0.0).toInt()
+                        tvOverallSkin.text = "$overallScore%"
+                        skinScoreProgress.progress = overallScore.coerceIn(0, 100)
 
-                    val overallScore = (doc.getDouble("overallSkinScore") ?: 0.0).toInt()
-                    tvOverallSkin.text = "$overallScore%"
-                    skinScoreProgress.progress = overallScore.coerceIn(0, 100)
-
-                    // --- NEW: Update Badge ---
-                    val level = getHealthLevel(overallScore)
-                    tvHealthBadge.text = level
-                    tvHealthBadge.setTextColor(getHealthColor(level))
+                        val level = getHealthLevel(overallScore)
+                        tvHealthBadge.text = level
+                        tvHealthBadge.setTextColor(getHealthColor(level))
+                    }
                 }
             }
     }
 
+    fun Fragment.runIfAttached(action: Fragment.() -> Unit) {
+        if (isAdded && view != null) {
+            requireActivity().runOnUiThread { action() }
+        }
+
+
+    }
     // LEVEL LOGIC
     private fun getHealthLevel(score: Int): String {
         return when {
+            score == 0 -> "No Data"
             score >= 85 -> "Healthy"
             score >= 60 -> "Average"
             score >= 40 -> "At Risk"
@@ -127,15 +149,19 @@ class ProfileFragment : Fragment(), BackHandler {
         }
     }
 
+
     // OPTIONAL COLOR LOGIC
     private fun getHealthColor(level: String): Int {
         return when (level) {
             "Healthy" -> resources.getColor(R.color.green, null)
             "Average" -> resources.getColor(R.color.yellow, null)
             "At Risk" -> resources.getColor(R.color.orange, null)
-            else -> resources.getColor(R.color.red, null)
+            "High Risk" -> resources.getColor(R.color.red, null)
+            "No Data" -> resources.getColor(R.color.white, null)
+            else -> resources.getColor(R.color.white, null) // fallback
         }
     }
+
 
     private fun setupListeners() {
         btnEditProfile.setOnClickListener {
@@ -154,29 +180,88 @@ class ProfileFragment : Fragment(), BackHandler {
         }
 
         btnDeleteAccount.setOnClickListener {
-            showConfirmationDialog("Delete Account", "This action cannot be undone. Continue?") {
-                FirebaseAuth.getInstance().currentUser?.delete()
-                startActivity(Intent(requireActivity(), LoginRegisterActivity::class.java))
-                requireActivity().finish()
+            val currentUser = FirebaseAuth.getInstance().currentUser ?: return@setOnClickListener
+            val uid = currentUser.uid
+
+            showConfirmationDialog(
+                "Delete Account",
+                "This action will delete your account and all your data permanently. Continue?"
+            ) {
+                val db = FirebaseFirestore.getInstance()
+
+                // 1️⃣ Delete user document
+                db.collection("users").document(uid)
+                    .delete()
+                    .addOnSuccessListener {
+                        // 2️⃣ Delete scans belonging to this user
+                        db.collection("scans")
+                            .whereEqualTo("userId", uid)
+                            .get()
+                            .addOnSuccessListener { querySnapshot ->
+                                val batch = db.batch()
+                                for (doc in querySnapshot.documents) {
+                                    batch.delete(doc.reference)
+                                }
+                                batch.commit().addOnSuccessListener {
+                                    // 3️⃣ Delete statistics
+                                    db.collection("statistics")
+                                        .whereEqualTo("userId", uid)
+                                        .get()
+                                        .addOnSuccessListener { statSnapshot ->
+                                            val batchStat = db.batch()
+                                            for (doc in statSnapshot.documents) {
+                                                batchStat.delete(doc.reference)
+                                            }
+                                            batchStat.commit().addOnSuccessListener {
+                                                // 4️⃣ Delete Auth account
+                                                currentUser.delete().addOnCompleteListener { task ->
+                                                    if (task.isSuccessful) {
+                                                        startActivity(
+                                                            Intent(
+                                                                requireActivity(),
+                                                                LoginRegisterActivity::class.java
+                                                            )
+                                                        )
+                                                        requireActivity().finish()
+                                                    } else {
+                                                        // Optional: handle failure (re-auth may be needed)
+                                                        showError("Failed to delete account: ${task.exception?.message}")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                }
+                            }
+                    }
             }
         }
     }
 
-    private fun showConfirmationDialog(title: String, message: String, onConfirm: () -> Unit) {
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(title)
+
+    private fun showError(message: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Error")
             .setMessage(message)
-            .setPositiveButton("Yes") { _, _ -> onConfirm() }
-            .setNegativeButton("Cancel", null)
-            .create()
+            .setPositiveButton("OK", null)
+            .show()
+    }
+    private fun showConfirmationDialog(title: String, message: String, onConfirm: () -> Unit) {
+        runIfAttached {
+            val dialog = AlertDialog.Builder(requireContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("Yes") { _, _ -> onConfirm() }
+                .setNegativeButton("Cancel", null)
+                .create()
 
-        dialog.setOnShowListener {
-            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+            dialog.setOnShowListener {
+                val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+            }
+
+            dialog.show()
         }
-
-        dialog.show()
     }
 
     override fun onResume() {

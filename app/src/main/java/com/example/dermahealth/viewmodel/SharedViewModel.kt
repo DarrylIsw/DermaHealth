@@ -42,6 +42,18 @@ class SharedViewModel(app: Application) : AndroidViewModel(app) {
     fun getTotalScans(): Int =
         _history.value?.size ?: 0
 
+    fun updateScan(updatedScan: ScanHistory) {
+        val newList = _history.value?.toMutableList() ?: mutableListOf()
+        val index = newList.indexOfFirst { it.id == updatedScan.id }
+        if (index != -1) {
+            newList[index] = updatedScan
+            _history.value = newList
+        }
+
+        // And save to persistent storage (SharedPreferences, JSON, Room, etc)
+        persist()
+    }
+
     fun deleteScan(scan: ScanHistory) {
         // 1. Remove from current list
         val current = _history.value?.toMutableList() ?: mutableListOf()

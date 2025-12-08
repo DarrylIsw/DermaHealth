@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
         bottomNav = findViewById(R.id.bottom_nav)
         circle = findViewById(R.id.nav_circle)
 
+        adjustBottomNavForScreenSize()  // <-- call this here
         // --- in MainActivity ---
         val fragmentStack = ArrayDeque<Fragment>()
         var currentTabId = R.id.nav_home
@@ -182,4 +183,30 @@ class MainActivity : AppCompatActivity() {
                 }.start()
         }
     }
+
+    private fun adjustBottomNavForScreenSize() {
+        val displayMetrics = resources.displayMetrics
+        val screenHeightDp = displayMetrics.heightPixels / displayMetrics.density
+
+        if (screenHeightDp > 800) {
+            val bottomContainer = findViewById<View>(R.id.bottom_container)
+            val navCircle = findViewById<View>(R.id.nav_circle)
+
+            bottomContainer.post {
+                // Use measuredHeight instead of height (post ensures view is laid out)
+                val newHeight = (bottomContainer.measuredHeight * 1.2).toInt()
+                bottomContainer.layoutParams.height = newHeight
+                bottomContainer.requestLayout()
+            }
+
+            navCircle.post {
+                val newWidth = (navCircle.measuredWidth * 1.2).toInt()
+                val newHeight = (navCircle.measuredHeight * 1.2).toInt()
+                navCircle.layoutParams.width = newWidth
+                navCircle.layoutParams.height = newHeight
+                navCircle.requestLayout()
+            }
+        }
+    }
+
 }

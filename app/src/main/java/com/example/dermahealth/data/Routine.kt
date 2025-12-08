@@ -1,25 +1,25 @@
 package com.example.dermahealth.data
 
-enum class RoutineType(val priority: Int) {
+enum class RoutineType(val priority: Int, val displayName: String) {
 
     // HOURLY TYPES
-    HOURLY(1),
-    HOURLY_SPECIFIC_TIME(2),
+    HOURLY(1, "Hourly"),
+    HOURLY_SPECIFIC_TIME(2, "Hourly (Specific Time)"),
 
     // EVERY X HOURS
-    EVERY_X_HOURS(3),
+    EVERY_X_HOURS(3, "Every X Hours"),
 
     // FIXED TIME ONLY (new meaning)
-    SPECIFIC_TIME_ONLY(4),
+    SPECIFIC_TIME_ONLY(4, "Specific Time Only"),
 
     // DAILY TYPES
-    DAILY(5),
+    DAILY(5, "Daily"),
 
     // EVERY X DAYS
-    EVERY_X_DAYS(6),
+    EVERY_X_DAYS(6, "Every X Days"),
 
     // ONE-TIME DATE & TIME
-    SPECIFIC_DATE(7);
+    SPECIFIC_DATE(7, "Specific Date");
 }
 
 
