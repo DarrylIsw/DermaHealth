@@ -123,4 +123,11 @@
     <string name="save">Save</string>
     <string name="change_avatar">Change Avatar</string>
     <string name="choose_photo">Choose Photo</string>
+
+    <string name="archive_scan_title">Archive scan</string>
+    <string name="archive_scan_msg">This scan and all its images will be archived and removed from history. Continue?</string>
+    <string name="archive_scan">Archive</string>
+    <string name="scan_archived">Scan has been archived.</string>
+    <string name="archive_history">Archive</string>
+
 </resources>

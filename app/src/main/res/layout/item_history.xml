@@ -217,6 +217,18 @@
                     app:cornerRadius="50dp"/>
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_archive"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/archive_history"
+                    android:textColor="@color/medium_gray"
+                    android:fontFamily="@font/poppins_medium"
+                    android:layout_marginStart="8dp"
+                    app:cornerRadius="50dp" />
+
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_delete"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"

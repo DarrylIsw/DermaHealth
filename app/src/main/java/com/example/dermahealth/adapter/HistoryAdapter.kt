@@ -23,6 +23,7 @@ import java.time.format.DateTimeFormatter
 class HistoryAdapter(
     private val onEdit: (ScanHistory) -> Unit,
     private val onDelete: (ScanHistory) -> Unit,
+    private val onArchive: (ScanHistory) -> Unit,
     private val onToggleExpand: (position: Int, expanded: Boolean) -> Unit
 ) : ListAdapter<ScanHistory, HistoryAdapter.VH>(DIFF) {
 
@@ -180,5 +181,6 @@ class HistoryAdapter(
 
         b.btnEdit.setOnClickListener { onEdit(item) }
         b.btnDelete.setOnClickListener { onDelete(item) }
+        b.btnArchive.setOnClickListener { onArchive(item) }
     }
 }

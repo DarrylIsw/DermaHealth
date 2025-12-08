@@ -38,6 +38,7 @@ class HistoryFragment : Fragment(), BackHandler {
         HistoryAdapter(
             onEdit = { scan -> showEditDialog(scan) },
             onDelete = { scan -> confirmDelete(scan) },
+            onArchive = { scan -> confirmArchive(scan) },
             onToggleExpand = { pos, expanded ->
                 if (expanded) {
                     b.rvHistory.post { b.rvHistory.smoothScrollToPosition(pos) }
@@ -108,6 +109,67 @@ class HistoryFragment : Fragment(), BackHandler {
 
         dialog.show()
     }
+
+    private fun confirmArchive(scan: ScanHistory) {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.archive_scan_title)
+            .setMessage(getString(R.string.archive_scan_msg))
+            .setPositiveButton(R.string.archive_scan) { _, _ -> archiveScan(scan) }
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+        }
+
+        dialog.show()
+    }
+
+    private fun archiveScan(scan: ScanHistory) {
+        // 1️⃣ Remove from adapter list
+        val currentList = adapter.currentList.toMutableList()
+        val idx = currentList.indexOfFirst { it.id == scan.id }
+        if (idx == -1) return
+
+        currentList.removeAt(idx)
+        adapter.submitList(currentList)
+        updateEmptyState()
+
+        // 2️⃣ Pindahkan file-image ke folder archive lokal
+        try {
+            val archiveRoot = File(requireContext().filesDir, "archived_scans")
+            if (!archiveRoot.exists()) archiveRoot.mkdirs()
+
+            val archiveFolder = File(archiveRoot, scan.id.toString())
+            if (!archiveFolder.exists()) archiveFolder.mkdirs()
+
+            scan.images.forEach { img ->
+                val src = File(img.path)
+                if (src.exists()) {
+                    val dest = File(archiveFolder, src.name)
+                    try {
+                        // copy lalu hapus asal; kalau mau lebih aman, bisa hanya copy
+                        src.copyTo(dest, overwrite = true)
+                        src.delete()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // 3️⃣ Remove dari "active history" di persistent storage
+        // Untuk sekarang, kita perlakukan archive seperti "soft delete" dari history utama
+        sharedViewModel.deleteScan(scan)
+
+        // 4️⃣ Feedback ke user
+        Snackbar.make(b.root, getString(R.string.scan_archived), Snackbar.LENGTH_LONG).show()
+    }
+
 
     private fun removeWithUndo(scan: ScanHistory) {
         val currentList = adapter.currentList.toMutableList()
