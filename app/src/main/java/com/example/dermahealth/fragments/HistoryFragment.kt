@@ -41,6 +41,7 @@ class HistoryFragment : Fragment(), BackHandler {
             onEdit = { scan -> showEditDialog(scan) },
             onDelete = { scan -> confirmDelete(scan) },
             onArchive = { scan -> confirmArchive(scan) },
+            onUnarchive = { scan -> confirmUnarchive(scan) },   // ⬅️ baru
             onToggleExpand = { pos, expanded ->
                 if (expanded) {
                     b.rvHistory.post { b.rvHistory.smoothScrollToPosition(pos) }
@@ -129,6 +130,26 @@ class HistoryFragment : Fragment(), BackHandler {
         dialog.show()
     }
 
+    private fun confirmUnarchive(scan: ScanHistory) {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.unarchive_scan_title)
+            .setMessage(R.string.unarchive_scan_msg)
+            .setPositiveButton(R.string.unarchive_history) { _, _ ->
+                unarchiveScan(scan)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val color = resources.getColor(R.color.medium_gray, requireContext().theme)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+        }
+
+        dialog.show()
+    }
+
+
     private fun archiveScan(scan: ScanHistory) {
         val allScans = sharedViewModel.history.value?.toMutableList() ?: mutableListOf()
         val idx = allScans.indexOfFirst { it.id == scan.id }
@@ -148,7 +169,27 @@ class HistoryFragment : Fragment(), BackHandler {
         ).show()
     }
 
+    private fun unarchiveScan(scan: ScanHistory) {
+        val allScans = sharedViewModel.history.value?.toMutableList() ?: mutableListOf()
+        val idx = allScans.indexOfFirst { it.id == scan.id }
+        if (idx == -1) return
 
+        val updated = scan.copy(isArchived = false, isExpanded = false)
+        allScans[idx] = updated
+
+        // Update di ViewModel
+        sharedViewModel.updateScanList(allScans)
+
+        // Observer history + refreshList() akan mengurus UI:
+        // - When viewing archived, item will disappear from list
+        // - When viewing active, item will reappear in list
+
+        Snackbar.make(
+            b.root,
+            getString(R.string.scan_unarchived),
+            Snackbar.LENGTH_LONG
+        ).show()
+    }
 
     private fun removeWithUndo(scan: ScanHistory) {
         val currentList = adapter.currentList.toMutableList()
@@ -260,18 +301,15 @@ class HistoryFragment : Fragment(), BackHandler {
         b.btnViewArchives.setOnClickListener {
             showingArchives = !showingArchives
 
-            // Ubah label tombol sesuai mode
-            if (showingArchives) {
-                b.btnViewArchives.text = getString(R.string.show_active_history)
+            b.btnViewArchives.text = if (showingArchives) {
+                getString(R.string.show_active_history)
             } else {
-                b.btnViewArchives.text = getString(R.string.view_archived_scans)
+                getString(R.string.view_archived_scans)
             }
 
-            // Refilter list berdasarkan mode
             val allScans = sharedViewModel.history.value ?: emptyList()
             refreshList(allScans)
         }
-
     }
 
     private fun refreshList(allScans: List<ScanHistory>) {
@@ -281,10 +319,12 @@ class HistoryFragment : Fragment(), BackHandler {
             allScans.filter { !it.isArchived }
         }
 
-        adapter.submitList(filtered)
-        updateEmptyState()
+        // Call updateEmptyState after DiffUtil
+        adapter.submitList(filtered) {
+            updateEmptyState()
+        }
 
-        // Ubah empty state text sesuai mode
+    // Ubah empty state text sesuai mode
 //        if (showingArchives) {
 //            b.emptyStateTitle.text = getString(R.string.no_archived_scans_title)
 //            b.emptyStateSubtitle.text = getString(R.string.no_archived_scans_subtitle)
