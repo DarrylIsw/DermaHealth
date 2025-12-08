@@ -3,6 +3,7 @@ package com.example.dermahealth
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -10,6 +11,7 @@ import com.example.dermahealth.fragments.HistoryFragment
 import com.example.dermahealth.fragments.ProfileFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.children
 import com.example.dermahealth.fragments.*
 class MainActivity : AppCompatActivity() {
 
@@ -187,26 +189,61 @@ class MainActivity : AppCompatActivity() {
     private fun adjustBottomNavForScreenSize() {
         val displayMetrics = resources.displayMetrics
         val screenHeightDp = displayMetrics.heightPixels / displayMetrics.density
+        val fragmentContainer = findViewById<FrameLayout>(R.id.fragment_container)
 
         if (screenHeightDp > 800) {
             val bottomContainer = findViewById<View>(R.id.bottom_container)
             val navCircle = findViewById<View>(R.id.nav_circle)
+            val navBackground = findViewById<View>(R.id.nav_background)
+
+            // Set bottom nav background to certain height
+            navBackground.layoutParams.height = 115.dpToPx()
+            navBackground.requestLayout()
 
             bottomContainer.post {
-                // Use measuredHeight instead of height (post ensures view is laid out)
-                val newHeight = (bottomContainer.measuredHeight * 1.2).toInt()
+                // Keep bottomContainer height proportional to background if needed
+                val newHeight = navBackground.layoutParams.height
                 bottomContainer.layoutParams.height = newHeight
                 bottomContainer.requestLayout()
             }
 
             navCircle.post {
-                val newWidth = (navCircle.measuredWidth * 1.2).toInt()
-                val newHeight = (navCircle.measuredHeight * 1.2).toInt()
+                val newWidth = (navCircle.measuredWidth * 1.23).toInt()
+                val newHeight = (navCircle.measuredHeight * 1.23).toInt()
                 navCircle.layoutParams.width = newWidth
                 navCircle.layoutParams.height = newHeight
+                navCircle.translationY = -15.dpToPx().toFloat()
                 navCircle.requestLayout()
+            }
+
+            fragmentContainer.post {
+                val bottomNavHeight = bottomContainer.measuredHeight
+                // Scale fragment container height so it doesn't overlap top
+                val newHeight = ((displayMetrics.heightPixels - bottomNavHeight) * 1.5).toInt()
+                fragmentContainer.layoutParams.height = newHeight
+                fragmentContainer.requestLayout()
+            }
+
+            val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
+            bottomNav.post {
+                // Iterate over menu items safely
+                for (i in 0 until bottomNav.menu.size()) {
+                    val menuItemView = bottomNav.findViewById<View>(
+                        bottomNav.menu.getItem(i).itemId
+                    )
+                    // Add top padding instead of margin
+                    menuItemView?.setPadding(
+                        menuItemView.paddingLeft,
+                        (menuItemView.paddingTop - 4.dpToPx()), // add extra top padding
+                        menuItemView.paddingRight,
+                        menuItemView.paddingBottom
+                    )
+                }
             }
         }
     }
+
+    private fun Int.dpToPx(): Int =
+        (this * resources.displayMetrics.density).toInt()
 
 }

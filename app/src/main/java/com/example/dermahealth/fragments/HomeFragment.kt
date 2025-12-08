@@ -66,6 +66,7 @@ import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.json.JSONException
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.getValue
@@ -591,14 +592,6 @@ class HomeFragment : Fragment(), BackHandler {
     // ---------------------------
     // Fetch environment data
     // ---------------------------
-    private fun initEnvironmentData() {
-        if (checkLocationPermission()) {
-            getUserLocation()
-        } else {
-            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
-
     private fun fetchEnvironmentData(lat: Double, lon: Double) {
         val weatherApiKey = getString(R.string.openweather_api_key)
         val uvApiKey = getString(R.string.openuv_api_key)
@@ -669,17 +662,34 @@ class HomeFragment : Fragment(), BackHandler {
 
             override fun onResponse(call: Call, response: Response) {
                 response.body?.string()?.let { body ->
-                    val uvIndex = JSONObject(body)
-                        .getJSONObject("result")
-                        .getDouble("uv")
+                    try {
+                        val json = JSONObject(body)
 
-                    // Scale UV to 0-100 for the progress bar (max UV ~11)
-                    val scaledUv = ((uvIndex / 11.0) * 100).toInt()
+                        if (json.has("result")) {
+                            val uvIndex = json.getJSONObject("result").getDouble("uv")
 
-// UV
-                    pbUv.post {
-                        animateProgressBarValue(pbUv, scaledUv)
-                        tvUv.text = "UV: %.1f".format(uvIndex)
+                            // Scale UV to 0-100 for the progress bar (max UV ~11)
+                            val scaledUv = ((uvIndex / 11.0) * 100).toInt()
+
+                            // UV
+                            pbUv.post {
+                                animateProgressBarValue(pbUv, scaledUv)
+                                tvUv.text = "UV: %.1f".format(uvIndex)
+                            }
+                        } else {
+                            // Handle missing "result" key gracefully
+                            pbUv.post {
+                                animateProgressBarValue(pbUv, 0)
+                                tvUv.text = "UV: N/A"
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
+                        // Optional: show error to user
+                        pbUv.post {
+                            animateProgressBarValue(pbUv, 0)
+                            tvUv.text = "UV: N/A"
+                        }
                     }
                 }
             }
