@@ -130,4 +130,9 @@
     <string name="scan_archived">Scan has been archived.</string>
     <string name="archive_history">Archive</string>
 
+    <string name="view_archived_scans">View Archived</string>
+    <string name="show_active_history">View Active</string>
+    <string name="no_archived_scans_title">No archived scans</string>
+    <string name="no_archived_scans_subtitle">Archived scans will appear here.</string>
+
 </resources>

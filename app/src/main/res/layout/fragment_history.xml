@@ -29,6 +29,20 @@
             android:fontFamily="@font/poppins_semibold"
             android:letterSpacing="0.02"
             android:layout_marginBottom="2dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_view_archives"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/view_archived_scans"
+            android:textColor="@color/medium_sky_blue"
+            android:fontFamily="@font/poppins_medium"
+            android:layout_marginBottom="8dp"
+            app:cornerRadius="50dp"
+            app:icon="@drawable/ic_archive"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp" />
     </LinearLayout>
 
     <!-- Subtitle -->
