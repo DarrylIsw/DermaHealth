@@ -195,10 +195,15 @@ class MainActivity : AppCompatActivity() {
             val bottomContainer = findViewById<View>(R.id.bottom_container)
             val navCircle = findViewById<View>(R.id.nav_circle)
             val navBackground = findViewById<View>(R.id.nav_background)
+            val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
 
             // Set bottom nav background to certain height
             navBackground.layoutParams.height = 115.dpToPx()
             navBackground.requestLayout()
+
+            // Set BottomNavigationView height to 90dp
+            bottomNav.layoutParams.height = 90.dpToPx()
+            bottomNav.requestLayout()
 
             bottomContainer.post {
                 // Keep bottomContainer height proportional to background if needed
@@ -212,7 +217,7 @@ class MainActivity : AppCompatActivity() {
                 val newHeight = (navCircle.measuredHeight * 1.23).toInt()
                 navCircle.layoutParams.width = newWidth
                 navCircle.layoutParams.height = newHeight
-                navCircle.translationY = -15.dpToPx().toFloat()
+                navCircle.translationY = -15.dpToPx().toFloat() // move higher
                 navCircle.requestLayout()
             }
 
@@ -224,17 +229,16 @@ class MainActivity : AppCompatActivity() {
                 fragmentContainer.requestLayout()
             }
 
-            val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
             bottomNav.post {
                 // Iterate over menu items safely
                 for (i in 0 until bottomNav.menu.size()) {
                     val menuItemView = bottomNav.findViewById<View>(
                         bottomNav.menu.getItem(i).itemId
                     )
-                    // Add top padding instead of margin
+                    // Adjust top padding for icons if needed
                     menuItemView?.setPadding(
                         menuItemView.paddingLeft,
-                        (menuItemView.paddingTop - 4.dpToPx()), // add extra top padding
+                        (menuItemView.paddingTop - 4.dpToPx()),
                         menuItemView.paddingRight,
                         menuItemView.paddingBottom
                     )

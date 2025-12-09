@@ -598,51 +598,87 @@ class HomeFragment : Fragment(), BackHandler {
 
         val client = OkHttpClient()
 
-        // --- OpenWeatherMap Weather (humidity) ---
+// --- OpenWeatherMap Current Weather (Humidity) ---
         val weatherUrl = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$weatherApiKey&units=metric"
         client.newCall(Request.Builder().url(weatherUrl).build()).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
 
             override fun onResponse(call: Call, response: Response) {
                 response.body?.string()?.let { body ->
-                    val humidity = JSONObject(body).getJSONObject("main").getInt("humidity")
+                    try {
+                        val json = JSONObject(body)
+                        if (json.has("main")) {
+                            val humidity = json.getJSONObject("main").optInt("humidity", -1)
 
-                    // Ensure this runs on the UI thread
-                    pbHumidity.post {
-                        animateProgressBarValue(pbHumidity, humidity)
-                        tvHumidity.text = "Humidity: $humidity%"
+                            pbHumidity.post {
+                                if (humidity >= 0) {
+                                    animateProgressBarValue(pbHumidity, humidity)
+                                    tvHumidity.text = "Humidity: $humidity%"
+                                } else {
+                                    animateProgressBarValue(pbHumidity, 0)
+                                    tvHumidity.text = "Humidity: N/A"
+                                }
+                            }
+                        } else {
+                            // "main" key missing
+                            pbHumidity.post {
+                                animateProgressBarValue(pbHumidity, 0)
+                                tvHumidity.text = "Humidity: N/A"
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
+                        pbHumidity.post {
+                            animateProgressBarValue(pbHumidity, 0)
+                            tvHumidity.text = "Humidity: N/A"
+                        }
                     }
                 }
             }
         })
 
-
-        // --- OpenWeatherMap Air Pollution (AQI) ---
+// --- OpenWeatherMap Air Pollution (AQI) ---
         val aqiUrl = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$weatherApiKey"
         client.newCall(Request.Builder().url(aqiUrl).build()).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = e.printStackTrace()
+
             override fun onResponse(call: Call, response: Response) {
                 response.body?.string()?.let { body ->
-                    val aqiValue = JSONObject(body)
-                        .getJSONArray("list")
-                        .getJSONObject(0)
-                        .getJSONObject("main")
-                        .getInt("aqi") // 1-5
+                    try {
+                        val json = JSONObject(body)
+                        val listArray = json.optJSONArray("list")
+                        if (listArray != null && listArray.length() > 0) {
+                            val mainObj = listArray.getJSONObject(0).optJSONObject("main")
+                            val aqiValue = mainObj?.optInt("aqi", -1) ?: -1
 
-                    val aqiLabel = when(aqiValue) {
-                        1 -> "Good"
-                        2 -> "Fair"
-                        3 -> "Moderate"
-                        4 -> "Poor"
-                        5 -> "Very Poor"
-                        else -> "Unknown"
-                    }
-                    // Optional: still animate a progress bar if you want (scaled)
-                    val scaledAqi = (aqiValue / 5.0 * 500).toInt()
-                    animateProgressBarValue(pbPollution, scaledAqi)
-                    pbPollution.post {
-                        animateProgressBarValue(pbPollution, scaledAqi)
-                        tvPollution.text = "AQI: $aqiLabel"
+                            val aqiLabel = when (aqiValue) {
+                                1 -> "Good"
+                                2 -> "Fair"
+                                3 -> "Moderate"
+                                4 -> "Poor"
+                                5 -> "Very Poor"
+                                else -> "Unknown"
+                            }
+
+                            val scaledAqi = if (aqiValue in 1..5) (aqiValue / 5.0 * 500).toInt() else 0
+
+                            pbPollution.post {
+                                animateProgressBarValue(pbPollution, scaledAqi)
+                                tvPollution.text = "AQI: $aqiLabel"
+                            }
+                        } else {
+                            // list array missing or empty
+                            pbPollution.post {
+                                animateProgressBarValue(pbPollution, 0)
+                                tvPollution.text = "AQI: N/A"
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
+                        pbPollution.post {
+                            animateProgressBarValue(pbPollution, 0)
+                            tvPollution.text = "AQI: N/A"
+                        }
                     }
                 }
             }

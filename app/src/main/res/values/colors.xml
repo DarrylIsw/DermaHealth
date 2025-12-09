@@ -51,4 +51,8 @@
     <color name="yellow">#FFF176</color>
     <color name="orange">#FFB74D</color>
     <color name="red">#E57373</color>
+    <color name="green_chip">#4CAF50</color>
+    <color name="red_chip">#E53935</color>
+    <color name="orange_chip">#FFA726</color>
+    <color name="grey_chip">#9E9E9E</color>
 </resources>

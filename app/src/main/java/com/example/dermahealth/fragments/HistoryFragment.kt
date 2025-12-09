@@ -69,6 +69,12 @@ class HistoryFragment : Fragment(), BackHandler {
             .setNegativeButton(android.R.string.cancel, null)
             .create()
 
+        dialog.setOnShowListener {
+            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
+        }
+
         dialog.show()
     }
 
@@ -256,4 +262,15 @@ class HistoryFragment : Fragment(), BackHandler {
         _b = null
         super.onDestroyView()
     }
+
+    override fun onResume() {
+        super.onResume()
+        fabScrollDown.show() // Or update based on scroll
+    }
+
+    override fun onPause() {
+        super.onPause()
+        fabScrollDown.hide() // Hide when leaving fragment
+    }
+
 }

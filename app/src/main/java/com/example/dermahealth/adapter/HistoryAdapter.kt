@@ -67,14 +67,15 @@ class HistoryAdapter(
     )
 
     private fun resolveSeverity(label: String?, score: Float?): String {
-        if (label == null || score == null) return "neutral"
-
+        if (label.isNullOrBlank()) return "neutral"
         return when (label.lowercase()) {
-            "benign" -> if (score >= 0.85f) "benign" else "neutral"
-            "malignant" -> if (score >= 0.85f) "malignant" else "suspicious"
+            "benign" -> if (score != null && score >= 0.85f) "benign" else "neutral"
+            "malignant" -> if (score != null && score >= 0.85f) "malignant" else "suspicious"
+            "suspicious" -> "suspicious"
             else -> "neutral"
         }
     }
+
 
     private fun getConclusionUI(label: String?, score: Float?): ConclusionStyle {
         val s = resolveSeverity(label, score)
@@ -141,7 +142,7 @@ class HistoryAdapter(
         val label = main?.label ?: "Unknown"
         val score = main?.score
 
-        // CHIP COLOR
+// CHIP COLOR + TEXT
         val severity = resolveSeverity(label, score)
         val chipColor = when (severity) {
             "benign" -> R.color.chip_benign
@@ -149,8 +150,18 @@ class HistoryAdapter(
             "suspicious" -> R.color.chip_suspicious
             else -> R.color.chip_neutral
         }
-        b.chipResult.text = label
+
+// Use severity as display text instead of raw label
+        val chipText = when (severity) {
+            "benign" -> "Benign"
+            "malignant" -> "Malignant"
+            "suspicious" -> "Suspicious"
+            else -> "Neutral"
+        }
+
+        b.chipResult.text = chipText
         b.chipResult.setChipBackgroundColorResource(chipColor)
+
 
         // DATE + NOTES
         b.tvDate.text = formatIsoDate(item.dateIso)
