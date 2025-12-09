@@ -126,7 +126,9 @@ class ScanFragment : Fragment() {
         ) { uri ->
             uri?.let {
                 val internal = copyToCache(it)
-                showCropOrSkipDialog(internal)
+                requireActivity().runOnUiThread {
+                    showCropOrSkipDialog(internal)
+                }
             }
         }
 
@@ -248,7 +250,7 @@ class ScanFragment : Fragment() {
 
             override fun onImageSaved(result: ImageCapture.OutputFileResults) {
                 val uri = Uri.fromFile(file)
-                runIfSafe {
+                runOnUiThreadIfSafe {
                     showCropOrSkipDialog(uri)
                 }
             }
@@ -450,6 +452,13 @@ class ScanFragment : Fragment() {
     }
 
 // ---------------- CHOOSE EXISTING SCAN --------------------
+
+    private fun runOnUiThreadIfSafe(block: () -> Unit) {
+        if (!isAdded) return
+        requireActivity().runOnUiThread {
+            if (isAdded) block()
+        }
+    }
 
     private fun chooseExistingScan(uri: Uri) {
         val scans = sharedViewModel.history.value ?: emptyList()

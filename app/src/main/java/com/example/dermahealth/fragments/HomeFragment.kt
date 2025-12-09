@@ -763,6 +763,13 @@ class HomeFragment : Fragment(), BackHandler {
     }
 
 
+    override fun onResume() {
+        super.onResume()
+
+        // Refresh location every time user returns to this screen
+        getUserLocation()
+    }
+
     private fun animateSkinScore(target: Int) {
         val animator = ValueAnimator.ofInt(cpSkin.progress, target)
         animator.duration = 800
