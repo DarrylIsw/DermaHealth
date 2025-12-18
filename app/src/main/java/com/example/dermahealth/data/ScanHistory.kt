@@ -17,7 +17,9 @@ data class ScanHistory(
     val id: Long,
     val mainImage: ScanImage?,
     val dateIso: String,
-    var notes: String = "",
+    val imgName: String,
+    val notes: String,
     val images: List<ScanImage> = emptyList(),
-    val isExpanded: Boolean = false
+    val isExpanded: Boolean = false,
+    val isArchived: Boolean = false
 )
