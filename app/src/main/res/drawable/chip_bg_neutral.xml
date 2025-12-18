@@ -1,0 +1,6 @@
+<!-- res/drawable/chip_bg_safe.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/grey_chip"/>
+    <corners android:radius="12dp"/>
+</shape>

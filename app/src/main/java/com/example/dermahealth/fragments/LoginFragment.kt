@@ -40,11 +40,14 @@ class LoginFragment : Fragment() {
             handleLogin()
         }
 
+        // Navigation wrapped with runIfSafe
         val goToRegister = {
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, RegisterFragment())
-                .addToBackStack(null)
-                .commit()
+            runIfSafe {
+                requireActivity().supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, RegisterFragment())
+                    .addToBackStack(null)
+                    .commit()
+            }
         }
 
         binding.btnRegister.setOnClickListener { goToRegister() }
@@ -81,18 +84,35 @@ class LoginFragment : Fragment() {
             return
         }
 
-        // --- Sign in directly with Firebase Auth ---
+        // --- Firebase Sign-In ---
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
-                Toast.makeText(requireContext(), "Login successful!", Toast.LENGTH_SHORT).show()
-                // Navigate to MainActivity
-                val intent = Intent(requireActivity(), MainActivity::class.java)
-                startActivity(intent)
-                requireActivity().finish()
+                runIfSafe {
+                    Toast.makeText(requireContext(), "Login successful!", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(requireActivity(), MainActivity::class.java)
+                    startActivity(intent)
+                    requireActivity().finish()
+                }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Authentication failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                runIfSafe {
+                    Toast.makeText(
+                        requireContext(),
+                        "Authentication failed: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
+    }
+
+    /**
+     * Safe executor — prevents crashes like:
+     * "Fragment not attached to a context" or "view == null"
+     */
+    private fun runIfSafe(block: () -> Unit) {
+        if (isAdded && view != null && context != null) {
+            block()
+        }
     }
 
     override fun onDestroyView() {

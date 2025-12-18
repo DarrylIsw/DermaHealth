@@ -5,14 +5,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Fragment Container -->
-    <FrameLayout
-        android:id="@+id/fragment_container"
+    <!-- Scrollable fragment container -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="80dp" /> <!-- leave space for bottom nav -->
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        android:paddingBottom="80dp"> <!-- leave space for bottom nav -->
 
-    <!-- Bottom Navigation container -->
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+
+    <!-- Bottom Navigation container pinned to bottom -->
     <FrameLayout
         android:id="@+id/bottom_container"
         android:layout_width="match_parent"
@@ -29,17 +36,6 @@
             android:layout_gravity="bottom"
             android:background="@drawable/bg_bottom_nav" />
 
-        <!-- Circle indicator -->
-        <View
-            android:id="@+id/nav_circle"
-            android:layout_width="55dp"
-            android:layout_height="55dp"
-            android:layout_gravity="center_horizontal|bottom"
-            android:layout_marginBottom="13.5dp"
-            android:background="@drawable/bg_nav_circle"
-            android:visibility="invisible"
-            android:translationZ="0dp" /> <!-- make sure it's above background -->
-
         <!-- BottomNavigationView -->
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottom_nav"
@@ -52,6 +48,17 @@
             app:itemIconTint="@color/nav_item_color"
             app:itemTextColor="@color/nav_item_color"
             app:itemActiveIndicatorStyle="@style/NoActiveIndicator" />
+
+        <!-- Circle indicator -->
+        <View
+            android:id="@+id/nav_circle"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="13.5dp"
+            android:background="@drawable/bg_nav_circle"
+            android:visibility="invisible"
+            android:translationZ="0dp" />
     </FrameLayout>
 
     <!-- Floating scroll-to-bottom button -->

@@ -40,10 +40,21 @@ class HistoryAdapter(
         private val OUT_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
         @RequiresApi(Build.VERSION_CODES.O)
-        fun prettyDate(iso: String?): String = runCatching {
-            if (iso.isNullOrBlank()) "Unknown"
-            else LocalDate.parse(iso, IN_FMT).format(OUT_FMT)
-        }.getOrElse { iso ?: "Unknown" }
+        fun formatIsoDate(iso: String?): String {
+            if (iso.isNullOrBlank()) return "Unknown"
+            return try {
+                // Parse ISO 8601 datetime like "2025-12-05T22:07:18Z"
+                val sdfInput = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.getDefault())
+                sdfInput.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                val date = sdfInput.parse(iso)
+
+                // Format to readable string
+                val sdfOutput = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale.getDefault())
+                sdfOutput.format(date!!)
+            } catch (e: Exception) {
+                iso
+            }
+        }
     }
 
     inner class VH(val b: ItemHistoryBinding) : RecyclerView.ViewHolder(b.root)
@@ -58,14 +69,15 @@ class HistoryAdapter(
     )
 
     private fun resolveSeverity(label: String?, score: Float?): String {
-        if (label == null || score == null) return "neutral"
-
+        if (label.isNullOrBlank()) return "neutral"
         return when (label.lowercase()) {
-            "benign" -> if (score >= 0.85f) "benign" else "neutral"
-            "malignant" -> if (score >= 0.85f) "malignant" else "suspicious"
+            "benign" -> if (score != null && score >= 0.85f) "benign" else "neutral"
+            "malignant" -> if (score != null && score >= 0.85f) "malignant" else "suspicious"
+            "suspicious" -> "suspicious"
             else -> "neutral"
         }
     }
+
 
     private fun getConclusionUI(label: String?, score: Float?): ConclusionStyle {
         val s = resolveSeverity(label, score)
@@ -111,6 +123,13 @@ class HistoryAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = getItem(position)
         val b = holder.b
+        b.tvScanNumber.text = "Scan #${position + 1}"
+        b.tvAnalysis.text = item.notes.ifEmpty { "No notes added" }
+        b.tvNotes.text = if (item.notes.isNullOrBlank()) {
+            "No Notes"
+        } else {
+            "View Notes"
+        }
 
         val main = item.mainImage
 
@@ -125,7 +144,7 @@ class HistoryAdapter(
         val label = main?.label ?: "Unknown"
         val score = main?.score
 
-        // CHIP COLOR
+// CHIP COLOR + TEXT
         val severity = resolveSeverity(label, score)
         val chipColor = when (severity) {
             "benign" -> R.color.chip_benign
@@ -133,7 +152,16 @@ class HistoryAdapter(
             "suspicious" -> R.color.chip_suspicious
             else -> R.color.chip_neutral
         }
-        b.chipResult.text = label
+
+// Use severity as display text instead of raw label
+        val chipText = when (severity) {
+            "benign" -> "Benign"
+            "malignant" -> "Malignant"
+            "suspicious" -> "Suspicious"
+            else -> "Neutral"
+        }
+
+        b.chipResult.text = chipText
         b.chipResult.setChipBackgroundColorResource(chipColor)
 
         // ---------- IMAGE NAME (imgName) ----------
@@ -144,8 +172,7 @@ class HistoryAdapter(
         b.tvImgName.text = imgName
 
         // DATE + NOTES
-        b.tvDate.text = prettyDate(item.dateIso)
-        b.tvNotes.text = item.notes.ifBlank { "No notes provided." }
+        b.tvDate.text = formatIsoDate(item.dateIso)
 
         // ---------- SCORE ----------
         val avgScore = if (item.images.isNotEmpty()) {

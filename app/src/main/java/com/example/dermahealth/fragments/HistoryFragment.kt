@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
@@ -19,6 +20,7 @@ import com.example.dermahealth.databinding.FragmentHistoryBinding
 import com.example.dermahealth.helper.BackHandler
 import com.example.dermahealth.ui.SwipeActionsCallback
 import com.example.dermahealth.viewmodel.SharedViewModel
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -49,6 +51,8 @@ class HistoryFragment : Fragment(), BackHandler {
             }
         )
     }
+    private lateinit var fabScrollDown: FloatingActionButton
+    private lateinit var rvHistory: RecyclerView
 
     private fun showEditDialog(scan: ScanHistory) {
         val context = requireContext()
@@ -93,6 +97,22 @@ class HistoryFragment : Fragment(), BackHandler {
         }
 
         dialog.show()
+    }
+
+    private fun updateNotes(scan: ScanHistory, newNotes: String) {
+        // Update object
+        val updatedScan = scan.copy(notes = newNotes)
+
+        // Update adapter list so UI refreshes
+        val updatedList = adapter.currentList.toMutableList()
+        val index = updatedList.indexOfFirst { it.id == scan.id }
+        if (index != -1) {
+            updatedList[index] = updatedScan
+            adapter.submitList(updatedList)
+        }
+
+        // Update in ViewModel (and persist to storage)
+        sharedViewModel.updateScan(updatedScan)
     }
 
 
@@ -210,21 +230,19 @@ class HistoryFragment : Fragment(), BackHandler {
         sharedViewModel.deleteScan(scan)
 
         // 4️⃣ Show Snackbar with undo
-        Snackbar.make(b.root, getString(R.string.scan_deleted), Snackbar.LENGTH_LONG)
-            .setAction(R.string.undo) {
-                // Restore in adapter
-                val restored = adapter.currentList.toMutableList()
-                restored.add(idx.coerceIn(0, restored.size), scan)
-                adapter.submitList(restored)
-                updateEmptyState()
-
-                // Restore in persistent storage
-                sharedViewModel.addScan(scan)
-
-                // Optionally restore files if you want (optional)
-                // copy files back from backup location if implemented
-            }
-            .show()
+        runIfSafe {
+            Snackbar.make(b.root, getString(R.string.scan_deleted), Snackbar.LENGTH_LONG)
+                .setAction(R.string.undo) {
+                    runIfSafe {
+                        val restored = adapter.currentList.toMutableList()
+                        restored.add(idx.coerceIn(0, restored.size), scan)
+                        adapter.submitList(restored)
+                        updateEmptyState()
+                        sharedViewModel.addScan(scan)
+                    }
+                }
+                .show()
+        }
     }
 
     private fun updateStatisticsInFirebase(scans: List<ScanHistory>) {
@@ -273,8 +291,31 @@ class HistoryFragment : Fragment(), BackHandler {
             .set(statsData)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _b = FragmentHistoryBinding.inflate(inflater, container, false)
+
+        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
+        rvHistory = b.rvHistory
+
+        // Show/hide FAB based on scroll position
+        rvHistory.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val atBottom = !recyclerView.canScrollVertically(1)
+                if (atBottom) fabScrollDown.hide() else fabScrollDown.show()
+            }
+        })
+
+        // Scroll to bottom when FAB clicked
+        fabScrollDown.setOnClickListener {
+            runIfSafe {
+                rvHistory.post { rvHistory.smoothScrollToPosition(adapter.itemCount - 1) }
+            }
+        }
+
         return b.root
     }
 
@@ -322,6 +363,17 @@ class HistoryFragment : Fragment(), BackHandler {
         // Call updateEmptyState after DiffUtil
         adapter.submitList(filtered) {
             updateEmptyState()
+            runIfSafe {
+                updateStatisticsInFirebase(list)
+            }
+
+        }
+    }
+
+
+    private fun runIfSafe(block: () -> Unit) {
+        if (isAdded && view != null && context != null) {
+            block()
         }
 
     // Ubah empty state text sesuai mode
@@ -345,4 +397,15 @@ class HistoryFragment : Fragment(), BackHandler {
         _b = null
         super.onDestroyView()
     }
+
+    override fun onResume() {
+        super.onResume()
+        fabScrollDown.show() // Or update based on scroll
+    }
+
+    override fun onPause() {
+        super.onPause()
+        fabScrollDown.hide() // Hide when leaving fragment
+    }
+
 }
