@@ -473,7 +473,7 @@ class ScanFragment : Fragment() {
             AlertDialog.Builder(requireContext())
                 .setTitle("Save Scan")
                 .setMessage("Do you want to create a new scan history or add to an existing one?")
-                .setPositiveButton("New") { _, _ -> saveNewScan(uri) }
+                .setPositiveButton("New") { _, _ -> promptForNewScanName(uri) }
                 .setNeutralButton("Existing") { _, _ -> chooseExistingScan(uri) }
                 .setNegativeButton("Cancel", null)
                 .create()

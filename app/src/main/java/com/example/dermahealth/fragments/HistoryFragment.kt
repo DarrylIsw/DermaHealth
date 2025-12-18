@@ -161,7 +161,7 @@ class HistoryFragment : Fragment(), BackHandler {
             .create()
 
         dialog.setOnShowListener {
-            val color = resources.getColor(R.color.medium_gray, requireContext().theme)
+            val color = resources.getColor(R.color.medium_sky_blue, requireContext().theme)
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(color)
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(color)
         }
@@ -364,7 +364,7 @@ class HistoryFragment : Fragment(), BackHandler {
         adapter.submitList(filtered) {
             updateEmptyState()
             runIfSafe {
-                updateStatisticsInFirebase(list)
+                updateStatisticsInFirebase(filtered)
             }
 
         }

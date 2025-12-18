@@ -101,7 +101,11 @@ class ProfileFragment : Fragment(), BackHandler {
                     runIfAttached {
                         tvName.text = doc.getString("fullName") ?: "Unknown User"
                         tvMobile.text = doc.getString("phone") ?: "No phone"
-                        tvAgeValue.text = (doc.getLong("age") ?: 0).toString()
+                        tvAgeValue.text = (
+                                (doc.get("age") as? Number)?.toInt()
+                                    ?: (doc.getString("age")?.trim()?.toIntOrNull())
+                                    ?: 0
+                                ).toString()
                         tvEmail.text = currentUser.email ?: "No email"
                     }
                 }

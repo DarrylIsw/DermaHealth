@@ -190,7 +190,11 @@ class HistoryAdapter(
         // ---------- IMAGE LIST WITH INDIVIDUAL SCORES ----------
         b.rvImages.layoutManager =
             LinearLayoutManager(b.root.context, LinearLayoutManager.HORIZONTAL, false)
-        b.rvImages.adapter = HistoryImagesAdapter(item.images)
+        // NEWEST -> OLDEST (kiri ke kanan)
+        val imagesNewestFirst = item.images.asReversed()
+        b.rvImages.adapter = HistoryImagesAdapter(imagesNewestFirst)
+        b.rvImages.scrollToPosition(0)
+
         b.rvImages.isNestedScrollingEnabled = false
 
         // ---------- EXPAND / COLLAPSE ----------
