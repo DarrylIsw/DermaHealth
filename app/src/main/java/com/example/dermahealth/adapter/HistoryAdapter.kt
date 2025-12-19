@@ -23,6 +23,8 @@ import java.time.format.DateTimeFormatter
 class HistoryAdapter(
     private val onEdit: (ScanHistory) -> Unit,
     private val onDelete: (ScanHistory) -> Unit,
+    private val onArchive: (ScanHistory) -> Unit,
+    private val onUnarchive: (ScanHistory) -> Unit,
     private val onToggleExpand: (position: Int, expanded: Boolean) -> Unit
 ) : ListAdapter<ScanHistory, HistoryAdapter.VH>(DIFF) {
 
@@ -162,6 +164,12 @@ class HistoryAdapter(
         b.chipResult.text = chipText
         b.chipResult.setChipBackgroundColorResource(chipColor)
 
+        // ---------- IMAGE NAME (imgName) ----------
+        val imgName = item.imgName
+            ?.takeIf { it.isNotBlank() }
+            ?: "Untitled scan"
+
+        b.tvImgName.text = imgName
 
         // DATE + NOTES
         b.tvDate.text = formatIsoDate(item.dateIso)
@@ -182,7 +190,11 @@ class HistoryAdapter(
         // ---------- IMAGE LIST WITH INDIVIDUAL SCORES ----------
         b.rvImages.layoutManager =
             LinearLayoutManager(b.root.context, LinearLayoutManager.HORIZONTAL, false)
-        b.rvImages.adapter = HistoryImagesAdapter(item.images)
+        // NEWEST -> OLDEST (kiri ke kanan)
+        val imagesNewestFirst = item.images.asReversed()
+        b.rvImages.adapter = HistoryImagesAdapter(imagesNewestFirst)
+        b.rvImages.scrollToPosition(0)
+
         b.rvImages.isNestedScrollingEnabled = false
 
         // ---------- EXPAND / COLLAPSE ----------
@@ -201,5 +213,24 @@ class HistoryAdapter(
 
         b.btnEdit.setOnClickListener { onEdit(item) }
         b.btnDelete.setOnClickListener { onDelete(item) }
+
+        // ---------- ARCHIVE / UNARCHIVE ----------
+        if (item.isArchived) {
+            // Mode archived: tampilkan tombol UNARCHIVE
+            b.btnArchive.visibility = View.VISIBLE
+            b.btnArchive.text = b.root.context.getString(R.string.unarchive_history)
+            b.btnArchive.setTextColor(
+                b.root.context.getColor(R.color.medium_sky_blue)
+            )
+            b.btnArchive.setOnClickListener { onUnarchive(item) }
+        } else {
+            // Mode normal: tombol ARCHIVE
+            b.btnArchive.visibility = View.VISIBLE
+            b.btnArchive.text = b.root.context.getString(R.string.archive_history)
+            b.btnArchive.setTextColor(
+                b.root.context.getColor(R.color.medium_sky_blue)
+            )
+            b.btnArchive.setOnClickListener { onArchive(item) }
+        }
     }
 }

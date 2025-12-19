@@ -71,6 +71,7 @@
     <string name="photo_tip">Tip: Keep 20–30 cm away. Avoid blur. Crop the lesion precisely after capture.</string>
     <string name="result_benign">Result: Benign</string>
     <string name="date_dummy">Date: Sep 24, 2025</string>
+    <string name="imgName_dummy">Category: Skin lesion</string>
     <string name="notes_monitor_regularly">Notes: Monitor regularly</string>
     <string name="expand">Expand</string>
     <string name="result_details">Result Details</string>
@@ -122,4 +123,22 @@
     <string name="save">Save</string>
     <string name="change_avatar">Change Avatar</string>
     <string name="choose_photo">Choose Photo</string>
+
+    <string name="archive_scan_title">Archive scan</string>
+    <string name="archive_scan_msg">This scan and all its images will be archived and removed from history. Continue?</string>
+    <string name="archive_scan">Archive</string>
+
+    <string name="scan_unarchived">Scan has been moved back to history.</string>
+    <string name="unarchive_scan_title">Unarchive scan</string>
+    <string name="unarchive_scan_msg">This scan will be moved back to your active history. Continue?</string>
+
+    <string name="scan_archived">Scan has been archived.</string>
+    <string name="archive_history">Archive</string>
+    <string name="unarchive_history">Unarchive</string>
+
+    <string name="view_archived_scans">View Archived</string>
+    <string name="show_active_history">View Active</string>
+    <string name="no_archived_scans_title">No archived scans</string>
+    <string name="no_archived_scans_subtitle">Archived scans will appear here.</string>
+
 </resources>

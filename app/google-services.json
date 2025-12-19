@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "704221813262",
+    "project_id": "dermahealth-e2ab7",
+    "storage_bucket": "dermahealth-e2ab7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:704221813262:android:d4ca0179ee38d80b393a5f",
+        "android_client_info": {
+          "package_name": "com.example.dermahealth"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMW1Tvd2jmcSbdl1CpscEFjqx0KWdL0yk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
