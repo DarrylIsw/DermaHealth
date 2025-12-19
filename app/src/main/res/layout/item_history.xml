@@ -142,9 +142,10 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvImages"
                 android:layout_width="match_parent"
-                android:layout_height="140dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:clipToPadding="false"
+                android:clipChildren="false"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="8dp"

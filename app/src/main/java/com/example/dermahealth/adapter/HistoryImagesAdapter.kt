@@ -16,6 +16,9 @@ import coil.transform.RoundedCornersTransformation
 import com.example.dermahealth.R
 import com.example.dermahealth.data.ScanImage
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class HistoryImagesAdapter(
     private val images: List<ScanImage>
@@ -24,6 +27,7 @@ class HistoryImagesAdapter(
     inner class ImgVH(view: View) : RecyclerView.ViewHolder(view) {
         val ivImage: ImageView = view.findViewById(R.id.ivImage)
         val tvScore: TextView = view.findViewById(R.id.tvScore)
+        val tvDate: TextView = view.findViewById(R.id.tvDate)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImgVH {
@@ -49,9 +53,32 @@ class HistoryImagesAdapter(
         val scorePct = ((item.score ?: 0f) * 100).toInt()
         holder.tvScore.text = "$scorePct%"
 
-        // 🔍 Zoom on click
+        // Show formatted date/time from timestamp
+        holder.tvDate.text = formatTimestamp(item.timestamp)
+
+        // Zoom on click
         holder.ivImage.setOnClickListener {
             showZoomDialog(holder.itemView.context, item.path)
+        }
+    }
+
+    private fun formatTimestamp(isoString: String?): String {
+        if (isoString.isNullOrBlank()) return "Unknown"
+
+        return try {
+            // Parse incoming format: 2025-12-19T21:10:00Z
+            val inFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+
+            // Display format
+            val outFmt = SimpleDateFormat("MMM d, yyyy • HH:mm", Locale.getDefault())
+
+            val date = inFmt.parse(isoString) ?: return "Unknown"
+            outFmt.format(date)
+        } catch (_: Exception) {
+            // fallback: show raw string if parsing fails
+            isoString
         }
     }
 

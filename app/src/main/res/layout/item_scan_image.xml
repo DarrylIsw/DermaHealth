@@ -4,7 +4,10 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:layout_marginEnd="8dp"
-    android:gravity="center">
+    android:gravity="center"
+    android:paddingBottom="8dp"
+    android:clipToPadding="false"
+    android:clipChildren="false">
 
     <ImageView
         android:id="@+id/ivImage"
@@ -24,4 +27,15 @@
         android:fontFamily="@font/inter_medium"
         android:gravity="center"
         android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Dec 19, 2025 • 21:10"
+        android:textSize="11sp"
+        android:textColor="#888"
+        android:singleLine="true"
+        android:ellipsize="end" />
 </LinearLayout>
