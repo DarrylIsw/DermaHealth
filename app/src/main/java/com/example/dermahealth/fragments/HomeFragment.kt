@@ -373,15 +373,33 @@ class HomeFragment : Fragment(), BackHandler {
 
 
 
-// --- Time picker for Daily & Every-X-Days ---
+        // --- Time picker for Daily & Every-X-Days ---
         etTimePicker.setOnClickListener {
             val now = Calendar.getInstance()
-            TimePickerDialog(requireContext(), { _, hourOfDay, minute ->
-                selectedHour = hourOfDay
-                selectedMinute = minute
-                etTimePicker.setText(String.format("%02d:%02d", hourOfDay, minute))
-            }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), true).show()
+
+            val dialog = TimePickerDialog(
+                requireContext(),
+                { _, hourOfDay, minute ->
+                    selectedHour = hourOfDay
+                    selectedMinute = minute
+                    etTimePicker.setText(String.format("%02d:%02d", hourOfDay, minute))
+                },
+                now.get(Calendar.HOUR_OF_DAY),
+                now.get(Calendar.MINUTE),
+                true
+            )
+
+            dialog.setOnShowListener {
+                dialog.getButton(TimePickerDialog.BUTTON_POSITIVE)
+                    ?.setTextColor(resources.getColor(R.color.medium_sky_blue, null))
+
+                dialog.getButton(TimePickerDialog.BUTTON_NEGATIVE)
+                    ?.setTextColor(resources.getColor(R.color.medium_sky_blue, null))
+            }
+
+            dialog.show()
         }
+
 
 // --- Date picker for Specific Date ---
         etSpecificDate.setOnClickListener {
