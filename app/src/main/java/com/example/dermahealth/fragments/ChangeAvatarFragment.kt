@@ -37,9 +37,7 @@ class ChangeAvatarFragment : Fragment() {
 
         // --- Back button: returns to ProfileFragment ---
         btnBack.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, ProfileFragment())
-                .commit()
+            parentFragmentManager.popBackStack()
         }
 
         // --- Choose image from gallery ---
@@ -57,9 +55,16 @@ class ChangeAvatarFragment : Fragment() {
                 sharedPref.edit().putString("avatarUri", it.toString()).apply() // Save URI as string
 
                 // Return to ProfileFragment after saving
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, ProfileFragment())
-                    .commit()
+                btnSave.setOnClickListener {
+                    selectedImageUri?.let {
+                        val sharedPref = requireActivity()
+                            .getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
+                        sharedPref.edit().putString("avatarUri", it.toString()).apply()
+
+                        parentFragmentManager.popBackStack() // ✅ CORRECT
+                    }
+                }
+
             }
         }
 

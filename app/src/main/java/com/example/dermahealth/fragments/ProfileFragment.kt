@@ -1,6 +1,7 @@
 package com.example.dermahealth.fragments
 
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -77,6 +78,7 @@ class ProfileFragment : Fragment(), BackHandler {
 
         loadUserProfile()
         setupListeners()
+        loadAvatar()
 
         return view
     }
@@ -191,6 +193,14 @@ class ProfileFragment : Fragment(), BackHandler {
             }
         }
 
+        imgAvatar.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, ChangeAvatarFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+
         btnDeleteAccount.setOnClickListener {
             val currentUser = FirebaseAuth.getInstance().currentUser ?: return@setOnClickListener
             val uid = currentUser.uid
@@ -249,6 +259,16 @@ class ProfileFragment : Fragment(), BackHandler {
         }
     }
 
+    private fun loadAvatar() {
+        val sharedPref = requireActivity()
+            .getSharedPreferences("UserProfile", Context.MODE_PRIVATE)
+
+        val avatarUri = sharedPref.getString("avatarUri", null)
+        if (avatarUri != null) {
+            imgAvatar.setImageURI(Uri.parse(avatarUri))
+        }
+    }
+
 
     private fun showError(message: String) {
         AlertDialog.Builder(requireContext())
@@ -278,6 +298,7 @@ class ProfileFragment : Fragment(), BackHandler {
 
     override fun onResume() {
         super.onResume()
+        loadAvatar()
         loadUserProfile()
     }
 }

@@ -51,7 +51,6 @@ class HistoryFragment : Fragment(), BackHandler {
             }
         )
     }
-    private lateinit var fabScrollDown: FloatingActionButton
     private lateinit var rvHistory: RecyclerView
 
     private fun showEditDialog(scan: ScanHistory) {
@@ -298,23 +297,7 @@ class HistoryFragment : Fragment(), BackHandler {
     ): View {
         _b = FragmentHistoryBinding.inflate(inflater, container, false)
 
-        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
         rvHistory = b.rvHistory
-
-        // Show/hide FAB based on scroll position
-        rvHistory.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val atBottom = !recyclerView.canScrollVertically(1)
-                if (atBottom) fabScrollDown.hide() else fabScrollDown.show()
-            }
-        })
-
-        // Scroll to bottom when FAB clicked
-        fabScrollDown.setOnClickListener {
-            runIfSafe {
-                rvHistory.post { rvHistory.smoothScrollToPosition(adapter.itemCount - 1) }
-            }
-        }
 
         return b.root
     }
@@ -396,16 +379,6 @@ class HistoryFragment : Fragment(), BackHandler {
     override fun onDestroyView() {
         _b = null
         super.onDestroyView()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        fabScrollDown.show() // Or update based on scroll
-    }
-
-    override fun onPause() {
-        super.onPause()
-        fabScrollDown.hide() // Hide when leaving fragment
     }
 
 }

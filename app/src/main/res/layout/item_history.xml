@@ -25,7 +25,7 @@
             android:id="@+id/tvScanNumber"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Scan #1"
+            android:text=""
             android:textSize="16sp"
             android:textStyle="bold"
             android:fontFamily="@font/inter_bold"
@@ -128,15 +128,6 @@
                 android:fontFamily="@font/poppins_semibold"
                 android:textColor="@color/deep_dark_blue"
                 android:layout_marginBottom="8dp"/>
-
-<!--            <com.google.android.material.imageview.ShapeableImageView-->
-<!--                android:id="@+id/ivCropped"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="200dp"-->
-<!--                android:scaleType="centerCrop"-->
-<!--                app:srcCompat="@drawable/dummy_melanoma"-->
-<!--                android:contentDescription="@string/cropped_scan_result"-->
-<!--                android:layout_marginBottom="12dp"/>-->
 
             <!-- MULTIPLE IMAGES LIST -->
             <androidx.recyclerview.widget.RecyclerView

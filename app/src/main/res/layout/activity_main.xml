@@ -61,17 +61,17 @@
             android:translationZ="0dp" />
     </FrameLayout>
 
-    <!-- Floating scroll-to-bottom button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_scroll_down"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
-        android:layout_gravity="center|bottom"
-        android:layout_marginBottom="90dp"
-        app:backgroundTint="@android:color/white"
-        app:srcCompat="@drawable/ic_arrow_downward"
-        app:tint="@color/medium_sky_blue"
-        app:fabSize="mini"
-        android:visibility="gone" />
+<!--    &lt;!&ndash; Floating scroll-to-bottom button &ndash;&gt;-->
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/fab_scroll_down"-->
+<!--        android:layout_width="55dp"-->
+<!--        android:layout_height="55dp"-->
+<!--        android:layout_gravity="center|bottom"-->
+<!--        android:layout_marginBottom="90dp"-->
+<!--        app:backgroundTint="@android:color/white"-->
+<!--        app:srcCompat="@drawable/ic_arrow_downward"-->
+<!--        app:tint="@color/medium_sky_blue"-->
+<!--        app:fabSize="mini"-->
+<!--        android:visibility="gone" />-->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

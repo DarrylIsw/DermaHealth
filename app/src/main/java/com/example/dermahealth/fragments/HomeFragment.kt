@@ -86,7 +86,7 @@ class HomeFragment : Fragment(), BackHandler {
     private lateinit var tvTip: TextView
     private lateinit var ivTipIcon: ImageView
     private lateinit var nestedScroll: NestedScrollView
-    private var fabScrollDown: FloatingActionButton? = null
+
     private lateinit var tvNoRoutines: TextView
 
     private lateinit var overlay: FrameLayout
@@ -175,7 +175,6 @@ class HomeFragment : Fragment(), BackHandler {
         handler.removeCallbacksAndMessages(null)
         isActive = false
         refreshJob?.cancel()
-        fabScrollDown?.hide()
         _binding = null
     }
 
@@ -259,7 +258,6 @@ class HomeFragment : Fragment(), BackHandler {
         rvRoutines = view.findViewById(R.id.rv_routines)
         btnAddRoutine = view.findViewById(R.id.btn_add_routine)
         nestedScroll = view.findViewById(R.id.nested_scroll)
-        fabScrollDown = requireActivity().findViewById(R.id.fab_scroll_down)
 
         // Skin views
         cpSkin = view.findViewById(R.id.cp_skin)
@@ -410,11 +408,6 @@ class HomeFragment : Fragment(), BackHandler {
         // --- Cancel Overlay ---
         btnCancel.setOnClickListener { hideAddRoutineCard() }
 
-        // CLICK LISTENER FOR ADD ROUTINE
-        btnAddRoutine.setOnClickListener {
-            showAddRoutineOverlay()
-        }
-
         // --- Save button (handles add & edit) ---
         btnSave.setOnClickListener {
             if (isEditing) {
@@ -456,19 +449,6 @@ class HomeFragment : Fragment(), BackHandler {
             }
         ).attachToRecyclerView(rvRoutines)
 
-
-
-        // --- FAB scroll behaviour ---
-        nestedScroll.setOnScrollChangeListener { v: NestedScrollView, _, _, _, _ ->
-            val atBottom = !v.canScrollVertically(1)
-            if (atBottom) fabScrollDown?.hide() else fabScrollDown?.show()
-        }
-
-        fabScrollDown?.setOnClickListener {
-            nestedScroll.post {
-                nestedScroll.smoothScrollTo(0, nestedScroll.getChildAt(0).bottom)
-            }
-        }
 
         // --- Tip of the Day ---
         tvTip.text = tips[tipIndex]
