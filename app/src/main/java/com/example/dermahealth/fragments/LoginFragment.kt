@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.MainActivity
 import com.example.dermahealth.R
+import com.example.dermahealth.SessionManager
 import com.example.dermahealth.databinding.FragmentLoginBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -88,7 +89,11 @@ class LoginFragment : Fragment() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 runIfSafe {
+                    // SAVE LOGIN STATE
+                    SessionManager.setLoggedIn(requireContext(), true)
+
                     Toast.makeText(requireContext(), "Login successful!", Toast.LENGTH_SHORT).show()
+
                     val intent = Intent(requireActivity(), MainActivity::class.java)
                     startActivity(intent)
                     requireActivity().finish()

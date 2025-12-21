@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.example.dermahealth.LoginRegisterActivity
 import com.example.dermahealth.R
+import com.example.dermahealth.SessionManager
 import com.example.dermahealth.helper.BackHandler
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -177,7 +178,14 @@ class ProfileFragment : Fragment(), BackHandler {
 
         btnLogout.setOnClickListener {
             showConfirmationDialog("Logout", "Are you sure you want to log out?") {
+
+                // 1️⃣ Sign out from Firebase
                 FirebaseAuth.getInstance().signOut()
+
+                // 2️⃣ Clear persistent login flag
+                SessionManager.setLoggedIn(requireContext(), false)
+
+                // 3️⃣ Navigate to Login screen
                 startActivity(Intent(requireActivity(), LoginRegisterActivity::class.java))
                 requireActivity().finish()
             }

@@ -7,6 +7,7 @@ import android.os.Looper
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 
 class SplashActivity : AppCompatActivity() {
 
@@ -18,31 +19,36 @@ class SplashActivity : AppCompatActivity() {
 
         logoImage = findViewById(R.id.logoImage)
 
-        // Bring the logo upfront
         logoImage.alpha = 1f
         logoImage.bringToFront()
 
-        // 🔹 Fade in the logo
         val fadeIn = AlphaAnimation(0f, 1f).apply {
-            duration = 1200 // fade in for 1.2s
+            duration = 1200
             fillAfter = true
         }
         logoImage.startAnimation(fadeIn)
 
-        // 🔹 Keep it fully visible for ~1s, then fade out together with bg
         Handler(Looper.getMainLooper()).postDelayed({
             val fadeOut = AlphaAnimation(1f, 0f).apply {
-                duration = 600 // fade out duration
+                duration = 600
                 fillAfter = true
             }
             logoImage.startAnimation(fadeOut)
 
-            // Start main activity slightly after fade-out
             Handler(Looper.getMainLooper()).postDelayed({
-                startActivity(Intent(this, LoginRegisterActivity::class.java))
+                val isFirebaseLoggedIn = FirebaseAuth.getInstance().currentUser != null
+
+                val nextIntent = if (isFirebaseLoggedIn) {
+                    Intent(this, MainActivity::class.java)
+                } else {
+                    Intent(this, LoginRegisterActivity::class.java)
+                }
+
+                startActivity(nextIntent)
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                 finish()
+
             }, 450)
-        }, 1450) // 1200 fadeIn + 1000 delay before fadeOut starts
+        }, 1450)
     }
 }
